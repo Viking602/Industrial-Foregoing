@@ -1,0 +1,17 @@
+{
+  "name": "造石加工机",
+  "icon": "industrialforegoing:material_stonework_factory",
+  "category": "industrialforegoing:resource_production",
+  "sortnum": 0,
+  "read_by_default": true,
+  "pages": [
+    {
+      "type": "text",
+      "text": "新一代$(6)圆石$()生产设备。$(br2)提供$(6)60$() RF/t、$(6)水$()和$(6)熔岩$()后，可按设定生产材料。$(br)产物还能进一步加工：$(br)$(li)烧炼$(br)$(li)粉碎$(br)$(li)合成"
+    },
+    {
+      "type": "crafting",
+      "recipe": "industrialforegoing:material_stonework_factory"
+    }
+  ]
+}

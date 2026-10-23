@@ -1,8 +1,8 @@
 {
   "neoforge:conditions": [
     {
-      "type": "neoforge:item_exists",
-      "item": "industrialforegoing:processing_addon_tier_1"
+      "type": "neoforge:registered",
+      "value": "industrialforegoing:processing_addon_tier_1"
     }
   ],
   "parent": "minecraft:recipes/root",

@@ -8,7 +8,7 @@ import net.minecraft.world.level.storage.loot.LootTable;
 public class PinkSlimeBlock extends SlimeBlock implements IBlockLootTableProvider {
 
     public PinkSlimeBlock(Properties properties) {
-        super(properties);
+        super(com.hrznstudio.titanium.module.DeferredRegistryHelper.applyBlockRegistrationId(properties));
     }
 
     @Override

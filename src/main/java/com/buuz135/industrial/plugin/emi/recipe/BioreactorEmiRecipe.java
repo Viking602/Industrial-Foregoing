@@ -8,7 +8,7 @@ import dev.emi.emi.api.neoforge.NeoForgeEmiStack;
 import dev.emi.emi.api.stack.EmiIngredient;
 import dev.emi.emi.api.widget.WidgetHolder;
 import net.minecraft.client.Minecraft;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.Item;
@@ -23,8 +23,8 @@ public class BioreactorEmiRecipe extends CustomEmiRecipe {
 
 
     public BioreactorEmiRecipe(TagKey<Item> stack, FluidStack fluid) {
-        super(ResourceLocation.fromNamespaceAndPath(stack.location().getNamespace(), "emi_" + stack.location().getPath()), IFEmiPlugin.BIOREACTOR_EMI_CATEGORY,
-                fromInput(EmiIngredient.of(stack)),
+        super(Identifier.fromNamespaceAndPath(stack.identifier().getNamespace(), "emi_" + stack.identifier().getPath()), IFEmiPlugin.BIOREACTOR_EMI_CATEGORY,
+                fromInput(Emicom.buuz135.industrial.compat.Ingredients.of(stack)),
                 fromOutput(NeoForgeEmiStack.of(fluid)));
     }
 
@@ -42,7 +42,7 @@ public class BioreactorEmiRecipe extends CustomEmiRecipe {
     @Override
     public void addWidgets(WidgetHolder widgets) {
 
-        widgets.addSlot(EmiIngredient.of(List.of(this.getInputs().get(0))), 1, 19);
+        widgets.addSlot(Emicom.buuz135.industrial.compat.Ingredients.of(List.of(this.getInputs().get(0))), 1, 19);
 
         widgets.add(new NormalTankEmiWidget(this.getOutputs().get(0), 1000, 57, 1)).recipeContext(this);
 

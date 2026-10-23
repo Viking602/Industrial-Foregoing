@@ -25,47 +25,35 @@ import com.buuz135.industrial.api.transporter.TransporterType;
 import com.buuz135.industrial.api.transporter.TransporterTypeFactory;
 import com.buuz135.industrial.block.transportstorage.tile.TransporterTile;
 import com.buuz135.industrial.block.transportstorage.transporter.TransporterItemType;
-import com.mojang.blaze3d.platform.GlStateManager;
+
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderStateShard;
-import net.minecraft.client.renderer.RenderType;
+
+import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.core.Direction;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Vector3f;
 
 import java.util.Map;
 
-public class TransporterTESR implements BlockEntityRenderer<TransporterTile> {
+public class TransporterTESR extends com.buuz135.industrial.compat.CapturedBlockRenderer<TransporterTile> {
 
-    public static ResourceLocation TEXTURE = ResourceLocation.fromNamespaceAndPath("industrialforegoing", "textures/block/transporters/particle.png");
+    public static Identifier TEXTURE = Identifier.fromNamespaceAndPath("industrialforegoing", "textures/block/transporters/particle.png");
 
     public static RenderType TYPE = createRenderType();
 
     public TransporterTESR(BlockEntityRendererProvider.Context context) {
     }
 
-    public static RenderType createRenderType() {
-        RenderType.CompositeState state = RenderType.CompositeState.builder()
-                .setShaderState(new RenderStateShard.ShaderStateShard(GameRenderer::getPositionTexColorShader))
-                .setTextureState(new RenderStateShard.TextureStateShard(TEXTURE, false, false))
-                .setTransparencyState(new RenderStateShard.TransparencyStateShard("translucent_transparency", () -> {
-                    RenderSystem.enableBlend();
-                    RenderSystem.blendFunc(GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ONE);
-                }, () -> {
-                    RenderSystem.disableBlend();
-                    RenderSystem.defaultBlendFunc();
-                })).createCompositeState(true);
-        return RenderType.create("transporter_render", DefaultVertexFormat.POSITION_TEX_COLOR, VertexFormat.Mode.QUADS, 256, false, false, state);
-    }
+    public static RenderType createRenderType() { return net.minecraft.client.renderer.rendertype.RenderTypes.entityTranslucentEmissive(TEXTURE); }
 
     public static Vector3f getPath(Direction from, Direction to, double step, float partialTicks) {
         float totalSteps = 5f;

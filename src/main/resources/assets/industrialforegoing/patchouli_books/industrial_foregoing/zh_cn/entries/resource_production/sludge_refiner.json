@@ -1,0 +1,17 @@
+{
+  "name": "污泥精炼机",
+  "icon": "industrialforegoing:sludge_refiner",
+  "category": "industrialforegoing:resource_production",
+  "sortnum": 10,
+  "read_by_default": true,
+  "pages": [
+    {
+      "type": "text",
+      "text": "把$(6)污泥$()转化为有用的材料。$(br2)输入$(l:agr_hus/plant_gatherer)收割机$()产生的$(6)污泥$()，即可获得各种$(6)产物$()。$(br)工作需要$(6)1000$() RF/t，请准备充足的能量。"
+    },
+    {
+      "type": "crafting",
+      "recipe": "industrialforegoing:sludge_refiner"
+    }
+  ]
+}

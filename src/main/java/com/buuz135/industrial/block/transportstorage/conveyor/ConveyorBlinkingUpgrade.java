@@ -44,7 +44,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.data.recipes.RecipeOutput;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.Entity;
@@ -85,7 +85,7 @@ public class ConveyorBlinkingUpgrade extends ConveyorUpgrade {
         super.handleEntity(entity);
         if (whitelist != filter.matches(entity)) return;
         Direction direction = this.getContainer().getBlockWorld().getBlockState(this.getContainer().getBlockPosition()).getValue(ConveyorBlock.FACING);
-        Vec3 vec3d = new Vec3(horizontalDisplacement * direction.getNormal().getX(), verticalDisplacement, horizontalDisplacement * direction.getNormal().getZ());
+        Vec3 vec3d = new Vec3(horizontalDisplacement * direction.getUnitVec3i().getX(), verticalDisplacement, horizontalDisplacement * direction.getUnitVec3i().getZ());
         BlockPos pos = this.getPos().offset((int) vec3d.x, (int) vec3d.y, (int) vec3d.z);
         entity.setPos(pos.getX() + 0.5, pos.getY() + 0.25, pos.getZ() + 0.5);
         this.getWorld().playSound(null, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, SoundEvents.CHORUS_FRUIT_TELEPORT, SoundSource.AMBIENT, 0.5f, 1f);
@@ -109,10 +109,10 @@ public class ConveyorBlinkingUpgrade extends ConveyorUpgrade {
     @Override
     public void deserializeNBT(HolderLookup.Provider provider, CompoundTag nbt) {
         super.deserializeNBT(provider, nbt);
-        if (nbt.contains("Filter")) filter.deserializeNBT(provider, nbt.getCompound("Filter"));
-        whitelist = nbt.getBoolean("Whitelist");
-        horizontalDisplacement = nbt.getInt("HorizontalDisplacement");
-        verticalDisplacement = nbt.getInt("VerticalDisplacement");
+        if (nbt.contains("Filter")) filter.deserializeNBT(provider, nbt.getCompoundOrEmpty("Filter"));
+        whitelist = nbt.getBooleanOr("Whitelist", false);
+        horizontalDisplacement = nbt.getIntOr("HorizontalDisplacement", 0);
+        verticalDisplacement = nbt.getIntOr("VerticalDisplacement", 0);
     }
 
     @Override
@@ -129,7 +129,7 @@ public class ConveyorBlinkingUpgrade extends ConveyorUpgrade {
     public void handleButtonInteraction(int buttonId, CompoundTag compound) {
         super.handleButtonInteraction(buttonId, compound);
         if (buttonId >= 0 && buttonId < filter.getFilter().length) {
-            this.filter.setFilter(buttonId, ItemStack.parseOptional(IFAttachments.registryAccess(), compound));
+            this.filter.setFilter(buttonId, com.buuz135.industrial.compat.ItemNbt.parseOptional(IFAttachments.registryAccess(), compound));
             this.getContainer().requestSync();
         }
         if (buttonId == 10) {
@@ -163,7 +163,7 @@ public class ConveyorBlinkingUpgrade extends ConveyorUpgrade {
                 return ConveyorBlinkingUpgrade.this.filter;
             }
         });
-        ResourceLocation res = ResourceLocation.fromNamespaceAndPath(Reference.MOD_ID, "textures/gui/machines.png");
+        Identifier res = Identifier.fromNamespaceAndPath(Reference.MOD_ID, "textures/gui/machines.png");
         componentList.add(new TexturedStateButtonGuiComponent(10, 80, 19, 18, 18,
                 new StateButtonInfo(0, res, 1, 214, new String[]{"whitelist"}),
                 new StateButtonInfo(1, res, 20, 214, new String[]{"blacklist"})) {
@@ -229,8 +229,8 @@ public class ConveyorBlinkingUpgrade extends ConveyorUpgrade {
         }
 
         @Override
-        public Set<ResourceLocation> getTextures() {
-            return Collections.singleton(ResourceLocation.fromNamespaceAndPath(Reference.MOD_ID, "block/conveyor_blinking_upgrade"));
+        public Set<Identifier> getTextures() {
+            return Collections.singleton(Identifier.fromNamespaceAndPath(Reference.MOD_ID, "block/conveyor_blinking_upgrade"));
         }
 
         @Nonnull
@@ -246,14 +246,14 @@ public class ConveyorBlinkingUpgrade extends ConveyorUpgrade {
 
         @Override
         @Nonnull
-        public ResourceLocation getModel(Direction upgradeSide, Direction conveyorFacing) {
-            return ResourceLocation.fromNamespaceAndPath(Reference.MOD_ID, "block/conveyor_upgrade_blinking");
+        public Identifier getModel(Direction upgradeSide, Direction conveyorFacing) {
+            return Identifier.fromNamespaceAndPath(Reference.MOD_ID, "block/conveyor_upgrade_blinking");
         }
 
         @Nonnull
         @Override
-        public ResourceLocation getItemModel() {
-            return ResourceLocation.fromNamespaceAndPath(Reference.MOD_ID, "conveyor_blinking_upgrade");
+        public Identifier getItemModel() {
+            return Identifier.fromNamespaceAndPath(Reference.MOD_ID, "conveyor_blinking_upgrade");
         }
 
         @Override

@@ -1,8 +1,8 @@
 {
   "neoforge:conditions": [
     {
-      "type": "neoforge:item_exists",
-      "item": "industrialforegoing:gold_gear"
+      "type": "neoforge:registered",
+      "value": "industrialforegoing:gold_gear"
     }
   ],
   "parent": "minecraft:recipes/root",

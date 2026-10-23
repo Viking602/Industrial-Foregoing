@@ -68,9 +68,8 @@ public abstract class IndustrialAreaWorkingTile<T extends IndustrialAreaWorkingT
         this.spawnParticles = true;
         addButton(areaButton = new ButtonComponent(154 - 18, 84, 14, 14) {
             @Override
-            @OnlyIn(Dist.CLIENT)
-            public List<IFactory<? extends IScreenAddon>> getScreenAddons() {
-                List<IFactory<? extends IScreenAddon>> addons = new ArrayList<>();
+            public List<IFactory<?>> getScreenAddons() {
+                List<IFactory<?>> addons = new ArrayList<>();
                 addons.add(() -> new StateButtonAddon(areaButton, new StateButtonInfo(0, IndustrialAssetProvider.BUTTON_SHOW_AREA, "text.industrialforegoing.button.show_area"), new StateButtonInfo(1, IndustrialAssetProvider.BUTTON_HIDE_AREA, "text.industrialforegoing.button.hide_area")) {
                     @Override
                     public int getState() {
@@ -85,9 +84,8 @@ public abstract class IndustrialAreaWorkingTile<T extends IndustrialAreaWorkingT
         }));
         addButton(particleButton = new ButtonComponent(154 - 18 - 18, 84, 14, 14) {
             @Override
-            @OnlyIn(Dist.CLIENT)
-            public List<IFactory<? extends IScreenAddon>> getScreenAddons() {
-                List<IFactory<? extends IScreenAddon>> addons = new ArrayList<>();
+            public List<IFactory<?>> getScreenAddons() {
+                List<IFactory<?>> addons = new ArrayList<>();
                 addons.add(() -> new StateButtonAddon(particleButton, new StateButtonInfo(0, IndustrialAssetProvider.BUTTON_HIDE_PARTICLE, "text.industrialforegoing.button.hide_particles"), new StateButtonInfo(1, IndustrialAssetProvider.BUTTON_SHOW_PARTICLE, "text.industrialforegoing.button.show_particles")) {
                     @Override
                     public int getState() {
@@ -121,7 +119,7 @@ public abstract class IndustrialAreaWorkingTile<T extends IndustrialAreaWorkingT
     public void increasePointer() {
         BlockPos pointed = getPointedBlockPos();
         if (this.level instanceof ServerLevel && this.spawnParticles) {
-            ((ServerLevel) this.level).sendParticles(new DustParticleOptions(new Vector3f(Math.abs(this.worldPosition.getX() % 255) / 256f, Math.abs(this.worldPosition.getY() % 255) / 256f, Math.abs(this.worldPosition.getZ() % 255) / 256f), 1f), pointed.getX() + 0.5, pointed.getY() + 1, pointed.getZ() + 0.5, 1, 0, 0, 0, 0);
+            ((ServerLevel) this.level).sendParticles(new DustParticleOptions(net.minecraft.util.ARGB.color(255, Math.abs(this.worldPosition.getX() % 255), Math.abs(this.worldPosition.getY() % 255), Math.abs(this.worldPosition.getZ() % 255)), 1f), pointed.getX() + 0.5, pointed.getY() + 1, pointed.getZ() + 0.5, 1, 0, 0, 0, 0);
         }
         ++pointer;
     }
@@ -148,8 +146,8 @@ public abstract class IndustrialAreaWorkingTile<T extends IndustrialAreaWorkingT
     @Override
     public void loadSettings(Player player, CompoundTag tag) {
         super.loadSettings(player, tag);
-        this.spawnParticles = tag.getBoolean("WA_spawnParticles");
-        this.showingArea = tag.getBoolean("WA_showingArea");
+        this.spawnParticles = tag.getBooleanOr("WA_spawnParticles", false);
+        this.showingArea = tag.getBooleanOr("WA_showingArea", false);
     }
 
     @Override

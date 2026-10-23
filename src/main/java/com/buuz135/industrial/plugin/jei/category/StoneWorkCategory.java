@@ -34,9 +34,9 @@ import mezz.jei.api.recipe.RecipeIngredientRole;
 import mezz.jei.api.recipe.RecipeType;
 import mezz.jei.api.recipe.category.IRecipeCategory;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
-public class StoneWorkCategory implements IRecipeCategory<StoneWorkWrapper> {
+public class StoneWorkCategory implements com.buuz135.industrial.plugin.jei.MachineRecipeCategory<StoneWorkWrapper> {
     private final IGuiHelper helper;
 
     public StoneWorkCategory(IGuiHelper helper) {
@@ -55,7 +55,7 @@ public class StoneWorkCategory implements IRecipeCategory<StoneWorkWrapper> {
 
     @Override
     public IDrawable getBackground() {
-        return helper.createDrawable(ResourceLocation.fromNamespaceAndPath(Reference.MOD_ID, "textures/gui/jei.png"), 94, 0, 160, 26);
+        return helper.createDrawable(Identifier.fromNamespaceAndPath(Reference.MOD_ID, "textures/gui/jei.png"), 94, 0, 160, 26);
     }
 
     @Override
@@ -68,7 +68,7 @@ public class StoneWorkCategory implements IRecipeCategory<StoneWorkWrapper> {
         builder.addSlot(RecipeIngredientRole.INPUT, 1, 5).addIngredient(VanillaTypes.ITEM_STACK, recipe.input());
         builder.addSlot(RecipeIngredientRole.OUTPUT, 139, 5).addIngredient(VanillaTypes.ITEM_STACK, recipe.output());
         for (int i = 0; i < recipe.modes().size(); i++) {
-            builder.addSlot(RecipeIngredientRole.CATALYST, 29 + i * 24, 5).addIngredient(VanillaTypes.ITEM_STACK, recipe.modes().get(i).getIcon());
+            builder.addSlot(RecipeIngredientRole.CRAFTING_STATION, 29 + i * 24, 5).addIngredient(VanillaTypes.ITEM_STACK, recipe.modes().get(i).getIcon());
         }
     }
 

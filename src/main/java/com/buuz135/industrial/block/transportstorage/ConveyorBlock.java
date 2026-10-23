@@ -40,7 +40,7 @@ import net.minecraft.data.recipes.RecipeOutput;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.ItemInteractionResult;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -56,7 +56,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
-import net.minecraft.world.level.block.state.properties.DirectionProperty;
+
 import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.material.Fluids;
@@ -80,13 +80,13 @@ import java.util.function.Predicate;
 public class ConveyorBlock extends BasicTileBlock<ConveyorTile> implements SimpleWaterloggedBlock, IRecipeProvider {
 
     public static final BooleanProperty WATERLOGGED = BlockStateProperties.WATERLOGGED;
-    public static final DirectionProperty FACING = HorizontalDirectionalBlock.FACING;
+    public static final net.minecraft.world.level.block.state.properties.EnumProperty<Direction> FACING = HorizontalDirectionalBlock.FACING;
     public static final EnumProperty<EnumType> TYPE = EnumProperty.create("type", EnumType.class);
     //public static final EnumProperty<EnumSides> SIDES = EnumProperty.create("sides", EnumSides.class);
     private ConveyorItem item;
 
     public ConveyorBlock(TitaniumTab group) {
-        super(Properties.ofFullCopy(Blocks.IRON_BLOCK).noCollission().strength(2.0f).isValidSpawn((blockState, blockGetter, blockPos, entityType) -> true), ConveyorTile.class);
+        super(Properties.ofFullCopy(Blocks.IRON_BLOCK).noCollision().strength(2.0f).isValidSpawn((blockState, blockGetter, blockPos, entityType) -> true), ConveyorTile.class);
         this.registerDefaultState(this.defaultBlockState().setValue(FACING, Direction.NORTH).setValue(WATERLOGGED, false));
         //this.item = new ConveyorItem(this, group);
         this.setItemGroup(group);
@@ -113,18 +113,18 @@ public class ConveyorBlock extends BasicTileBlock<ConveyorTile> implements Simpl
 
 
     @Override
-    public ItemStack getCloneItemStack(BlockState state, HitResult target, LevelReader world, BlockPos pos, Player player) {
+    public ItemStack getCloneItemStack(LevelReader world, BlockPos pos, BlockState state, boolean includeData, Player player) {
         BlockEntity tileEntity = world.getBlockEntity(pos);
         if (tileEntity instanceof ConveyorTile) {
-            if (target instanceof DistanceRayTraceResult) {
-                ConveyorUpgrade upgrade = ((ConveyorTile) tileEntity).getUpgradeMap().get(getFacingUpgradeHit(state, player.getCommandSenderWorld(), pos, player));
+            if (player != null) {
+                ConveyorUpgrade upgrade = ((ConveyorTile) tileEntity).getUpgradeMap().get(getFacingUpgradeHit(state, player.level(), pos, player));
                 if (upgrade != null) {
                     return new ItemStack(upgrade.getFactory().getUpgradeItem(), 1);
                 }
             }
             return new ItemStack(this, 1);
         }
-        return super.getCloneItemStack(state, target, world, pos, player);
+        return super.getCloneItemStack(world, pos, state, includeData, player);
     }
 
     @Override
@@ -159,7 +159,7 @@ public class ConveyorBlock extends BasicTileBlock<ConveyorTile> implements Simpl
     //}
 
     @Override
-    public void neighborChanged(BlockState state, Level worldIn, BlockPos pos, Block blockIn, BlockPos fromPos, boolean p_220069_6_) {
+    public void neighborChanged(BlockState state, Level worldIn, BlockPos pos, Block blockIn, net.minecraft.world.level.redstone.Orientation fromPos, boolean p_220069_6_) {
         super.neighborChanged(state, worldIn, pos, blockIn, fromPos, p_220069_6_);
         //        if (!worldIn.isRemote && !canPlaceBlockAt(worldIn, pos)) {
 //            worldIn.destroyBlock(pos, false);
@@ -261,44 +261,44 @@ public class ConveyorBlock extends BasicTileBlock<ConveyorTile> implements Simpl
     }
 
     @Override
-    public ItemInteractionResult useItemOn(ItemStack handStack, BlockState state, Level worldIn, BlockPos pos, Player player, InteractionHand hand, BlockHitResult ray) {
+    public InteractionResult useItemOn(ItemStack handStack, BlockState state, Level worldIn, BlockPos pos, Player player, InteractionHand hand, BlockHitResult ray) {
         BlockEntity tileEntity = worldIn.getBlockEntity(pos);
         if (tileEntity instanceof ConveyorTile) {
             Direction facing = getFacingUpgradeHit(state, worldIn, pos, player);
             if (player.isCrouching()) {
                 if (facing != null) {
                     ((ConveyorTile) tileEntity).removeUpgrade(facing, true);
-                    return ItemInteractionResult.SUCCESS;
+                    return InteractionResult.SUCCESS;
                 }
-                return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+                return InteractionResult.TRY_WITH_EMPTY_HAND;
             } else {
                 if (facing == null) {
                     if (handStack.getItem().equals(Items.GLOWSTONE_DUST) && !((ConveyorTile) tileEntity).getConveyorType().isFast()) {
                         ((ConveyorTile) tileEntity).setType(((ConveyorTile) tileEntity).getConveyorType().getFast());
                         handStack.shrink(1);
-                        return ItemInteractionResult.SUCCESS;
+                        return InteractionResult.SUCCESS;
                     }
                     if (handStack.getItem().equals(ModuleCore.PLASTIC) && !((ConveyorTile) tileEntity).isSticky()) {
                         ((ConveyorTile) tileEntity).setSticky(true);
                         handStack.shrink(1);
-                        return ItemInteractionResult.SUCCESS;
+                        return InteractionResult.SUCCESS;
                     }
                     if (handStack.getItem() instanceof DyeItem) {
-                        ((ConveyorTile) tileEntity).setColor(((DyeItem) handStack.getItem()).getDyeColor());
-                        return ItemInteractionResult.SUCCESS;
+                        ((ConveyorTile) tileEntity).setColor(handStack.getOrDefault(net.minecraft.core.component.DataComponents.DYE, net.minecraft.world.item.DyeColor.WHITE));
+                        return InteractionResult.SUCCESS;
                     }
                 } else {
                     if (((ConveyorTile) tileEntity).hasUpgrade(facing)) {
                         ConveyorUpgrade upgrade = ((ConveyorTile) tileEntity).getUpgradeMap().get(facing);
                         if (upgrade.onUpgradeActivated(player, hand)) {
-                            return ItemInteractionResult.SUCCESS;
+                            return InteractionResult.SUCCESS;
                         } else if (upgrade.hasGui()) {
                             ((ConveyorTile) tileEntity).openGui(player, facing);
-                            return ItemInteractionResult.SUCCESS;
+                            return InteractionResult.SUCCESS;
                         }
                     }
                 }
-                return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+                return InteractionResult.TRY_WITH_EMPTY_HAND;
             }
         }
         return super.useItemOn(handStack, state, worldIn, pos, player, hand, ray);
@@ -361,8 +361,8 @@ public class ConveyorBlock extends BasicTileBlock<ConveyorTile> implements Simpl
     }
 
     @Override
-    public void entityInside(BlockState state, Level worldIn, BlockPos pos, Entity entityIn) {
-        super.entityInside(state, worldIn, pos, entityIn);
+    public void entityInside(BlockState state, Level worldIn, BlockPos pos, Entity entityIn, net.minecraft.world.entity.InsideBlockEffectApplier effectApplier, boolean precise) {
+        super.entityInside(state, worldIn, pos, entityIn, effectApplier, precise);
         BlockEntity entity = worldIn.getBlockEntity(pos);
         if (entity instanceof ConveyorTile) {
             ((ConveyorTile) entity).handleEntityMovement(entityIn);
@@ -528,15 +528,14 @@ public class ConveyorBlock extends BasicTileBlock<ConveyorTile> implements Simpl
         private TitaniumTab group;
 
         public ConveyorItem(Block block, TitaniumTab group) {
-            super(block, new Item.Properties());
+            super(block, com.hrznstudio.titanium.module.DeferredRegistryHelper.applyItemRegistrationId(new Item.Properties().useBlockDescriptionPrefix()));
             //this.setRegistryName(Reference.MOD_ID, "conveyor");
             this.group = group;
         }
 
         @Nullable
-        @Override
         public String getCreatorModId(ItemStack itemStack) {
-            return Component.translatable("itemGroup.industrialforegoing_" + this.group.getResourceLocation().getPath()).getString();
+            return Component.translatable("itemGroup.industrialforegoing_" + this.group.getIdentifier().getPath()).getString();
         }
     }
 

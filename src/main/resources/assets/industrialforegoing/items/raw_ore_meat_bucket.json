@@ -1,0 +1,11 @@
+{
+  "model": {
+    "type": "neoforge:fluid_container",
+    "fluid": "industrialforegoing:raw_ore_meat",
+    "textures": {
+      "base": "minecraft:item/bucket",
+      "fluid": "neoforge:item/mask/bucket_fluid",
+      "cover": "neoforge:item/mask/bucket_fluid_cover"
+    }
+  }
+}

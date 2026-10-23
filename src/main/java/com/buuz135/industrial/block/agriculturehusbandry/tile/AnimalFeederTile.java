@@ -33,7 +33,7 @@ import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.state.BlockState;
-import net.neoforged.neoforge.items.ItemHandlerHelper;
+import com.buuz135.industrial.compat.MachineItems;
 
 import javax.annotation.Nonnull;
 import java.util.List;
@@ -68,16 +68,14 @@ public class AnimalFeederTile extends IndustrialAreaWorkingTile<AnimalFeederTile
                 for (Animal secondParent : mobs) {
                     if (firstParent.equals(secondParent) || !firstParent.getClass().equals(secondParent.getClass()))
                         continue;
-                    ItemStack stack = getFeedingItem(firstParent);
+                    ItemStack stack = consumeFeedingItem(firstParent);
                     ItemStack original = stack.copy();
-                    stack.shrink(1);
-                    stack = getFeedingItem(secondParent);
+                    stack = consumeFeedingItem(secondParent);
                     if (stack.isEmpty()) {
                         original.setCount(1);
-                        ItemHandlerHelper.insertItem(input, original, false);
+                        MachineItems.insertItem(input, original, false);
                         continue;
                     }
-                    stack.shrink(1);
                     firstParent.setInLove(null);
                     secondParent.setInLove(null);
                     return new WorkAction(0.5f, powerPerOperation);
@@ -85,6 +83,17 @@ public class AnimalFeederTile extends IndustrialAreaWorkingTile<AnimalFeederTile
             }
         }
         return new WorkAction(1, 0);
+    }
+
+    private ItemStack consumeFeedingItem(Animal entity) {
+        for (int slot = 0; slot < input.getSlots(); slot++) {
+            ItemStack stack = input.getStackInSlot(slot);
+            if (entity.isFood(stack)) {
+                MachineItems.shrink(input, slot, 1);
+                return stack.copyWithCount(1);
+            }
+        }
+        return ItemStack.EMPTY;
     }
 
     private ItemStack getFeedingItem(Animal entity) {

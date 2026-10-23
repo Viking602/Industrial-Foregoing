@@ -49,11 +49,11 @@ public class LaserLensItem extends IFCustomItem {
     @Override
     public void registerRecipe(RecipeOutput consumer) {
         DissolutionChamberRecipe.createRecipe(consumer, color.getName() + "_laser_lens", new DissolutionChamberRecipe(List.of(
-                Ingredient.of(Tags.Items.GLASS_PANES),
-                Ingredient.of(Tags.Items.GLASS_PANES),
-                Ingredient.of(Tags.Items.GLASS_PANES),
-                Ingredient.of(Tags.Items.GLASS_PANES),
-                Ingredient.of(color.getTag())
+                com.buuz135.industrial.compat.Ingredients.of(Tags.Items.GLASS_PANES),
+                com.buuz135.industrial.compat.Ingredients.of(Tags.Items.GLASS_PANES),
+                com.buuz135.industrial.compat.Ingredients.of(Tags.Items.GLASS_PANES),
+                com.buuz135.industrial.compat.Ingredients.of(Tags.Items.GLASS_PANES),
+                com.buuz135.industrial.compat.Ingredients.of(color.getTag())
         ), new FluidStack(ModuleCore.LATEX.getSourceFluid().get(), 250), 100, Optional.of(new ItemStack(this)), Optional.empty()));
 
     }

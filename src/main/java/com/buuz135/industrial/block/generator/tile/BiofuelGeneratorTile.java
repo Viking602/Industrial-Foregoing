@@ -47,7 +47,7 @@ public class BiofuelGeneratorTile extends IndustrialGeneratorTile<BiofuelGenerat
 
     public BiofuelGeneratorTile(BlockPos blockPos, BlockState blockState) {
         super(ModuleGenerator.BIOFUEL_GENERATOR, blockPos, blockState);
-        addTank(biofuel = (SidedFluidTankComponent<BiofuelGeneratorTile>) new SidedFluidTankComponent<BiofuelGeneratorTile>("biofuel", BiofuelGeneratorConfig.maxBiofuelTankSize, 43, 20, 0).
+        addTank(biofuel = (SidedFluidTankComponent<BiofuelGeneratorTile>) new com.buuz135.industrial.compat.MachineFluidTank<BiofuelGeneratorTile>("biofuel", BiofuelGeneratorConfig.maxBiofuelTankSize, 43, 20, 0).
                 setColor(DyeColor.PURPLE).
                 setComponentHarness(this).
                 setTankAction(FluidTankComponent.Action.FILL).
@@ -60,7 +60,7 @@ public class BiofuelGeneratorTile extends IndustrialGeneratorTile<BiofuelGenerat
     @Override
     public int consumeFuel() {
         if (biofuel.getFluidAmount() > 0) {
-            biofuel.drainForced(1, IFluidHandler.FluidAction.EXECUTE);
+            com.buuz135.industrial.compat.MachineFluids.drainForced(biofuel, 1, IFluidHandler.FluidAction.EXECUTE);
             return 4;
         }
         return 0;

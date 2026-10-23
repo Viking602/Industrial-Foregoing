@@ -27,7 +27,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.animal.Cat;
+import net.minecraft.world.entity.animal.feline.Cat;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -259,7 +259,7 @@ public class ProcessExplosion {
         if (dist > 100) {
             dist = 100;
         }
-        if (dist <= 0 || power <= 0 || posVec.y() < world.getMinBuildHeight() || posVec.y() > world.getMaxBuildHeight()) {
+        if (dist <= 0 || power <= 0 || posVec.y() < world.getMinY() || posVec.y() > world.getMaxY() + 1) {
             return totalResist;
         }
 

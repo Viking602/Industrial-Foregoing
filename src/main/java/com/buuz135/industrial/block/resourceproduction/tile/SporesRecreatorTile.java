@@ -39,7 +39,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Fluids;
 import net.neoforged.neoforge.common.Tags;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
-import net.neoforged.neoforge.items.ItemHandlerHelper;
+import com.buuz135.industrial.compat.MachineItems;
 
 import javax.annotation.Nonnull;
 
@@ -56,7 +56,7 @@ public class SporesRecreatorTile extends IndustrialProcessingTile<SporesRecreato
 
     public SporesRecreatorTile(BlockPos blockPos, BlockState blockState) {
         super(ModuleResourceProduction.SPORES_RECREATOR, 79, 40, blockPos, blockState);
-        addTank(tank = (SidedFluidTankComponent<SporesRecreatorTile>) new SidedFluidTankComponent<SporesRecreatorTile>("water", SporeRecreatorConfig.maxWaterTankSize, 31, 20, 0).
+        addTank(tank = (SidedFluidTankComponent<SporesRecreatorTile>) new com.buuz135.industrial.compat.MachineFluidTank<SporesRecreatorTile>("water", SporeRecreatorConfig.maxWaterTankSize, 31, 20, 0).
                 setColor(DyeColor.CYAN).
                 setTankAction(FluidTankComponent.Action.FILL).
                 setComponentHarness(this).
@@ -82,16 +82,16 @@ public class SporesRecreatorTile extends IndustrialProcessingTile<SporesRecreato
     public boolean canIncrease() {
         return !ItemHandlerUtil.getFirstItem(input).isEmpty() && tank.getFluidAmount() >= 100
                 && (ItemHandlerUtil.getFirstItem(input).is(Tags.Items.MUSHROOMS) ? tank.getFluid().getFluid().isSame(Fluids.WATER) : tank.getFluid().getFluid().isSame(Fluids.LAVA))
-                && ItemHandlerHelper.insertItem(output, new ItemStack(ItemHandlerUtil.getFirstItem(input).getItem(), 2), true).isEmpty();
+                && MachineItems.insertItem(output, new ItemStack(ItemHandlerUtil.getFirstItem(input).getItem(), 2), true).isEmpty();
     }
 
     @Override
     public Runnable onFinish() {
         return () -> {
             ItemStack outputStack = new ItemStack(ItemHandlerUtil.getFirstItem(input).getItem(), 2);
-            tank.drainForced(100, IFluidHandler.FluidAction.EXECUTE);
-            ItemHandlerUtil.getFirstItem(input).shrink(1);
-            ItemHandlerHelper.insertItem(output, outputStack, false);
+            com.buuz135.industrial.compat.MachineFluids.drainForced(tank, 100, IFluidHandler.FluidAction.EXECUTE);
+            com.buuz135.industrial.compat.MachineItems.consumeFirst(input, 1);
+            MachineItems.insertItem(output, outputStack, false);
         };
     }
 

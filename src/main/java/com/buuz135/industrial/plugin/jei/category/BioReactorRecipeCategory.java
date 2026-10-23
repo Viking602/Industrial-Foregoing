@@ -33,7 +33,7 @@ import mezz.jei.api.recipe.RecipeIngredientRole;
 import mezz.jei.api.recipe.RecipeType;
 import mezz.jei.api.recipe.category.IRecipeCategory;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.crafting.Ingredient;
@@ -41,7 +41,7 @@ import net.neoforged.neoforge.fluids.FluidStack;
 
 import javax.annotation.Nullable;
 
-public class BioReactorRecipeCategory implements IRecipeCategory<BioReactorRecipeCategory.ReactorRecipeWrapper> {
+public class BioReactorRecipeCategory implements com.buuz135.industrial.plugin.jei.MachineRecipeCategory<BioReactorRecipeCategory.ReactorRecipeWrapper> {
 
     private IGuiHelper guiHelper;
     private IDrawable tankOverlay;
@@ -49,7 +49,7 @@ public class BioReactorRecipeCategory implements IRecipeCategory<BioReactorRecip
 
     public BioReactorRecipeCategory(IGuiHelper guiHelper, String title) {
         this.guiHelper = guiHelper;
-        tankOverlay = guiHelper.createDrawable(ResourceLocation.fromNamespaceAndPath(Reference.MOD_ID, "textures/gui/jei.png"), 1, 207, 12, 48);
+        tankOverlay = guiHelper.createDrawable(Identifier.fromNamespaceAndPath(Reference.MOD_ID, "textures/gui/jei.png"), 1, 207, 12, 48);
         this.title = Component.translatable(title);
     }
 
@@ -66,7 +66,7 @@ public class BioReactorRecipeCategory implements IRecipeCategory<BioReactorRecip
 
     @Override
     public IDrawable getBackground() {
-        return guiHelper.createDrawable(ResourceLocation.fromNamespaceAndPath(Reference.MOD_ID, "textures/gui/jei.png"), 0, 27, 70, 50);
+        return guiHelper.createDrawable(Identifier.fromNamespaceAndPath(Reference.MOD_ID, "textures/gui/jei.png"), 0, 27, 70, 50);
     }
 
     @Nullable
@@ -77,7 +77,7 @@ public class BioReactorRecipeCategory implements IRecipeCategory<BioReactorRecip
 
     @Override
     public void setRecipe(IRecipeLayoutBuilder builder, ReactorRecipeWrapper recipe, IFocusGroup focuses) {
-        builder.addSlot(RecipeIngredientRole.INPUT, 1, 17).addIngredients(Ingredient.of(recipe.stack));
+        builder.addSlot(RecipeIngredientRole.INPUT, 1, 17).addIngredients(com.buuz135.industrial.compat.Ingredients.of(recipe.stack));
         builder.addSlot(RecipeIngredientRole.OUTPUT, 57, 1).setFluidRenderer(1000, false, 12, 48).setOverlay(tankOverlay, 0, 0).addIngredient(NeoForgeTypes.FLUID_STACK, recipe.getFluid());
     }
 

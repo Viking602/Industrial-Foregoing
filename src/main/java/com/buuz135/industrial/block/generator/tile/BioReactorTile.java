@@ -80,7 +80,7 @@ public class BioReactorTile extends IndustrialWorkingTile<BioReactorTile> {
     @SuppressWarnings("unchecked")
     public BioReactorTile(BlockPos blockPos, BlockState blockState) {
         super(ModuleGenerator.BIOREACTOR, BioReactorConfig.powerPerOperation, blockPos, blockState);
-        addTank(water = (SidedFluidTankComponent<BioReactorTile>) new SidedFluidTankComponent<BioReactorTile>("water", BioReactorConfig.maxWaterTankStorage, 45, 20, 0).
+        addTank(water = (SidedFluidTankComponent<BioReactorTile>) new com.buuz135.industrial.compat.MachineFluidTank<BioReactorTile>("water", BioReactorConfig.maxWaterTankStorage, 45, 20, 0).
                 setColor(DyeColor.CYAN).
                 setComponentHarness(this).
                 setTankAction(FluidTankComponent.Action.FILL).
@@ -93,7 +93,7 @@ public class BioReactorTile extends IndustrialWorkingTile<BioReactorTile> {
                 setOutputFilter((stack, integer) -> false).
                 setComponentHarness(this)
                 , 136, 84, false));
-        addTank(biofuel = (SidedFluidTankComponent<BioReactorTile>) new SidedFluidTankComponent<BioReactorTile>("biofuel", BioReactorConfig.maxBioFuelTankStorage, 74 + 18 * 3, 20, 2).
+        addTank(biofuel = (SidedFluidTankComponent<BioReactorTile>) new com.buuz135.industrial.compat.MachineFluidTank<BioReactorTile>("biofuel", BioReactorConfig.maxBioFuelTankStorage, 74 + 18 * 3, 20, 2).
                 setColor(DyeColor.PURPLE).
                 setComponentHarness(this).
                 setTankAction(FluidTankComponent.Action.DRAIN).
@@ -101,8 +101,7 @@ public class BioReactorTile extends IndustrialWorkingTile<BioReactorTile> {
         );
         addProgressBar(bar = new ProgressBarComponent<BioReactorTile>(96 + 18 * 3, 20, BioReactorConfig.maxProgress) {
                     @Override
-                    @OnlyIn(Dist.CLIENT)
-                    public List<IFactory<? extends IScreenAddon>> getScreenAddons() {
+                    public List<IFactory<?>> getScreenAddons() {
                         return Collections.singletonList(() -> new ProgressBarScreenAddon<BioReactorTile>(bar.getPosX(), bar.getPosY(), this) {
                             @Override
                             public List<Component> getTooltipLines() {
@@ -128,10 +127,10 @@ public class BioReactorTile extends IndustrialWorkingTile<BioReactorTile> {
             if (efficiency <= 0) return new WorkAction(1, 0);
             int fluidAmount = ((efficiency - 1) * 40 + 93) * efficiency + 2;
             if (water.getFluidAmount() >= fluidAmount && biofuel.getCapacity() - biofuel.getFluidAmount() >= fluidAmount) {
-                water.drainForced(fluidAmount, IFluidHandler.FluidAction.EXECUTE);
-                biofuel.fillForced(new FluidStack(ModuleCore.BIOFUEL.getSourceFluid().get(), fluidAmount), IFluidHandler.FluidAction.EXECUTE);
+                com.buuz135.industrial.compat.MachineFluids.drainForced(water, fluidAmount, IFluidHandler.FluidAction.EXECUTE);
+                com.buuz135.industrial.compat.MachineFluids.fillForced(biofuel, new FluidStack(ModuleCore.BIOFUEL.getSourceFluid().get(), fluidAmount), IFluidHandler.FluidAction.EXECUTE);
                 for (int i = 0; i < input.getInventory().getSlots(); i++) {
-                    input.getInventory().getStackInSlot(i).shrink(1);
+                    com.buuz135.industrial.compat.MachineItems.shrink(input.getInventory(), i, 1);
                 }
                 return new WorkAction(1, getPowerPerOperation);
             }
@@ -182,11 +181,11 @@ public class BioReactorTile extends IndustrialWorkingTile<BioReactorTile> {
     @Override
     public void loadSettings(Player player, CompoundTag tag) {
         if (tag.contains("BR_locked")) {
-            input.setLocked(tag.getBoolean("BR_locked"));
+            input.setLocked(tag.getBooleanOr("BR_locked", false));
         }
         if (tag.contains("BR_filter")) {
-            for (String psFilter : tag.getCompound("BR_filter").getAllKeys()) {
-                input.getFilter()[Integer.parseInt(psFilter)] = ItemStack.parseOptional(this.level.registryAccess(), tag.getCompound("BR_filter").getCompound(psFilter));
+            for (String psFilter : tag.getCompoundOrEmpty("BR_filter").keySet()) {
+                input.getFilter()[Integer.parseInt(psFilter)] = com.buuz135.industrial.compat.ItemNbt.parseOptional(this.level.registryAccess(), tag.getCompoundOrEmpty("BR_filter").getCompoundOrEmpty(psFilter));
             }
         }
         super.loadSettings(player, tag);
@@ -197,7 +196,7 @@ public class BioReactorTile extends IndustrialWorkingTile<BioReactorTile> {
         tag.putBoolean("BR_locked", input.isLocked());
         CompoundTag filterTag = new CompoundTag();
         for (int i = 0; i < input.getFilter().length; i++) {
-            filterTag.put(i + "", input.getFilter()[i].saveOptional(this.level.registryAccess()));
+            filterTag.put(i + "", com.buuz135.industrial.compat.ItemNbt.saveOptional(input.getFilter()[i], this.level.registryAccess()));
         }
         tag.put("BR_filter", filterTag);
         super.saveSettings(player, tag);

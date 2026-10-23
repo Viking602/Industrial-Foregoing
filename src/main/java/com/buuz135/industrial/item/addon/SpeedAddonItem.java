@@ -49,36 +49,30 @@ public class SpeedAddonItem extends AddonItem implements ISpecialCreativeTabItem
     private int tier;
 
     public SpeedAddonItem(int tier, TitaniumTab group) {
-        super("speed_addon_tier_" + tier, group, new Properties().stacksTo(16));
+        super("speed_addon_tier_" + tier, group, new Properties().stacksTo(16).component(AugmentWrapper.ATTACHMENT.get(), java.util.Map.of(AugmentTypes.SPEED.getType(), (float) (1 + tier))));
         this.tier = tier;
     }
 
-    @Override
-    public void verifyComponentsAfterLoad(ItemStack stack) {
-        super.verifyComponentsAfterLoad(stack);
-        AugmentWrapper.setType(stack, AugmentTypes.SPEED, 1 + tier);
-
-    }
 
     @Override
     public void registerRecipe(RecipeOutput consumer) {
         TagKey<Item> tierMaterial = tier == 1 ? IndustrialTags.Items.GEAR_GOLD : IndustrialTags.Items.GEAR_DIAMOND;
         DissolutionChamberRecipe.createRecipe(consumer, "speed_addon_tier_" + tier, new DissolutionChamberRecipe(List.of(
-                Ingredient.of(new ItemStack(Items.REDSTONE)),
-                Ingredient.of(new ItemStack(Items.REDSTONE)),
-                Ingredient.of(new ItemStack(Items.GLASS_PANE)),
-                Ingredient.of(new ItemStack(Items.GLASS_PANE)),
-                Ingredient.of(tierMaterial),
-                Ingredient.of(tierMaterial),
-                Ingredient.of(new ItemStack(Items.SUGAR)),
-                Ingredient.of(new ItemStack(Items.SUGAR))
+                com.buuz135.industrial.compat.Ingredients.of(new ItemStack(Items.REDSTONE)),
+                com.buuz135.industrial.compat.Ingredients.of(new ItemStack(Items.REDSTONE)),
+                com.buuz135.industrial.compat.Ingredients.of(new ItemStack(Items.GLASS_PANE)),
+                com.buuz135.industrial.compat.Ingredients.of(new ItemStack(Items.GLASS_PANE)),
+                com.buuz135.industrial.compat.Ingredients.of(tierMaterial),
+                com.buuz135.industrial.compat.Ingredients.of(tierMaterial),
+                com.buuz135.industrial.compat.Ingredients.of(new ItemStack(Items.SUGAR)),
+                com.buuz135.industrial.compat.Ingredients.of(new ItemStack(Items.SUGAR))
         ), new FluidStack(ModuleCore.LATEX.getSourceFluid().get(), 1000), 200, Optional.of(new ItemStack(this)), Optional.empty()));
 
     }
 
     @Override
-    public String getDescriptionId() {
-        return Component.translatable("item.industrialforegoing.addon").getString() + Component.translatable("item.industrialforegoing.speed").getString() + Component.translatable("item.industrialforegoing.tier").getString() + tier + " ";
+    public Component getName(ItemStack stack) {
+        return Component.literal(Component.translatable("item.industrialforegoing.addon").getString() + Component.translatable("item.industrialforegoing.speed").getString() + Component.translatable("item.industrialforegoing.tier").getString() + tier + " ");
     }
 
     @Override

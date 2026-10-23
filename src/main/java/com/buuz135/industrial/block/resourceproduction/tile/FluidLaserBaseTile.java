@@ -45,7 +45,7 @@ import com.hrznstudio.titanium.component.sideness.IFacingComponent;
 import com.hrznstudio.titanium.item.AugmentWrapper;
 import com.hrznstudio.titanium.network.locator.instance.TileEntityLocatorInstance;
 import com.hrznstudio.titanium.network.messages.ButtonClickNetworkMessage;
-import com.hrznstudio.titanium.util.RecipeUtil;
+import com.buuz135.industrial.compat.MachineRecipes;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.EditBox;
@@ -92,8 +92,7 @@ public class FluidLaserBaseTile extends IndustrialMachineTile<FluidLaserBaseTile
         this.miningDepth = this.getBlockPos().getY();
         this.addProgressBar(work = new ProgressBarComponent<FluidLaserBaseTile>(74, 24 + 18, 0, FluidLaserBaseConfig.maxProgress) {
                     @Override
-                    @OnlyIn(Dist.CLIENT)
-                    public List<IFactory<? extends IScreenAddon>> getScreenAddons() {
+                    public List<IFactory<?>> getScreenAddons() {
                         return Collections.singletonList(() -> new ProgressBarScreenAddon<FluidLaserBaseTile>(work.getPosX(), work.getPosY(), this) {
                             @Override
                             public List<Component> getTooltipLines() {
@@ -121,55 +120,60 @@ public class FluidLaserBaseTile extends IndustrialMachineTile<FluidLaserBaseTile
                 //.setInputFilter((stack, integer) -> stack.getItem() instanceof LaserLensItem)
         );
         catalyst.getFacingModes().keySet().forEach(sideness -> catalyst.getFacingModes().put(sideness, IFacingComponent.FaceMode.NONE));
-        this.addTank(output = (SidedFluidTankComponent<FluidLaserBaseTile>) new SidedFluidTankComponent<FluidLaserBaseTile>("output", 32000, 102, 20, 1)
+        this.addTank(output = (SidedFluidTankComponent<FluidLaserBaseTile>) new com.buuz135.industrial.compat.MachineFluidTank<FluidLaserBaseTile>("output", 32000, 102, 20, 1)
                 .setColor(DyeColor.ORANGE)
                 .setTankAction(FluidTankComponent.Action.DRAIN)
         );
     }
 
     @Override
-    @OnlyIn(Dist.CLIENT)
     public void initClient() {
         super.initClient();
-        this.addGuiAddonFactory(() -> new TextScreenAddon("", 70, 84 + 3, false) {
-            @Override
-            public String getText() {
-                return ChatFormatting.DARK_GRAY + Component.translatable("text.industrialforegoing.depth").getString();
-            }
-        });
-        this.addGuiAddonFactory(() -> {
-            var edit = new EditBox(Minecraft.getInstance().font, 80, 26, 40, 12, Component.literal(this.miningDepth + "")) {
+        new ClientUi().setup();
+    }
+
+    private final class ClientUi {
+        private void setup() {
+            FluidLaserBaseTile.this.addGuiAddonFactory(() -> new TextScreenAddon("", 70, 84 + 3, false) {
                 @Override
-                public String getValue() {
-                    return miningDepth + "";
-                }
-            };
-            edit.setValue(miningDepth + "");
-            edit.setFilter(string -> {
-                if (string.isEmpty()) return true;
-                try {
-                    Integer.decode(string);
-                    return true;
-                } catch (NumberFormatException e) {
-                    return false;
+                public String getText() {
+                    return ChatFormatting.DARK_GRAY + Component.translatable("text.industrialforegoing.depth").getString();
                 }
             });
-            edit.setResponder(string -> {
-                if (!string.isEmpty()) {
-                    CompoundTag compoundTag = new CompoundTag();
-                    compoundTag.putInt("MiningLevel", Integer.decode(string));
-                    Titanium.NETWORK.sendToServer(new ButtonClickNetworkMessage(new TileEntityLocatorInstance(this.getBlockPos()), 5487, compoundTag));
-                }
+            FluidLaserBaseTile.this.addGuiAddonFactory(() -> {
+                var edit = new EditBox(Minecraft.getInstance().font, 80, 26, 40, 12, Component.literal(FluidLaserBaseTile.this.miningDepth + "")) {
+                    @Override
+                    public String getValue() {
+                        return miningDepth + "";
+                    }
+                };
+                edit.setValue(miningDepth + "");
+                edit.setFilter(string -> {
+                    if (string.isEmpty()) return true;
+                    try {
+                        Integer.decode(string);
+                        return true;
+                    } catch (NumberFormatException e) {
+                        return false;
+                    }
+                });
+                edit.setResponder(string -> {
+                    if (!string.isEmpty()) {
+                        CompoundTag compoundTag = new CompoundTag();
+                        compoundTag.putInt("MiningLevel", Integer.decode(string));
+                        Titanium.NETWORK.sendToServer(new ButtonClickNetworkMessage(new TileEntityLocatorInstance(FluidLaserBaseTile.this.getBlockPos()), 5487, compoundTag));
+                    }
+                });
+                return new WidgetScreenAddon(102, 85, edit);
             });
-            return new WidgetScreenAddon(102, 85, edit);
-        });
+        }
     }
 
     @Override
     public void handleButtonMessage(int id, Player playerEntity, CompoundTag compound) {
         super.handleButtonMessage(id, playerEntity, compound);
         if (id == 5487) {
-            this.miningDepth = compound.getInt("MiningLevel");
+            this.miningDepth = compound.getIntOr("MiningLevel", 0);
             syncObject(this.miningDepth);
         }
     }
@@ -190,7 +194,7 @@ public class FluidLaserBaseTile extends IndustrialMachineTile<FluidLaserBaseTile
 
         Holder<Biome> biome = this.level.getBiome(this.worldPosition);
 
-        for (LaserDrillFluidRecipe recipe : RecipeUtil.getRecipes(this.level, (RecipeType<LaserDrillFluidRecipe>) ModuleCore.LASER_DRILL_FLUID_TYPE.get())) {
+        for (LaserDrillFluidRecipe recipe : MachineRecipes.getRecipes(this.level, (RecipeType<LaserDrillFluidRecipe>) ModuleCore.LASER_DRILL_FLUID_TYPE.get())) {
             if (!recipe.catalyst.test(catalystStack)) {
                 continue;
             }
@@ -207,18 +211,18 @@ public class FluidLaserBaseTile extends IndustrialMachineTile<FluidLaserBaseTile
                 for (var candidate : entities) {
                     if (!entityData.getData().isEmpty()) {
                         CompoundTag data = new CompoundTag();
-                        candidate.saveWithoutId(data);
+                        com.buuz135.industrial.compat.EntityNbt.saveWithoutId(candidate, data);
                         if (!NbtUtils.compareNbt(recipe.entityData.get().getData(), data, true)) {
                             continue;
                         }
                     }
 
                     candidate.hurt(candidate.damageSources().generic(), 5);
-                    output.fillForced(recipe.output.getFluids()[0].copy(), IFluidHandler.FluidAction.EXECUTE);
+                    com.buuz135.industrial.compat.MachineFluids.fillForced(output, new net.neoforged.neoforge.fluids.FluidStack(recipe.output.ingredient().fluids().getFirst(), recipe.output.amount()), IFluidHandler.FluidAction.EXECUTE);
                     return;
                 }
             } else {
-                output.fillForced(recipe.output.getFluids()[0].copy(), IFluidHandler.FluidAction.EXECUTE);
+                com.buuz135.industrial.compat.MachineFluids.fillForced(output, new net.neoforged.neoforge.fluids.FluidStack(recipe.output.ingredient().fluids().getFirst(), recipe.output.amount()), IFluidHandler.FluidAction.EXECUTE);
                 return;
             }
         }
@@ -256,7 +260,7 @@ public class FluidLaserBaseTile extends IndustrialMachineTile<FluidLaserBaseTile
     @Override
     public void loadSettings(Player player, CompoundTag tag) {
         if (tag.contains("FL_miningDepth")) {
-            this.miningDepth = tag.getInt("FL_miningDepth");
+            this.miningDepth = tag.getIntOr("FL_miningDepth", 0);
         }
         super.loadSettings(player, tag);
     }

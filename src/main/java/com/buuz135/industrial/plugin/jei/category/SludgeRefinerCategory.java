@@ -43,7 +43,7 @@ import mezz.jei.api.recipe.RecipeIngredientRole;
 import mezz.jei.api.recipe.RecipeType;
 import mezz.jei.api.recipe.category.IRecipeCategory;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.ItemStack;
@@ -53,7 +53,7 @@ import org.apache.commons.lang3.tuple.Pair;
 
 import java.awt.*;
 
-public class SludgeRefinerCategory implements IRecipeCategory<SludgeRefinerCategory.Recipe> {
+public class SludgeRefinerCategory implements com.buuz135.industrial.plugin.jei.MachineRecipeCategory<SludgeRefinerCategory.Recipe> {
     public record Recipe() {}
     public static final RecipeType<Recipe> RECIPE_TYPE = RecipeType.create(Reference.MOD_ID, "dummy/sludge_refiner", Recipe.class);
 
@@ -89,12 +89,13 @@ public class SludgeRefinerCategory implements IRecipeCategory<SludgeRefinerCateg
     public void setRecipe(IRecipeLayoutBuilder builder, Recipe recipe, IFocusGroup focuses) {
         builder.addSlot(RecipeIngredientRole.INPUT, 24 + 3, 3 + 3).setFluidRenderer(SludgeRefinerConfig.maxSludgeTankSize, false, 12, 50).setOverlay(bigTank, 0, 0).addIngredient(NeoForgeTypes.FLUID_STACK, new FluidStack(ModuleCore.SLUDGE.getSourceFluid(), 500));
 
-        builder.addSlot(RecipeIngredientRole.OUTPUT, 80, 5).addIngredients(Ingredient.of(IndustrialTags.Items.SLUDGE_OUTPUT));
+        builder.addSlot(RecipeIngredientRole.OUTPUT, 80, 5).addIngredients(com.buuz135.industrial.compat.Ingredients.of(IndustrialTags.Items.SLUDGE_OUTPUT));
     }
 
     @Override
-    public void draw(Recipe recipe, IRecipeSlotsView recipeSlotsView, GuiGraphics guiGraphics, double mouseX, double mouseY) {
-        IRecipeCategory.super.draw(recipe, recipeSlotsView, guiGraphics, mouseX, mouseY);
+    public void draw(Recipe recipe, IRecipeSlotsView recipeSlotsView, GuiGraphicsExtractor guiGraphics, double mouseX, double mouseY) {
+        getBackground().draw(guiGraphics, 0, 0);
+        
 
         AssetUtil.drawAsset(guiGraphics, Minecraft.getInstance().screen, DefaultAssetProvider.DEFAULT_PROVIDER.getAsset(AssetTypes.ENERGY_BACKGROUND), 0, 3);
         AssetUtil.drawAsset(guiGraphics, Minecraft.getInstance().screen, DefaultAssetProvider.DEFAULT_PROVIDER.getAsset(AssetTypes.TANK_NORMAL), 24, 3);

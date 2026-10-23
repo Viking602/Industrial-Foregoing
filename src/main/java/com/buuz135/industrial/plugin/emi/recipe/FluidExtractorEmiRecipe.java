@@ -20,7 +20,7 @@ public class FluidExtractorEmiRecipe extends CustomEmiRecipe {
     public FluidExtractorEmiRecipe(RecipeHolder<FluidExtractorRecipe> recipe) {
         super(recipe.id(), IFEmiPlugin.FLUID_EXTRACTOR_EMI_CATEGORY,
                 combineIng(
-                        fromInput(EmiIngredient.of(recipe.value().input))
+                        fromInput(Emicom.buuz135.industrial.compat.Ingredients.of(recipe.value().input))
                 ),
                 fromOutput(new ItemStack(recipe.value().result.getBlock()), recipe.value().output));
         this.recipe = recipe;
@@ -41,17 +41,17 @@ public class FluidExtractorEmiRecipe extends CustomEmiRecipe {
     public void addWidgets(WidgetHolder widgets) {
         widgets.addSlot(this.getInputs().get(0), 1, 17);
 
-        widgets.addSlot(EmiIngredient.of(List.of(this.getOutputs().get(0))), 27, 34).recipeContext(this);
+        widgets.addSlot(Emicom.buuz135.industrial.compat.Ingredients.of(List.of(this.getOutputs().get(0))), 27, 34).recipeContext(this);
         widgets.add(new NormalTankEmiWidget(this.getOutputs().get(1), 10, 57, 1)).recipeContext(this);
 
         widgets.addFillingArrow(26, 12, 5000);
 
         widgets.addDrawable(0, 0, 0, 0, (draw, mouseX, mouseY, delta) -> {
-            draw.drawString(Minecraft.getInstance().font, ChatFormatting.DARK_GRAY + Component.translatable("text.industrialforegoing.jei.recipe.production").getString(), 80, 6, 0xFFFFFF, false);
-            draw.drawString(Minecraft.getInstance().font, ChatFormatting.DARK_GRAY + "" + recipe.value().output.getAmount() + Component.translatable("text.industrialforegoing.jei.recipe.mb_work").getString(), 80, 6 + (Minecraft.getInstance().font.lineHeight + 2) * 1, 0xFFFFFF, false);
+            draw.text(Minecraft.getInstance().font, ChatFormatting.DARK_GRAY + Component.translatable("text.industrialforegoing.jei.recipe.production").getString(), 80, 6, 0xFFFFFF, false);
+            draw.text(Minecraft.getInstance().font, ChatFormatting.DARK_GRAY + "" + recipe.value().output.getAmount() + Component.translatable("text.industrialforegoing.jei.recipe.mb_work").getString(), 80, 6 + (Minecraft.getInstance().font.lineHeight + 2) * 1, 0xFFFFFF, false);
             if (recipe.value().outputsLatex()) {
-                draw.drawString(Minecraft.getInstance().font, ChatFormatting.DARK_AQUA + "" + Component.translatable("text.industrialforegoing.jei.recipe.tripled_when").getString(), 80, 6 + (Minecraft.getInstance().font.lineHeight + 2) * 2, 0xFFFFFF, false);
-                draw.drawString(Minecraft.getInstance().font, ChatFormatting.DARK_AQUA + "" + Component.translatable("text.industrialforegoing.jei.recipe.powered").getString(), 80, 6 + (Minecraft.getInstance().font.lineHeight + 2) * 3, 0xFFFFFF, false);
+                draw.text(Minecraft.getInstance().font, ChatFormatting.DARK_AQUA + "" + Component.translatable("text.industrialforegoing.jei.recipe.tripled_when").getString(), 80, 6 + (Minecraft.getInstance().font.lineHeight + 2) * 2, 0xFFFFFF, false);
+                draw.text(Minecraft.getInstance().font, ChatFormatting.DARK_AQUA + "" + Component.translatable("text.industrialforegoing.jei.recipe.powered").getString(), 80, 6 + (Minecraft.getInstance().font.lineHeight + 2) * 3, 0xFFFFFF, false);
             }
         });
 

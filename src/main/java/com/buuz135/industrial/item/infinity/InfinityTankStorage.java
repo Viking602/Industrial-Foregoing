@@ -35,10 +35,46 @@ public class InfinityTankStorage implements IFluidHandlerItem, IScreenAddonProvi
         for (TankDefinition tankDefinition : this.tanks) {
             var tank = new FluidTank(tankDefinition.capacity(), tankDefinition.filter());
             if (component.contains(tankDefinition.name())) {
-                tank = tank.readFromNBT(IFAttachments.registryAccess(), component.getCompound(tankDefinition.name()));
+                var data = component.getCompoundOrEmpty(tankDefinition.name());
+                if (!data.contains("Fluid") && data.contains("id")) {
+                    var wrapped = new CompoundTag();
+                    wrapped.put("Fluid", data.copy());
+                    data = wrapped;
+                }
+                tank = com.buuz135.industrial.compat.ValueNbt.load(tank, IFAttachments.registryAccess(), data);
             }
             tankMap.put(tankDefinition.name(), tank);
         }
+    }
+
+    public net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.fluid.FluidResource> asNative(net.neoforged.neoforge.transfer.access.ItemAccess access) {
+        var validItem = stack.getItem();
+        return new net.neoforged.neoforge.transfer.ItemAccessResourceHandler<net.neoforged.neoforge.transfer.fluid.FluidResource>(access, tanks.size()) {
+            private FluidStack fluid(net.neoforged.neoforge.transfer.item.ItemResource resource, int index) {
+                return resource.is(validItem) ? new InfinityTankStorage(resource.toStack(), tanks.toArray(TankDefinition[]::new)).getFluidInTank(index) : FluidStack.EMPTY;
+            }
+            @Override protected net.neoforged.neoforge.transfer.fluid.FluidResource getResourceFrom(net.neoforged.neoforge.transfer.item.ItemResource resource, int index) {
+                return net.neoforged.neoforge.transfer.fluid.FluidResource.of(fluid(resource, index));
+            }
+            @Override protected int getAmountFrom(net.neoforged.neoforge.transfer.item.ItemResource resource, int index) { return fluid(resource, index).getAmount(); }
+            @Override protected int getCapacity(int index, net.neoforged.neoforge.transfer.fluid.FluidResource resource) { return itemAccess.getResource().is(validItem) ? tanks.get(index).capacity() : 0; }
+            @Override public boolean isValid(int index, net.neoforged.neoforge.transfer.fluid.FluidResource resource) {
+                return itemAccess.getResource().is(validItem) && tanks.get(index).filter().test(resource.toStack(1));
+            }
+            @Override protected net.neoforged.neoforge.transfer.item.ItemResource update(net.neoforged.neoforge.transfer.item.ItemResource resource, int index, net.neoforged.neoforge.transfer.fluid.FluidResource fluid, int amount) {
+                var copy = resource.toStack();
+                var storage = new InfinityTankStorage(copy, tanks.toArray(TankDefinition[]::new));
+                storage.tankMap.get(tanks.get(index).name()).setFluid(fluid.toStack(amount));
+                storage.save();
+                return net.neoforged.neoforge.transfer.item.ItemResource.of(copy);
+            }
+            @Override public int insert(int index, net.neoforged.neoforge.transfer.fluid.FluidResource resource, int amount, net.neoforged.neoforge.transfer.transaction.TransactionContext transaction) {
+                return tanks.get(index).insert() ? super.insert(index, resource, amount, transaction) : 0;
+            }
+            @Override public int extract(int index, net.neoforged.neoforge.transfer.fluid.FluidResource resource, int amount, net.neoforged.neoforge.transfer.transaction.TransactionContext transaction) {
+                return tanks.get(index).extract() ? super.extract(index, resource, amount, transaction) : 0;
+            }
+        };
     }
 
     @Override
@@ -118,15 +154,14 @@ public class InfinityTankStorage implements IFluidHandlerItem, IScreenAddonProvi
         var component = new CompoundTag();
         for (TankDefinition tankDefinition : this.tanks) {
             var tank = tankMap.get(tankDefinition.name());
-            component.put(tankDefinition.name(), tank.writeToNBT(IFAttachments.registryAccess(), component.getCompound(tankDefinition.name())));
+            component.put(tankDefinition.name(), com.buuz135.industrial.compat.ValueNbt.save(tank, IFAttachments.registryAccess()));
         }
         this.stack.set(IFAttachments.INFINITY_TANKS, component);
     }
 
-    @OnlyIn(Dist.CLIENT)
     @Override
-    public @NotNull List<IFactory<? extends IScreenAddon>> getScreenAddons() {
-        List<IFactory<? extends IScreenAddon>> list = new ArrayList<>();
+    public @NotNull List<IFactory<?>> getScreenAddons() {
+        List<IFactory<?>> list = new ArrayList<>();
         for (int i = 0; i < this.tanks.size(); i++) {
             var tankDefinition = this.tanks.get(i);
             int finalI = i;

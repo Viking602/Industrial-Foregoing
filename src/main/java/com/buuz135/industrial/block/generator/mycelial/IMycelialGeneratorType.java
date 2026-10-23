@@ -25,13 +25,13 @@ package com.buuz135.industrial.block.generator.mycelial;
 import com.buuz135.industrial.plugin.jei.generator.MycelialGeneratorRecipe;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.RegistryAccess;
-import net.minecraft.data.recipes.ShapedRecipeBuilder;
+import com.hrznstudio.titanium.recipe.generator.TitaniumShapedRecipeBuilder;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
-import net.neoforged.neoforge.common.util.INBTSerializable;
+import com.hrznstudio.titanium.nbthandler.INBTSerializable;
 import net.neoforged.neoforge.fluids.FluidStack;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -54,9 +54,9 @@ public interface IMycelialGeneratorType {
 
     List<Predicate<FluidStack>> getTankInputPredicates();
 
-    boolean canStart(INBTSerializable<CompoundTag>[] inputs);
+    boolean canStart(net.neoforged.neoforge.common.util.ValueIOSerializable[] inputs);
 
-    Pair<Integer, Integer> getTimeAndPowerGeneration(INBTSerializable<CompoundTag>[] inputs);
+    Pair<Integer, Integer> getTimeAndPowerGeneration(net.neoforged.neoforge.common.util.ValueIOSerializable[] inputs);
 
     DyeColor[] getInputColors();
 
@@ -66,7 +66,7 @@ public interface IMycelialGeneratorType {
 
     List<MycelialGeneratorRecipe> getRecipes(RegistryAccess registryAccess);
 
-    ShapedRecipeBuilder addIngredients(ShapedRecipeBuilder recipeBuilder);
+    TitaniumShapedRecipeBuilder addIngredients(TitaniumShapedRecipeBuilder recipeBuilder);
 
     default void onTick(Level world, BlockPos pos) {
 

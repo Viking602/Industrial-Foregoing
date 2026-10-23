@@ -22,7 +22,7 @@
 
 package com.buuz135.industrial.proxy.client.particle;
 
-import com.mojang.blaze3d.platform.GlStateManager;
+
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
 import net.minecraft.client.Camera;
@@ -46,19 +46,9 @@ import org.joml.Vector3f;
 import java.util.ArrayList;
 import java.util.List;
 
-@OnlyIn(Dist.CLIENT)
 public class ParticleVex extends Particle {
 
-    public static ParticleRenderType RENDER = new ParticleRenderType() {
-        @Override
-        public @Nullable BufferBuilder begin(Tesselator tesselator, TextureManager textureManager) {
-            RenderSystem.setShader(GameRenderer::getPositionColorLightmapShader);
-            RenderSystem.enableBlend();
-            RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
-            RenderSystem.lineWidth(1.5F);
-            return tesselator.begin(VertexFormat.Mode.DEBUG_LINE_STRIP, DefaultVertexFormat.POSITION_COLOR_LIGHTMAP);
-        }
-    };
+    public static final ParticleRenderType RENDER = new ParticleRenderType("industrialforegoing:vex_trail");
 
     private final Entity entity;
     private List<Direction> directions;
@@ -66,14 +56,14 @@ public class ParticleVex extends Particle {
     private boolean isDying = false;
 
     public ParticleVex(Entity entity) { //getPosition
-        super((ClientLevel) entity.level(), entity.getX() + entity.level().random.nextDouble() - 0.5, entity.getY() + 1 + entity.level().random.nextDouble() - 0.5, entity.getZ() + entity.level().random.nextDouble() - 0.5);
+        super((ClientLevel) entity.level(), entity.getX() + entity.level().getRandom().nextDouble() - 0.5, entity.getY() + 1 + entity.level().getRandom().nextDouble() - 0.5, entity.getZ() + entity.level().getRandom().nextDouble() - 0.5);
         this.entity = entity;
         directions = new ArrayList<>();
         Direction prev = Direction.NORTH;
         directions.add(0, prev);
         for (int i = 1; i < 50; i++) {
             prev = directions.get(i - 1);
-            directions.add(i, level.random.nextDouble() < 0.05 ? getRandomFacing(level.random, prev) : prev);
+            directions.add(i, level.getRandom().nextDouble() < 0.05 ? getRandomFacing(level.getRandom(), prev) : prev);
         }
         calculateLines();
         this.lifetime = 500;
@@ -86,42 +76,48 @@ public class ParticleVex extends Particle {
             isDying = true;
         }
         if (!isDying && !this.removed) {
-            directions.add(0, level.random.nextDouble() < 0.05 ? getRandomFacing(level.random, directions.get(0)) : directions.get(0));
+            directions.add(0, level.getRandom().nextDouble() < 0.05 ? getRandomFacing(level.getRandom(), directions.get(0)) : directions.get(0));
             directions.remove(50);
-            Vec3 directionVector = new Vec3(directions.get(0).getNormal().getX(), directions.get(0).getNormal().getY(), directions.get(0).getNormal().getZ()).scale(0.01);
+            Vec3 directionVector = new Vec3(directions.get(0).getUnitVec3i().getX(), directions.get(0).getUnitVec3i().getY(), directions.get(0).getUnitVec3i().getZ()).scale(0.01);
             this.setPos(x - directionVector.x, y - directionVector.y, z - directionVector.z);
             calculateLines();
         } else {
-            directions.remove(directions.size() - 1);
+            if (!directions.isEmpty()) directions.removeLast();
             calculateLines();
             if (directions.isEmpty()) this.remove();
         }
     }
 
-    @Override
-    public void render(VertexConsumer bufferBad, Camera activeRenderInfo, float v) {
-        if (entity instanceof LocalPlayer && Minecraft.getInstance().player.getUUID().equals(entity.getUUID()) && Minecraft.getInstance().options.getCameraType() == CameraType.FIRST_PERSON && this.entity.position().add(0, 1, 0).distanceToSqr(new Vec3(x, y, z)) < 3)
-            return;
-        var bufferBuilder = RENDER.begin(Tesselator.getInstance(), Minecraft.getInstance().getTextureManager());
-
-        Vec3 vector3d = activeRenderInfo.getPosition();
-        float x = (float) (entity.xOld + (vector3d.x - entity.xOld));
-        float y = (float) (entity.yOld + (vector3d.y - entity.yOld));
-        float z = (float) (entity.zOld + (vector3d.z - entity.zOld));
-
-
-        for (Vector3f line : lines) {
-            bufferBuilder.addVertex(line.x - x, line.y - y, line.z - z).setColor(1f, 1f, 1f, 1f).setUv2(240, 240);
-        }
-        var mesh = bufferBuilder.build();
-        if (mesh != null) {
-            BufferUploader.drawWithShader(mesh);
-        }
+    private boolean hiddenInFirstPerson() {
+        var player = Minecraft.getInstance().player;
+        return player != null && entity == player && Minecraft.getInstance().options.getCameraType() == CameraType.FIRST_PERSON
+                && entity.position().add(0, 1, 0).distanceToSqr(new Vec3(x, y, z)) < 3;
     }
 
-    @Override
-    public ParticleRenderType getRenderType() {
-        return RENDER;
+    @Override public ParticleRenderType getGroup() { return RENDER; }
+
+    public static final class Group extends net.minecraft.client.particle.ParticleGroup<ParticleVex> {
+        public Group(net.minecraft.client.particle.ParticleEngine engine) { super(engine); }
+        @Override public net.minecraft.client.renderer.state.level.ParticleGroupRenderState extractRenderState(
+                net.minecraft.client.renderer.culling.Frustum frustum, Camera camera, float partialTick) {
+            // Copy the paths now: ticking particles must not mutate a submitted frame.
+            List<List<Vector3f>> trails = new ArrayList<>();
+            Vec3 cameraPos = camera.position();
+            for (ParticleVex particle : particles) {
+                if (!particle.hiddenInFirstPerson()) trails.add(particle.lines.stream()
+                        .map(point -> new Vector3f(point).sub((float)cameraPos.x, (float)cameraPos.y, (float)cameraPos.z)).toList());
+            }
+            return (collector, cameraState) -> collector.submitCustomGeometry(new PoseStack(), net.minecraft.client.renderer.rendertype.RenderTypes.lines(), (pose, buffer) -> {
+                for (List<Vector3f> trail : trails) for (int i = 1; i < trail.size(); i++) {
+                    Vector3f from = trail.get(i-1), to = trail.get(i);
+                    Vector3f normal = new Vector3f(to).sub(from);
+                    if (normal.lengthSquared() == 0) continue;
+                    normal.normalize();
+                    buffer.addVertex(pose, from.x, from.y, from.z).setColor(-1).setNormal(pose, normal.x, normal.y, normal.z).setLineWidth(1.5f);
+                    buffer.addVertex(pose, to.x, to.y, to.z).setColor(-1).setNormal(pose, normal.x, normal.y, normal.z).setLineWidth(1.5f);
+                }
+            });
+        }
     }
 
     private Direction getRandomFacing(RandomSource random, Direction opposite) {
@@ -139,7 +135,7 @@ public class ParticleVex extends Particle {
         lines.add(prevBlockPos);
         for (int i = 1; i < directions.size(); i++) {
             if (!directions.get(i).equals(prev) || i == directions.size() - 1) {
-                Vec3 directionVector = new Vec3(prev.getNormal().getX(), prev.getNormal().getY(), prev.getNormal().getZ()).scale(0.01);
+                Vec3 directionVector = new Vec3(prev.getUnitVec3i().getX(), prev.getUnitVec3i().getY(), prev.getUnitVec3i().getZ()).scale(0.01);
                 Vector3f endBlockPos = new Vector3f((float) (prevBlockPos.x + directionVector.x * (i - currentPosition)), (float) (prevBlockPos.y + directionVector.y * (i - currentPosition)), (float) (prevBlockPos.z + directionVector.z * (i - currentPosition)));
                 lines.add(endBlockPos);
                 prev = directions.get(i);

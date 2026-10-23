@@ -1,0 +1,17 @@
+{
+  "name": "屠宰场",
+  "icon": "industrialforegoing:mob_slaughter_factory",
+  "category": "industrialforegoing:agriculture_husbandry",
+  "sortnum": 9,
+  "read_by_default": true,
+  "pages": [
+    {
+      "type": "text",
+      "text": "将生物加工成$(l:agr_hus/meat)肉汤$()和$(l:agr_hus/pink_slime)粉色史莱姆液$()。被这台机器击杀的生物不会产生掉落物或经验。$(br2)被动生物产生的粉色史莱姆液比其他生物更多。"
+    },
+    {
+      "type": "crafting",
+      "recipe": "industrialforegoing:mob_slaughter_factory"
+    }
+  ]
+}

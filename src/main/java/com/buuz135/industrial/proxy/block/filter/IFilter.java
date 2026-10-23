@@ -117,7 +117,7 @@ public interface IFilter<T extends Entity> {
 
         public void accept(ItemStack ingredient) {
             if (Minecraft.getInstance().screen instanceof ICanSendNetworkMessage) {
-                ((ICanSendNetworkMessage) Minecraft.getInstance().screen).sendMessage(id, (CompoundTag) ingredient.saveOptional(Minecraft.getInstance().level.registryAccess()));
+                ((ICanSendNetworkMessage) Minecraft.getInstance().screen).sendMessage(id, (CompoundTag) com.buuz135.industrial.compat.ItemNbt.saveOptional(ingredient, Minecraft.getInstance().level.registryAccess()));
             }
         }
     }

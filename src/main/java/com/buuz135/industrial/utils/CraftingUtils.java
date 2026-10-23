@@ -24,7 +24,7 @@ package com.buuz135.industrial.utils;
 
 import com.buuz135.industrial.module.ModuleCore;
 import com.buuz135.industrial.recipe.CrusherRecipe;
-import com.hrznstudio.titanium.util.RecipeUtil;
+import com.buuz135.industrial.compat.MachineRecipes;
 import it.unimi.dsi.fastutil.ints.Int2ObjectArrayMap;
 import net.minecraft.core.NonNullList;
 import net.minecraft.world.item.ItemStack;
@@ -45,78 +45,18 @@ import java.util.Map;
 
 public class CraftingUtils {
 
-    private static final Map<Integer, List<CraftingRecipe>> recipesBySize = new Int2ObjectArrayMap<>();
-
     public static ItemStack findOutput(int size, ItemStack input, Level world) {
         if (input.getCount() < size * size) return ItemStack.EMPTY;
-        var recipe = getRecipeFor(size, input, world);
-        if (recipe != null) {
-            ItemStack output = recipe.getResultItem(world.registryAccess());
-            return output.copy();
+        var craftingInput = CraftingInput.of(size, size, java.util.Collections.nCopies(size * size, input.copyWithCount(1)));
+        for (CraftingRecipe recipe : MachineRecipes.getRecipes(world, RecipeType.CRAFTING)) {
+            if (recipe.matches(craftingInput, world)) return recipe.assemble(craftingInput);
         }
         return ItemStack.EMPTY;
     }
 
-    private static List<CraftingRecipe> getRecipesWithSize(int size, Level world) {
-        return recipesBySize.computeIfAbsent(size, k -> {
-            RecipeManager recipeManager = world.getRecipeManager();
-            return recipeManager.getAllRecipesFor(RecipeType.CRAFTING)
-                .stream()
-                .map(RecipeHolder::value)
-                .filter(recipe -> canCraftInDimensions(recipe, size) && allIngredientsEqual(recipe))
-                .toList();
-        });
-    }
-
-    private static boolean canCraftInDimensions(CraftingRecipe recipe, int size) {
-        if (!recipe.canCraftInDimensions(size, size)) {
-            return false;
-        }
-        if (recipe instanceof ShapedRecipe shapedRecipe) {
-            return shapedRecipe.getWidth() == size && shapedRecipe.getHeight() == size;
-        } else if (recipe instanceof ShapelessRecipe shapelessRecipe) {
-            return shapelessRecipe.getIngredients().size() == (size * size);
-        }
-        return true;
-    }
-
-    private static boolean allIngredientsEqual(CraftingRecipe recipe) {
-        NonNullList<Ingredient> ingredients = recipe.getIngredients();
-        int count = ingredients.size();
-        if (count <= 1) {
-            return true;
-        }
-        Ingredient firstIngredient = ingredients.getFirst();
-        for (int i = 1; i < count; i++) {
-            Ingredient ingredient = ingredients.get(i);
-            if (!firstIngredient.equals(ingredient)) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    @Nullable
-    private static CraftingRecipe getRecipeFor(int size, ItemStack input, Level world) {
-        List<CraftingRecipe> craftingRecipes = getRecipesWithSize(size, world);
-
-        List<ItemStack> inputs = new ArrayList<>();
-        for (int i = 0; i < size * size; i++) {
-            inputs.add(input.copy());
-        }
-        CraftingInput craftingInput = CraftingInput.of(size, size, inputs);
-
-        for (CraftingRecipe recipe : craftingRecipes) {
-            if (recipe.matches(craftingInput, world)) {
-                return recipe;
-            }
-        }
-        return null;
-    }
-
     public static ItemStack getCrushOutput(Level world, ItemStack stack) {
-        for (CrusherRecipe recipe : RecipeUtil.getRecipes(world, (RecipeType<CrusherRecipe>)ModuleCore.CRUSHER_TYPE.get())) {
-            if (recipe.input.test(stack)) return recipe.output.getItems()[0];
+        for (CrusherRecipe recipe : MachineRecipes.getRecipes(world, (RecipeType<CrusherRecipe>)ModuleCore.CRUSHER_TYPE.get())) {
+            if (recipe.input.test(stack)) return recipe.output.items().map(net.minecraft.world.item.ItemStack::new).toArray(net.minecraft.world.item.ItemStack[]::new)[0];
         }
         return ItemStack.EMPTY;
     }

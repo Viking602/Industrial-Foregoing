@@ -99,7 +99,7 @@ public class EntityData {
         }
 
         public TagBuilder putUUID(String key, UUID value) {
-            tag.putUUID(key, value);
+            tag.store(key, net.minecraft.core.UUIDUtil.CODEC, value);
             return this;
         }
 
@@ -124,7 +124,9 @@ public class EntityData {
         }
 
         public TagBuilder putByteArray(String key, List<Byte> value) {
-            tag.putByteArray(key, value);
+            byte[] array = new byte[value.size()];
+            for (int i = 0; i < array.length; i++) array[i] = value.get(i);
+            tag.putByteArray(key, array);
             return this;
         }
 
@@ -134,7 +136,9 @@ public class EntityData {
         }
 
         public TagBuilder putIntArray(String key, List<Integer> value) {
-            tag.putIntArray(key, value);
+            int[] array = new int[value.size()];
+            for (int i = 0; i < array.length; i++) array[i] = value.get(i);
+            tag.putIntArray(key, array);
             return this;
         }
 
@@ -144,7 +148,9 @@ public class EntityData {
         }
 
         public TagBuilder putLongArray(String key, List<Long> value) {
-            tag.putLongArray(key, value);
+            long[] array = new long[value.size()];
+            for (int i = 0; i < array.length; i++) array[i] = value.get(i);
+            tag.putLongArray(key, array);
             return this;
         }
 

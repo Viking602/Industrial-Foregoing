@@ -6,7 +6,7 @@ import com.buuz135.industrial.module.ModuleCore;
 import com.buuz135.industrial.plugin.jei.StoneWorkWrapper;
 import com.buuz135.industrial.plugin.jei.category.BioReactorRecipeCategory;
 import com.buuz135.industrial.recipe.StoneWorkGenerateRecipe;
-import com.hrznstudio.titanium.util.RecipeUtil;
+import com.buuz135.industrial.compat.MachineRecipes;
 import net.minecraft.client.Minecraft;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
@@ -57,8 +57,8 @@ public class RecipeViewerHelper {
 
     public static List<StoneWorkWrapper> getStoneWork() {
         List<StoneWorkWrapper> perfectStoneWorkWrappers = new ArrayList<>();
-        for (StoneWorkGenerateRecipe generatorRecipe : RecipeUtil.getRecipes(Minecraft.getInstance().level, (RecipeType<StoneWorkGenerateRecipe>) ModuleCore.STONEWORK_GENERATE_TYPE.get())) {
-            List<StoneWorkWrapper> wrappers = findAllStoneWorkOutputs(generatorRecipe.output, new ArrayList<>());
+        for (StoneWorkGenerateRecipe generatorRecipe : MachineRecipes.getRecipes(Minecraft.getInstance().level, (RecipeType<StoneWorkGenerateRecipe>) ModuleCore.STONEWORK_GENERATE_TYPE.get())) {
+            List<StoneWorkWrapper> wrappers = findAllStoneWorkOutputs(generatorRecipe.output(), new ArrayList<>());
             for (StoneWorkWrapper workWrapper : new ArrayList<>(wrappers)) {
                 if (perfectStoneWorkWrappers.stream().noneMatch(stoneWorkWrapper -> ItemStack.isSameItem(workWrapper.output(), stoneWorkWrapper.output()))) {
                     boolean isSomoneShorter = false;

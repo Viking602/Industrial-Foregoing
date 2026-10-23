@@ -53,24 +53,19 @@ public class RangeAddonItem extends AddonItem implements ISpecialCreativeTabItem
     private int tier;
 
     public RangeAddonItem(int tier, TitaniumTab group) {
-        super("range_addon_tier_" + tier, group, new Properties().stacksTo(16));
+        super("range_addon_tier_" + tier, group, new Properties().stacksTo(16).component(AugmentWrapper.ATTACHMENT.get(), java.util.Map.of(RANGE.getType(), (float) (tier))));
         this.tier = tier;
     }
 
     @Override
-    public void onCraftedBy(ItemStack stack, Level worldIn, Player playerIn) {
-        super.onCraftedBy(stack, worldIn, playerIn);
+    public void onCraftedBy(ItemStack stack, Player playerIn) {
+        super.onCraftedBy(stack, playerIn);
     }
 
-    @Override
-    public void verifyComponentsAfterLoad(ItemStack stack) {
-        super.verifyComponentsAfterLoad(stack);
-        AugmentWrapper.setType(stack, RANGE, tier);
-    }
 
     @Override
-    public String getDescriptionId() {
-        return Component.translatable("item.industrialforegoing.addon").getString() + Component.translatable("item.industrialforegoing.range_addon").getString() + Component.translatable("item.industrialforegoing.tier").getString() + (tier + 1) + " ";
+    public Component getName(ItemStack stack) {
+        return Component.literal(Component.translatable("item.industrialforegoing.addon").getString() + Component.translatable("item.industrialforegoing.range_addon").getString() + Component.translatable("item.industrialforegoing.tier").getString() + (tier + 1) + " ");
     }
 
     @Override
@@ -86,14 +81,14 @@ public class RangeAddonItem extends AddonItem implements ISpecialCreativeTabItem
     @Override
     public void registerRecipe(RecipeOutput consumer) {
         DissolutionChamberRecipe.createRecipe(consumer, "range_addon_tier_" + tier, new DissolutionChamberRecipe(List.of(
-                Ingredient.of(new ItemStack(Items.REDSTONE)),
-                Ingredient.of(new ItemStack(Items.REDSTONE)),
-                Ingredient.of(new ItemStack(Items.GLASS_PANE)),
-                Ingredient.of(new ItemStack(Items.GLASS_PANE)),
-                Ingredient.of(new ItemStack(MATERIALS[tier])),
-                Ingredient.of(new ItemStack(MATERIALS[tier])),
-                Ingredient.of(new ItemStack(MATERIALS[tier])),
-                Ingredient.of(new ItemStack(MATERIALS[tier]))
+                com.buuz135.industrial.compat.Ingredients.of(new ItemStack(Items.REDSTONE)),
+                com.buuz135.industrial.compat.Ingredients.of(new ItemStack(Items.REDSTONE)),
+                com.buuz135.industrial.compat.Ingredients.of(new ItemStack(Items.GLASS_PANE)),
+                com.buuz135.industrial.compat.Ingredients.of(new ItemStack(Items.GLASS_PANE)),
+                com.buuz135.industrial.compat.Ingredients.of(new ItemStack(MATERIALS[tier])),
+                com.buuz135.industrial.compat.Ingredients.of(new ItemStack(MATERIALS[tier])),
+                com.buuz135.industrial.compat.Ingredients.of(new ItemStack(MATERIALS[tier])),
+                com.buuz135.industrial.compat.Ingredients.of(new ItemStack(MATERIALS[tier]))
         ), new FluidStack(ModuleCore.LATEX.getSourceFluid().get(), 1000), 200, Optional.of(new ItemStack(this)), Optional.empty()));
 
     }

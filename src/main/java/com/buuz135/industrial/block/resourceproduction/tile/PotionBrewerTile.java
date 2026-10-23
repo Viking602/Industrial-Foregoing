@@ -56,7 +56,7 @@ import net.minecraft.world.level.material.Fluids;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 import net.neoforged.neoforge.event.EventHooks;
-import net.neoforged.neoforge.items.ItemHandlerHelper;
+import com.buuz135.industrial.compat.MachineItems;
 
 import java.text.DecimalFormat;
 import java.util.ArrayList;
@@ -100,7 +100,7 @@ public class PotionBrewerTile extends IndustrialProcessingTile<PotionBrewerTile>
                 .setInputFilter((stack, integer) -> true)
                 .setOutputFilter((stack, integer) -> false),
                 148, 40, false));
-        addTank(water = (SidedFluidTankComponent<PotionBrewerTile>) new SidedFluidTankComponent<PotionBrewerTile>("water", 1000, 75, 40, 0)
+        addTank(water = (SidedFluidTankComponent<PotionBrewerTile>) new com.buuz135.industrial.compat.MachineFluidTank<PotionBrewerTile>("water", 1000, 75, 40, 0)
                 .setColor(DyeColor.CYAN)
                 .setTankAction(FluidTankComponent.Action.FILL)
                 .setTankType(FluidTankComponent.Type.SMALL)
@@ -108,8 +108,7 @@ public class PotionBrewerTile extends IndustrialProcessingTile<PotionBrewerTile>
         );
         addProgressBar(blaze = new ProgressBarComponent<PotionBrewerTile>(30, 20, 100) {
                     @Override
-                    @OnlyIn(Dist.CLIENT)
-                    public List<IFactory<? extends IScreenAddon>> getScreenAddons() {
+                    public List<IFactory<?>> getScreenAddons() {
                         return Collections.singletonList(() -> new ProgressBarScreenAddon<PotionBrewerTile>(30, 20, this) {
                             @Override
                             public List<Component> getTooltipLines() {
@@ -149,7 +148,7 @@ public class PotionBrewerTile extends IndustrialProcessingTile<PotionBrewerTile>
     @Override
     public boolean canIncrease() {
         if (blaze.getProgress() + 20 <= blaze.getMaxProgress() && !this.blazeInput.getStackInSlot(0).isEmpty()) {
-            this.blazeInput.getStackInSlot(0).shrink(1);
+            com.buuz135.industrial.compat.MachineItems.shrink(this.blazeInput, 0, 1);
             blaze.setProgress(blaze.getProgress() + 20);
         }
         if (ItemHandlerUtil.isEmpty(output)) {
@@ -170,8 +169,8 @@ public class PotionBrewerTile extends IndustrialProcessingTile<PotionBrewerTile>
                 for (int i = 0; i < bottleAmount; i++) {
                     var stack = new ItemStack(Items.POTION);
                     stack.set(DataComponents.POTION_CONTENTS, PotionContents.EMPTY.withPotion(Potions.WATER));
-                    ItemHandlerHelper.insertItem(this.output, stack, false);
-                    this.bottleInput.getStackInSlot(0).shrink(1);
+                    MachineItems.insertItem(this.output, stack, false);
+                    com.buuz135.industrial.compat.MachineItems.shrink(this.bottleInput, 0, 1);
                 }
                 ++this.state;
             } else {
@@ -231,7 +230,7 @@ public class PotionBrewerTile extends IndustrialProcessingTile<PotionBrewerTile>
 
         input.replaceAll(potionItem -> this.level.potionBrewing().mix(ingredient, potionItem));
 
-        ingredient.shrink(1);
+        com.buuz135.industrial.compat.MachineItems.shrink(brewingItems.getInventory(), slot, 1);
 
         EventHooks.onPotionBrewed(input);
 
@@ -241,14 +240,14 @@ public class PotionBrewerTile extends IndustrialProcessingTile<PotionBrewerTile>
     @Override
     public void loadSettings(Player player, CompoundTag tag) {
         if (tag.contains("BR_locked")) {
-            brewingItems.setLocked(tag.getBoolean("BR_locked"));
+            brewingItems.setLocked(tag.getBooleanOr("BR_locked", false));
         }
         if (tag.contains("BR_filter")) {
-            for (String psFilter : tag.getCompound("BR_filter").getAllKeys()) {
-                brewingItems.getFilter()[Integer.parseInt(psFilter)] = ItemStack.parseOptional(this.level.registryAccess(), tag.getCompound("BR_filter").getCompound(psFilter));
+            for (String psFilter : tag.getCompoundOrEmpty("BR_filter").keySet()) {
+                brewingItems.getFilter()[Integer.parseInt(psFilter)] = com.buuz135.industrial.compat.ItemNbt.parseOptional(this.level.registryAccess(), tag.getCompoundOrEmpty("BR_filter").getCompoundOrEmpty(psFilter));
             }
         }
-        this.filter.deserializeNBT(this.level.registryAccess(), tag.getCompound("PB_OutputFilter"));
+        this.filter.deserializeNBT(this.level.registryAccess(), tag.getCompoundOrEmpty("PB_OutputFilter"));
         super.loadSettings(player, tag);
     }
 
@@ -257,7 +256,7 @@ public class PotionBrewerTile extends IndustrialProcessingTile<PotionBrewerTile>
         tag.putBoolean("BR_locked", brewingItems.isLocked());
         CompoundTag filterTag = new CompoundTag();
         for (int i = 0; i < brewingItems.getFilter().length; i++) {
-            filterTag.put(i + "", brewingItems.getFilter()[i].saveOptional(this.level.registryAccess()));
+            filterTag.put(i + "", com.buuz135.industrial.compat.ItemNbt.saveOptional(brewingItems.getFilter()[i], this.level.registryAccess()));
         }
         tag.put("BR_filter", filterTag);
         tag.put("PB_OutputFilter", this.filter.serializeNBT(this.level.registryAccess()));

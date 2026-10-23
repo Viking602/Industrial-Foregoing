@@ -9,14 +9,14 @@ import dev.emi.emi.api.widget.WidgetHolder;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 public class FermentationStationEmiRecipe extends CustomEmiRecipe {
 
     private final OreFluidEntryFermenter recipe;
 
     public FermentationStationEmiRecipe(OreFluidEntryFermenter recipe) {
-        super(ResourceLocation.parse(OreTitaniumFluidType.getFluidTag(recipe.getOutput())), IFEmiPlugin.FERMENTATION_STATION_EMI_CATEGORY,
+        super(Identifier.parse(OreTitaniumFluidType.getFluidTag(recipe.getOutput())), IFEmiPlugin.FERMENTATION_STATION_EMI_CATEGORY,
                 fromInput(recipe.getInput()),
                 fromOutput(NeoForgeEmiStack.of(recipe.getOutput())));
         this.recipe = recipe;
@@ -40,7 +40,7 @@ public class FermentationStationEmiRecipe extends CustomEmiRecipe {
         widgets.addFillingArrow(26, 21, 2000);
 
         widgets.addDrawable(0, 0, 0, 0, (draw, mouseX, mouseY, delta) -> {
-            draw.drawString(Minecraft.getInstance().font, ChatFormatting.DARK_AQUA + Component.translatable("text.industrialforegoing.jei.recipe.up_to_500mb").getString(), 8, 59, 0xFFFFFF, false);
+            draw.text(Minecraft.getInstance().font, ChatFormatting.DARK_AQUA + Component.translatable("text.industrialforegoing.jei.recipe.up_to_500mb").getString(), 8, 59, 0xFFFFFF, false);
         });
     }
 }

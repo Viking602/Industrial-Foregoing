@@ -50,7 +50,7 @@ public class FluidPlacerTile extends IndustrialAreaWorkingTile<FluidPlacerTile> 
 
     public FluidPlacerTile(BlockPos blockPos, BlockState blockState) {
         super(ModuleResourceProduction.FLUID_PLACER, RangeManager.RangeType.BEHIND, false, FluidPlacerConfig.powerPerOperation, blockPos, blockState);
-        this.addTank(this.tank = (SidedFluidTankComponent<FluidPlacerTile>) new SidedFluidTankComponent<FluidPlacerTile>("input", FluidPlacerConfig.maxInputTankSize, 43, 20, 0)
+        this.addTank(this.tank = (SidedFluidTankComponent<FluidPlacerTile>) new com.buuz135.industrial.compat.MachineFluidTank<FluidPlacerTile>("input", FluidPlacerConfig.maxInputTankSize, 43, 20, 0)
                 .setColor(DyeColor.BLUE)
                 .setTankAction(FluidTankComponent.Action.FILL)
                 .setComponentHarness(this)
@@ -66,12 +66,12 @@ public class FluidPlacerTile extends IndustrialAreaWorkingTile<FluidPlacerTile> 
             if (isLoaded(pointed) && BlockUtils.canBlockBeBroken(this.level, pointed, this.getUuid()) && !level.getFluidState(pointed).isSource() && tank.getFluidAmount() >= FluidType.BUCKET_VOLUME) {
                 if (tank.getFluid().getFluid().isSame(Fluids.WATER) && level.getBlockState(pointed).hasProperty(BlockStateProperties.WATERLOGGED) && !level.getBlockState(pointed).getValue(BlockStateProperties.WATERLOGGED)) {
                     level.setBlockAndUpdate(pointed, level.getBlockState(pointed).setValue(BlockStateProperties.WATERLOGGED, true));
-                    tank.drainForced(FluidType.BUCKET_VOLUME, IFluidHandler.FluidAction.EXECUTE);
+                    com.buuz135.industrial.compat.MachineFluids.drainForced(tank, FluidType.BUCKET_VOLUME, IFluidHandler.FluidAction.EXECUTE);
                     increasePointer();
                     return new WorkAction(1, getPowerPerOperation);
                 } else if (level.isEmptyBlock(pointed) || (!level.getFluidState(pointed).isEmpty() && !level.getFluidState(pointed).isSource())) {
                     level.setBlockAndUpdate(pointed, tank.getFluid().getFluid().defaultFluidState().createLegacyBlock());
-                    tank.drainForced(FluidType.BUCKET_VOLUME, IFluidHandler.FluidAction.EXECUTE);
+                    com.buuz135.industrial.compat.MachineFluids.drainForced(tank, FluidType.BUCKET_VOLUME, IFluidHandler.FluidAction.EXECUTE);
                     increasePointer();
                     return new WorkAction(1, getPowerPerOperation);
                 }

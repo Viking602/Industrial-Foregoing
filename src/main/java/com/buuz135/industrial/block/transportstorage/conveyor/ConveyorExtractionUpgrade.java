@@ -42,7 +42,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.data.recipes.RecipeOutput;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
@@ -111,9 +111,9 @@ public class ConveyorExtractionUpgrade extends ConveyorUpgrade {
 
     @Override
     public void deserializeNBT(HolderLookup.Provider provider, CompoundTag nbt) {
-        fast = nbt.getBoolean("fast");
-        if (nbt.contains("Filter")) filter.deserializeNBT(provider, nbt.getCompound("Filter"));
-        whitelist = nbt.getBoolean("Whitelist");
+        fast = nbt.getBooleanOr("fast", false);
+        if (nbt.contains("Filter")) filter.deserializeNBT(provider, nbt.getCompoundOrEmpty("Filter"));
+        whitelist = nbt.getBooleanOr("Whitelist", false);
     }
 
     @Override
@@ -139,12 +139,12 @@ public class ConveyorExtractionUpgrade extends ConveyorUpgrade {
 
     @Override
     public void update() {
-        if (getWorld().isClientSide)
+        if (getWorld().isClientSide())
             return;
         items.removeIf(ItemEntity -> ItemEntity.getItem().isEmpty() || !ItemEntity.isAlive());
         if (items.size() >= 20) return;
         if (getWorld().getGameTime() % (fast ? 10 : 20) == 0) {
-            getHandlerCapability(Capabilities.ItemHandler.BLOCK, Capabilities.ItemHandler.ENTITY_AUTOMATION).ifPresent(itemHandler -> {
+            getHandlerCapability(Capabilities.Item.BLOCK, Capabilities.Item.ENTITY_AUTOMATION).map(com.buuz135.industrial.compat.MachineCapabilities::items).ifPresent(itemHandler -> {
                 for (int i = 0; i < itemHandler.getSlots(); i++) {
                     ItemStack stack = itemHandler.extractItem(i, 4, true);
                     if (stack.isEmpty() || whitelist != filter.matches(stack))
@@ -162,7 +162,7 @@ public class ConveyorExtractionUpgrade extends ConveyorUpgrade {
         }
         if (getContainer() instanceof ConveyorTile) {
             IFluidTank tank = ((ConveyorTile) getContainer()).getTank();
-            getHandlerCapability(Capabilities.FluidHandler.BLOCK, Capabilities.FluidHandler.ENTITY).ifPresent(fluidHandler -> {
+            getHandlerCapability(Capabilities.Fluid.BLOCK, Capabilities.Fluid.ENTITY).map(com.buuz135.industrial.compat.MachineCapabilities::fluids).ifPresent(fluidHandler -> {
                 if (!fluidHandler.drain(250, IFluidHandler.FluidAction.SIMULATE).isEmpty() && whitelist == filter.matches(fluidHandler.drain(250, IFluidHandler.FluidAction.SIMULATE))) {
                     FluidStack drain = fluidHandler.drain(tank.fill(fluidHandler.drain(250, IFluidHandler.FluidAction.SIMULATE), IFluidHandler.FluidAction.EXECUTE), IFluidHandler.FluidAction.EXECUTE);
                     if (drain.isEmpty() && drain.getAmount() > 0) getContainer().requestFluidSync();
@@ -194,7 +194,7 @@ public class ConveyorExtractionUpgrade extends ConveyorUpgrade {
     public void handleButtonInteraction(int buttonId, CompoundTag compound) {
         super.handleButtonInteraction(buttonId, compound);
         if (buttonId >= 0 && buttonId < filter.getFilter().length) {
-            this.filter.setFilter(buttonId, ItemStack.parseOptional(getWorld().registryAccess(), compound));
+            this.filter.setFilter(buttonId, com.buuz135.industrial.compat.ItemNbt.parseOptional(getWorld().registryAccess(), compound));
             this.getContainer().requestSync();
         }
         if (buttonId == 16) {
@@ -212,7 +212,7 @@ public class ConveyorExtractionUpgrade extends ConveyorUpgrade {
                 return ConveyorExtractionUpgrade.this.filter;
             }
         });
-        ResourceLocation res = ResourceLocation.fromNamespaceAndPath(Reference.MOD_ID, "textures/gui/machines.png");
+        Identifier res = Identifier.fromNamespaceAndPath(Reference.MOD_ID, "textures/gui/machines.png");
         componentList.add(new TexturedStateButtonGuiComponent(16, 133, 20, 18, 18,
                 new StateButtonInfo(0, res, 1, 214, new String[]{"whitelist"}),
                 new StateButtonInfo(1, res, 20, 214, new String[]{"blacklist"})) {
@@ -236,14 +236,14 @@ public class ConveyorExtractionUpgrade extends ConveyorUpgrade {
 
         @Override
         @Nonnull
-        public ResourceLocation getModel(Direction upgradeSide, Direction conveyorFacing) {
-            return ResourceLocation.fromNamespaceAndPath(Reference.MOD_ID, "block/conveyor_upgrade_extractor_" + upgradeSide.getSerializedName().toLowerCase(Locale.ROOT));
+        public Identifier getModel(Direction upgradeSide, Direction conveyorFacing) {
+            return Identifier.fromNamespaceAndPath(Reference.MOD_ID, "block/conveyor_upgrade_extractor_" + upgradeSide.getSerializedName().toLowerCase(Locale.ROOT));
         }
 
         @Nonnull
         @Override
-        public ResourceLocation getItemModel() {
-            return ResourceLocation.fromNamespaceAndPath(Reference.MOD_ID, "conveyor_extraction_upgrade");
+        public Identifier getItemModel() {
+            return Identifier.fromNamespaceAndPath(Reference.MOD_ID, "conveyor_extraction_upgrade");
         }
 
         @Override

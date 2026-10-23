@@ -46,7 +46,7 @@ public class StoneWorkGeneratorEmiRecipe extends CustomEmiRecipe {
     public void addWidgets(WidgetHolder widgets) {
 
 
-        widgets.addSlot(EmiIngredient.of(List.of(this.getOutputs().get(0))), 8, 9 * 2).drawBack(false).recipeContext(this);
+        widgets.addSlot(Emicom.buuz135.industrial.compat.Ingredients.of(List.of(this.getOutputs().get(0))), 8, 9 * 2).drawBack(false).recipeContext(this);
 
 
         widgets.addDrawable(0, 0, 0, 0, (draw, mouseX, mouseY, delta) -> {
@@ -60,7 +60,7 @@ public class StoneWorkGeneratorEmiRecipe extends CustomEmiRecipe {
             lines.add(Component.literal(ChatFormatting.YELLOW + " - " + ChatFormatting.DARK_GRAY + recipe.value().lavaConsume + ChatFormatting.DARK_AQUA + LangUtil.getString("tooltip.industrialforegoing.mb_of", LangUtil.getString("block.minecraft.lava"))));
             int y = 0;
             for (Component line : lines) {
-                draw.drawString(Minecraft.getInstance().font, line.getString(), 36, y * Minecraft.getInstance().font.lineHeight, 0xFFFFFFFF, false);
+                draw.text(Minecraft.getInstance().font, line.getString(), 36, y * Minecraft.getInstance().font.lineHeight, 0xFFFFFFFF, false);
                 ++y;
             }
 

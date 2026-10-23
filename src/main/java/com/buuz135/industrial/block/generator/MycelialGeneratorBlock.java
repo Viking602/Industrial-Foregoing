@@ -83,17 +83,17 @@ public class MycelialGeneratorBlock extends IndustrialBlock<MycelialGeneratorTil
     }
 
     @Override
-    public void onRemove(BlockState state, Level worldIn, BlockPos pos, BlockState newState, boolean isMoving) {
+    public void affectNeighborsAfterRemoval(BlockState state, net.minecraft.server.level.ServerLevel worldIn, BlockPos pos, boolean isMoving) {
         BlockEntity entity = worldIn.getBlockEntity(pos);
         if (entity instanceof MycelialGeneratorTile) {
             MycelialDataManager.removeGeneratorInfo(((MycelialGeneratorTile) entity).getOwner(), worldIn, pos, type);
         }
-        super.onRemove(state, worldIn, pos, newState, isMoving);
+        super.affectNeighborsAfterRemoval(state, worldIn, pos, isMoving);
     }
 
     @Override
     public void registerRecipe(RecipeOutput consumer) {
-        ShapedRecipeBuilder recipe = TitaniumShapedRecipeBuilder.shapedRecipe(this).pattern("BBB").pattern("BCB").pattern("RMR")
+        var recipe = TitaniumShapedRecipeBuilder.shapedRecipe(this).pattern("BBB").pattern("BCB").pattern("RMR")
                 .define('R', Items.REDSTONE);
         type.addIngredients(recipe).save(consumer);
     }

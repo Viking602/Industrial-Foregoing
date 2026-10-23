@@ -1,8 +1,8 @@
 {
   "neoforge:conditions": [
     {
-      "type": "neoforge:item_exists",
-      "item": "industrialforegoing:mycelial_magma"
+      "type": "neoforge:registered",
+      "value": "industrialforegoing:mycelial_magma"
     }
   ],
   "parent": "minecraft:recipes/root",

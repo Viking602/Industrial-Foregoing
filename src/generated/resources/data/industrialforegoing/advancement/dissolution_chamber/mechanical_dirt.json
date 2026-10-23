@@ -1,8 +1,8 @@
 {
   "neoforge:conditions": [
     {
-      "type": "neoforge:item_exists",
-      "item": "industrialforegoing:mechanical_dirt"
+      "type": "neoforge:registered",
+      "value": "industrialforegoing:mechanical_dirt"
     }
   ],
   "parent": "minecraft:recipes/root",

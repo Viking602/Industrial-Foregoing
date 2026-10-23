@@ -48,11 +48,12 @@ public class TransporterSyncMessage extends Message {
     }
 
     @Override
-    protected void handleMessage(IPayloadContext context) {
+    public void handleClientMessage(IPayloadContext context) {
         context.enqueueWork(() -> {
             TileUtil.getTileEntity(Minecraft.getInstance().level, pos, TransporterTile.class).ifPresent(tileEntity -> {
                 tileEntity.getTransporterTypeMap().get(Direction.from3DDataValue(direction)).handleRenderSync(Direction.from3DDataValue(originDirection), sync);
             });
         });
     }
+    @Override protected void handleServerMessage(IPayloadContext context) {}
 }

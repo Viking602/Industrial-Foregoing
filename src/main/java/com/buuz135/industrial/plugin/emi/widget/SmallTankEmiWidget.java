@@ -8,7 +8,7 @@ import dev.emi.emi.api.widget.Bounds;
 import dev.emi.emi.api.widget.SlotWidget;
 import dev.emi.emi.api.widget.TankWidget;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent;
 
 import java.awt.*;
@@ -31,7 +31,7 @@ public class SmallTankEmiWidget extends SlotWidget {
     }
 
     @Override
-    public void render(GuiGraphics draw, int mouseX, int mouseY, float delta) {
+    public void render(GuiGraphicsExtractor draw, int mouseX, int mouseY, float delta) {
         this.widget.render(draw, mouseX, mouseY, delta);
         AssetUtil.drawAsset(draw, Minecraft.getInstance().screen, DefaultAssetProvider.DEFAULT_PROVIDER.getAsset(AssetTypes.TANK_SMALL), this.x, this.y);
     }

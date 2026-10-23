@@ -39,7 +39,7 @@ import net.minecraft.core.Holder;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.inventory.AnvilMenu;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.ItemStack;
@@ -70,7 +70,7 @@ public class EnchantmentApplicatorTile extends IndustrialProcessingTile<Enchantm
 
     public EnchantmentApplicatorTile(BlockPos blockPos, BlockState blockState) {
         super(ModuleMisc.ENCHANTMENT_APPLICATOR, 112, 40, blockPos, blockState);
-        this.addTank(tank = (SidedFluidTankComponent<EnchantmentApplicatorTile>) new SidedFluidTankComponent<EnchantmentApplicatorTile>("essence", EnchantmentApplicatorConfig.tankSize, 34, 20, 0).
+        this.addTank(tank = (SidedFluidTankComponent<EnchantmentApplicatorTile>) new com.buuz135.industrial.compat.MachineFluidTank<EnchantmentApplicatorTile>("essence", EnchantmentApplicatorConfig.tankSize, 34, 20, 0).
                 setColor(DyeColor.LIME).
                 setComponentHarness(this).
                 setOnContentChange(() -> syncObject(this.tank)).
@@ -126,11 +126,10 @@ public class EnchantmentApplicatorTile extends IndustrialProcessingTile<Enchantm
         return xp > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) xp;
     }
 
-    @OnlyIn(Dist.CLIENT)
     @Override
     public void initClient() {
         super.initClient();
-        ResourceLocation res = ResourceLocation.fromNamespaceAndPath(Reference.MOD_ID, "textures/gui/machines.png");
+        Identifier res = Identifier.fromNamespaceAndPath(Reference.MOD_ID, "textures/gui/machines.png");
         this.addGuiAddonFactory(() -> new TextureScreenAddon(158, 4, 14, 14, res, 96, 233) {
 
             @Override
@@ -146,7 +145,7 @@ public class EnchantmentApplicatorTile extends IndustrialProcessingTile<Enchantm
     public boolean canIncrease() {
         Pair<ItemStack, Integer> output = updateRepairOutput();
         long amount = this.tank.getFluidAmount();
-        var capability = this.level.getCapability(Capabilities.FluidHandler.BLOCK, this.worldPosition.above(), Direction.DOWN);
+        var capability = com.buuz135.industrial.compat.MachineCapabilities.fluids(this.level, this.worldPosition.above(), Direction.DOWN);
         if (capability != null) {
             amount += getMatchingAmount(capability);
         }
@@ -158,14 +157,14 @@ public class EnchantmentApplicatorTile extends IndustrialProcessingTile<Enchantm
         return () -> {
             Pair<ItemStack, Integer> output = updateRepairOutput();
             this.inputFirst.setStackInSlot(0, ItemStack.EMPTY);
-            this.inputSecond.getStackInSlot(0).shrink(1);
+            com.buuz135.industrial.compat.MachineItems.shrink(this.inputSecond, 0, 1);
             this.output.setStackInSlot(0, output.getLeft());
             var amount = getEssenceConsumed(output.getRight());
-            var capability = this.level.getCapability(Capabilities.FluidHandler.BLOCK, this.worldPosition.above(), Direction.DOWN);
+            var capability = com.buuz135.industrial.compat.MachineCapabilities.fluids(this.level, this.worldPosition.above(), Direction.DOWN);
             if (capability != null) {
                 amount = drainAmount(amount, capability);
             }
-            if (amount > 0) this.tank.drainForced(amount, IFluidHandler.FluidAction.EXECUTE);
+            if (amount > 0) com.buuz135.industrial.compat.MachineFluids.drainForced(this.tank, amount, IFluidHandler.FluidAction.EXECUTE);
         };
     }
 
@@ -206,7 +205,7 @@ public class EnchantmentApplicatorTile extends IndustrialProcessingTile<Enchantm
             boolean addEnchantment = false;
             if (!inputSecond.isEmpty()) {
                 addEnchantment = inputSecond.has(DataComponents.STORED_ENCHANTMENTS);
-                if (inputFirstCopy.isDamageableItem() && inputFirstCopy.getItem().isValidRepairItem(inputFirst, inputSecond)) { //Combine
+                if (inputFirstCopy.isDamageableItem() && inputFirstCopy.isValidRepairItem(inputSecond)) { //Combine
                     int l2 = Math.min(inputFirstCopy.getDamageValue(), inputFirstCopy.getMaxDamage() / 4);
                     if (l2 <= 0) { //No Output
                         return Pair.of(ItemStack.EMPTY, 0);
@@ -276,7 +275,7 @@ public class EnchantmentApplicatorTile extends IndustrialProcessingTile<Enchantm
                     }
                 }
             }
-            if (addEnchantment && !inputFirstCopy.isBookEnchantable(inputSecond)) inputFirstCopy = ItemStack.EMPTY;
+            if (addEnchantment && !net.minecraft.world.item.enchantment.EnchantmentHelper.canStoreEnchantments(inputFirstCopy)) inputFirstCopy = ItemStack.EMPTY;
             maximumCost = j + i;
             if (i <= 0) {
                 inputFirstCopy = ItemStack.EMPTY;

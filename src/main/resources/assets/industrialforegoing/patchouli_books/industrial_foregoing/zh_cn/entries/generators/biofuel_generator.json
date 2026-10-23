@@ -1,0 +1,17 @@
+{
+  "name": "生物燃油发电机",
+  "icon": "industrialforegoing:biofuel_generator",
+  "category": "industrialforegoing:generators",
+  "sortnum": 3,
+  "read_by_default": true,
+  "pages": [
+    {
+      "type": "text",
+      "text": "消耗$(l:generators/biofuel)生物燃油$()，产生$(6)160$() RF/t。$(br2)内部能量缓存满时会停止消耗燃料，避免浪费。"
+    },
+    {
+      "type": "crafting",
+      "recipe": "industrialforegoing:biofuel_generator"
+    }
+  ]
+}

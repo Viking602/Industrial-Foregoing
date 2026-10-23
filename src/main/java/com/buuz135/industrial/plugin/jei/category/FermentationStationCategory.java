@@ -37,18 +37,18 @@ import mezz.jei.api.recipe.RecipeType;
 import mezz.jei.api.recipe.category.IRecipeCategory;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
-public class FermentationStationCategory implements IRecipeCategory<OreFluidEntryFermenter> {
+public class FermentationStationCategory implements com.buuz135.industrial.plugin.jei.MachineRecipeCategory<OreFluidEntryFermenter> {
 
     private final IGuiHelper helper;
     private IDrawable tankOverlay;
 
     public FermentationStationCategory(IGuiHelper helper) {
         this.helper = helper;
-        tankOverlay = helper.createDrawable(ResourceLocation.fromNamespaceAndPath(Reference.MOD_ID, "textures/gui/jei.png"), 1, 207, 12, 48);
+        tankOverlay = helper.createDrawable(Identifier.fromNamespaceAndPath(Reference.MOD_ID, "textures/gui/jei.png"), 1, 207, 12, 48);
     }
 
     @Override
@@ -64,7 +64,7 @@ public class FermentationStationCategory implements IRecipeCategory<OreFluidEntr
     @Override
     public IDrawable getBackground() {
         int offset = 45;
-        return helper.createDrawable(ResourceLocation.fromNamespaceAndPath(Reference.MOD_ID, "textures/gui/jei.png"), 142 + offset, 29, 112 - offset, 60);
+        return helper.createDrawable(Identifier.fromNamespaceAndPath(Reference.MOD_ID, "textures/gui/jei.png"), 142 + offset, 29, 112 - offset, 60);
     }
 
     @Override
@@ -79,7 +79,8 @@ public class FermentationStationCategory implements IRecipeCategory<OreFluidEntr
     }
 
     @Override
-    public void draw(OreFluidEntryFermenter recipe, IRecipeSlotsView recipeSlotsView, GuiGraphics guiGraphics, double mouseX, double mouseY) {
-        guiGraphics.drawString(Minecraft.getInstance().font, ChatFormatting.DARK_AQUA + Component.translatable("text.industrialforegoing.jei.recipe.up_to_500mb").getString(), 3, 52, 0xFFFFFF);
+    public void draw(OreFluidEntryFermenter recipe, IRecipeSlotsView recipeSlotsView, GuiGraphicsExtractor guiGraphics, double mouseX, double mouseY) {
+        getBackground().draw(guiGraphics, 0, 0);
+        guiGraphics.text(Minecraft.getInstance().font, ChatFormatting.DARK_AQUA + Component.translatable("text.industrialforegoing.jei.recipe.up_to_500mb").getString(), 3, 52, 0xFFFFFFFF);
     }
 }

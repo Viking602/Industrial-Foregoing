@@ -60,7 +60,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
-import net.neoforged.neoforge.items.ItemHandlerHelper;
+import com.buuz135.industrial.compat.MachineItems;
 
 import java.util.Optional;
 
@@ -97,7 +97,6 @@ public abstract class IndustrialMachineTile<T extends IndustrialMachineTile<T>> 
         }
     }
 
-    @OnlyIn(Dist.CLIENT)
     @Override
     public void initClient() {
         super.initClient();
@@ -163,7 +162,6 @@ public abstract class IndustrialMachineTile<T extends IndustrialMachineTile<T>> 
     }
 
 
-    @OnlyIn(Dist.CLIENT)
     @Override
     public void clientTick(Level level, BlockPos pos, BlockState state, T blockEntity) {
         super.clientTick(level, pos, state, blockEntity);
@@ -172,13 +170,13 @@ public abstract class IndustrialMachineTile<T extends IndustrialMachineTile<T>> 
     @Override
     public void loadSettings(Player player, CompoundTag tag) {
         if (tag.contains(settingsAddons)) {
-            var stacks = IMachineSettings.readInventory(this.level.registryAccess(), tag.getCompound(settingsAddons));
+            var stacks = IMachineSettings.readInventory(this.level.registryAccess(), tag.getCompoundOrEmpty(settingsAddons));
             for (var stack : stacks) {
                 if (this.canAcceptAugment(stack)) {
                     for (ItemStack stackPlayer : player.inventoryMenu.getItems()) {
                         if (ItemStack.isSameItem(stack, stackPlayer)) {
                             var copiedStack = stackPlayer.copyWithCount(1);
-                            if (ItemHandlerHelper.insertItem(this.getAugmentInventory(), copiedStack, false).isEmpty()) {
+                            if (MachineItems.insertItem(this.getAugmentInventory(), copiedStack, false).isEmpty()) {
                                 stackPlayer.shrink(1);
                             }
                             break;
@@ -188,15 +186,15 @@ public abstract class IndustrialMachineTile<T extends IndustrialMachineTile<T>> 
             }
         }
         if (tag.contains(redstoneMode)) {
-            NBTManager.getInstance().readTileEntity(this, this.level.registryAccess(), tag.getCompound(redstoneMode));
+            NBTManager.getInstance().readTileEntity(this, this.level.registryAccess(), tag.getCompoundOrEmpty(redstoneMode));
         }
         if (tag.contains(sidenessInventory)) {
             for (InventoryComponent<T> inventoryHandler : this.getMultiInventoryComponent().getInventoryHandlers()) {
                 if (inventoryHandler instanceof SidedInventoryComponent<T> sided) {
-                    if (tag.getCompound(sidenessInventory).contains(sided.getName())) {
-                        CompoundTag intermediateTag = tag.getCompound(sidenessInventory).getCompound(sided.getName());
-                        for (String allKey : intermediateTag.getAllKeys()) {
-                            sided.getFacingModes().put(FacingUtil.Sideness.valueOf(allKey), IFacingComponent.FaceMode.valueOf(intermediateTag.getString(allKey)));
+                    if (tag.getCompoundOrEmpty(sidenessInventory).contains(sided.getName())) {
+                        CompoundTag intermediateTag = tag.getCompoundOrEmpty(sidenessInventory).getCompoundOrEmpty(sided.getName());
+                        for (String allKey : intermediateTag.keySet()) {
+                            sided.getFacingModes().put(FacingUtil.Sideness.valueOf(allKey), IFacingComponent.FaceMode.valueOf(intermediateTag.getStringOr(allKey, "")));
                         }
                     }
                 }
@@ -205,10 +203,10 @@ public abstract class IndustrialMachineTile<T extends IndustrialMachineTile<T>> 
         if (tag.contains(sidenessTank)) {
             for (FluidTankComponent<T> fluidTankComponent : this.getMultiTankComponent().getTanks()) {
                 if (fluidTankComponent instanceof SidedFluidTankComponent<T> sided) {
-                    if (tag.getCompound(sidenessTank).contains(sided.getName())) {
-                        CompoundTag intermediateTag = tag.getCompound(sidenessTank).getCompound(sided.getName());
-                        for (String allKey : intermediateTag.getAllKeys()) {
-                            sided.getFacingModes().put(FacingUtil.Sideness.valueOf(allKey), IFacingComponent.FaceMode.valueOf(intermediateTag.getString(allKey)));
+                    if (tag.getCompoundOrEmpty(sidenessTank).contains(sided.getName())) {
+                        CompoundTag intermediateTag = tag.getCompoundOrEmpty(sidenessTank).getCompoundOrEmpty(sided.getName());
+                        for (String allKey : intermediateTag.keySet()) {
+                            sided.getFacingModes().put(FacingUtil.Sideness.valueOf(allKey), IFacingComponent.FaceMode.valueOf(intermediateTag.getStringOr(allKey, "")));
                         }
                     }
                 }
@@ -216,8 +214,8 @@ public abstract class IndustrialMachineTile<T extends IndustrialMachineTile<T>> 
         }
         if (tag.contains(filter)) {
             for (IFilter iFilter : this.getMultiFilterComponent().getFilters()) {
-                if (tag.getCompound(filter).contains(iFilter.getName())) {
-                    iFilter.deserializeNBT(this.level.registryAccess(), tag.getCompound(filter).getCompound(iFilter.getName()));
+                if (tag.getCompoundOrEmpty(filter).contains(iFilter.getName())) {
+                    iFilter.deserializeNBT(this.level.registryAccess(), tag.getCompoundOrEmpty(filter).getCompoundOrEmpty(iFilter.getName()));
                 }
             }
         }

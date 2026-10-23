@@ -1,8 +1,8 @@
 {
   "neoforge:conditions": [
     {
-      "type": "neoforge:item_exists",
-      "item": "industrialforegoing:bioreactor"
+      "type": "neoforge:registered",
+      "value": "industrialforegoing:bioreactor"
     }
   ],
   "parent": "minecraft:recipes/root",

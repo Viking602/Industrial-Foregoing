@@ -63,7 +63,7 @@ import dev.emi.emi.api.recipe.VanillaEmiRecipeCategories;
 import dev.emi.emi.api.stack.EmiIngredient;
 import dev.emi.emi.api.stack.EmiStack;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.tags.ItemTags;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
@@ -110,13 +110,13 @@ public class IFEmiPlugin implements EmiPlugin {
         RecipeManager manager = registry.getRecipeManager();
         //DISSOLUTION CHAMBER
         registry.addCategory(DISSOLUTION_CHAMBER_EMI_CATEGORY);
-        registry.addWorkstation(DISSOLUTION_CHAMBER_EMI_CATEGORY, EmiIngredient.of(Ingredient.of(ModuleCore.DISSOLUTION_CHAMBER.getBlock())));
+        registry.addWorkstation(DISSOLUTION_CHAMBER_EMI_CATEGORY, Emicom.buuz135.industrial.compat.Ingredients.of(com.buuz135.industrial.compat.Ingredients.of(ModuleCore.DISSOLUTION_CHAMBER.getBlock())));
         for (RecipeHolder<?> recipe : manager.getAllRecipesFor((RecipeType<DissolutionChamberRecipe>) ModuleCore.DISSOLUTION_TYPE.get())) {
             registry.addRecipe(new DissChamberEmiRecipe((RecipeHolder<DissolutionChamberRecipe>) recipe));
         }
         //BIOREACTOR
         registry.addCategory(BIOREACTOR_EMI_CATEGORY);
-        registry.addWorkstation(BIOREACTOR_EMI_CATEGORY, EmiIngredient.of(Ingredient.of(ModuleGenerator.BIOREACTOR.getBlock())));
+        registry.addWorkstation(BIOREACTOR_EMI_CATEGORY, Emicom.buuz135.industrial.compat.Ingredients.of(com.buuz135.industrial.compat.Ingredients.of(ModuleGenerator.BIOREACTOR.getBlock())));
         for (BioReactorRecipeCategory.ReactorRecipeWrapper generateBioreactorRecipe : RecipeViewerHelper.generateBioreactorRecipes()) {
             registry.addRecipe(new BioreactorEmiRecipe(generateBioreactorRecipe.getStack(), generateBioreactorRecipe.getFluid()));
         }
@@ -125,61 +125,61 @@ public class IFEmiPlugin implements EmiPlugin {
         List<OreFluidEntryFermenter> fluidEntryFermenters = new ArrayList<>();
         List<OreFluidEntrySieve> fluidSieve = new ArrayList<>();
 
-        BuiltInRegistries.ITEM.getTagNames().map(itemTagKey -> itemTagKey.location())
+        BuiltInRegistries.ITEM.getTagNames().map(itemTagKey -> itemTagKey.identifier())
                 .filter(resourceLocation -> resourceLocation.toString().startsWith("c:raw_materials/") && OreTitaniumFluidType.isValid(resourceLocation))
                 .forEach(resourceLocation -> {
                     TagKey<Item> tag = TagUtil.getItemTag(resourceLocation);
-                    TagKey<Item> dust = TagUtil.getItemTag(ResourceLocation.parse(resourceLocation.toString().replace("c:raw_materials/", "c:dusts/")));
+                    TagKey<Item> dust = TagUtil.getItemTag(Identifier.parse(resourceLocation.toString().replace("c:raw_materials/", "c:dusts/")));
                     washer.add(new OreFluidEntryRaw(tag, new FluidStack(ModuleCore.MEAT.getSourceFluid().get(), 100), OreTitaniumFluidType.getFluidWithTag(ModuleCore.RAW_ORE_MEAT, 100, resourceLocation)));
                     fluidEntryFermenters.add(new OreFluidEntryFermenter(OreTitaniumFluidType.getFluidWithTag(ModuleCore.RAW_ORE_MEAT, 100, resourceLocation), OreTitaniumFluidType.getFluidWithTag(ModuleCore.FERMENTED_ORE_MEAT, 200, resourceLocation)));
                     fluidSieve.add(new OreFluidEntrySieve(OreTitaniumFluidType.getFluidWithTag(ModuleCore.FERMENTED_ORE_MEAT, 100, resourceLocation), TagUtil.getItemWithPreference(dust), ItemTags.SAND));
                 });
         //WASHING
         registry.addCategory(ORE_WASHER_EMI_CATEGORY);
-        registry.addWorkstation(ORE_WASHER_EMI_CATEGORY, EmiIngredient.of(Ingredient.of(ModuleResourceProduction.WASHING_FACTORY.getBlock())));
+        registry.addWorkstation(ORE_WASHER_EMI_CATEGORY, Emicom.buuz135.industrial.compat.Ingredients.of(com.buuz135.industrial.compat.Ingredients.of(ModuleResourceProduction.WASHING_FACTORY.getBlock())));
         washer.forEach(wash -> registry.addRecipe(new OreWasherEmiRecipe(wash)));
         //FERMENTATION
         registry.addCategory(FERMENTATION_STATION_EMI_CATEGORY);
-        registry.addWorkstation(FERMENTATION_STATION_EMI_CATEGORY, EmiIngredient.of(Ingredient.of(ModuleResourceProduction.FERMENTATION_STATION.getBlock())));
+        registry.addWorkstation(FERMENTATION_STATION_EMI_CATEGORY, Emicom.buuz135.industrial.compat.Ingredients.of(com.buuz135.industrial.compat.Ingredients.of(ModuleResourceProduction.FERMENTATION_STATION.getBlock())));
         fluidEntryFermenters.forEach(oreFluidEntryFermenter -> registry.addRecipe(new FermentationStationEmiRecipe(oreFluidEntryFermenter)));
         //SIEVE
         registry.addCategory(FLUID_SIEVE_EMI_CATEGORY);
-        registry.addWorkstation(FLUID_SIEVE_EMI_CATEGORY, EmiIngredient.of(Ingredient.of(ModuleResourceProduction.FLUID_SIEVING_MACHINE.getBlock())));
+        registry.addWorkstation(FLUID_SIEVE_EMI_CATEGORY, Emicom.buuz135.industrial.compat.Ingredients.of(com.buuz135.industrial.compat.Ingredients.of(ModuleResourceProduction.FLUID_SIEVING_MACHINE.getBlock())));
         fluidSieve.forEach(fluidSieves -> registry.addRecipe(new FluidSieveEmiRecipe(fluidSieves)));
 
         //FLUID_EXTRACTOR
         registry.addCategory(FLUID_EXTRACTOR_EMI_CATEGORY);
-        registry.addWorkstation(FLUID_EXTRACTOR_EMI_CATEGORY, EmiIngredient.of(Ingredient.of(ModuleCore.FLUID_EXTRACTOR.getBlock())));
+        registry.addWorkstation(FLUID_EXTRACTOR_EMI_CATEGORY, Emicom.buuz135.industrial.compat.Ingredients.of(com.buuz135.industrial.compat.Ingredients.of(ModuleCore.FLUID_EXTRACTOR.getBlock())));
         for (RecipeHolder<?> recipe : manager.getAllRecipesFor((RecipeType<FluidExtractorRecipe>) ModuleCore.FLUID_EXTRACTOR_TYPE.get())) {
             registry.addRecipe(new FluidExtractorEmiRecipe((RecipeHolder<FluidExtractorRecipe>) recipe));
         }
 
         //LASER DRILL ORE
         registry.addCategory(LASER_DRILL_ORE_EMI_CATEGORY);
-        registry.addWorkstation(LASER_DRILL_ORE_EMI_CATEGORY, EmiIngredient.of(Ingredient.of(ModuleResourceProduction.ORE_LASER_BASE.getBlock())));
+        registry.addWorkstation(LASER_DRILL_ORE_EMI_CATEGORY, Emicom.buuz135.industrial.compat.Ingredients.of(com.buuz135.industrial.compat.Ingredients.of(ModuleResourceProduction.ORE_LASER_BASE.getBlock())));
         for (RecipeHolder<?> recipe : manager.getAllRecipesFor((RecipeType<LaserDrillOreRecipe>) ModuleCore.LASER_DRILL_TYPE.get())) {
             registry.addRecipe(new LaserDrillOreEmiRecipe((RecipeHolder<LaserDrillOreRecipe>) recipe));
         }
         //LASER DRILL FLUID
         registry.addCategory(LASER_DRILL_FLUID_EMI_CATEGORY);
-        registry.addWorkstation(LASER_DRILL_FLUID_EMI_CATEGORY, EmiIngredient.of(Ingredient.of(ModuleResourceProduction.FLUID_LASER_BASE.getBlock())));
+        registry.addWorkstation(LASER_DRILL_FLUID_EMI_CATEGORY, Emicom.buuz135.industrial.compat.Ingredients.of(com.buuz135.industrial.compat.Ingredients.of(ModuleResourceProduction.FLUID_LASER_BASE.getBlock())));
         for (RecipeHolder<?> recipe : manager.getAllRecipesFor((RecipeType<LaserDrillFluidRecipe>) ModuleCore.LASER_DRILL_FLUID_TYPE.get())) {
             registry.addRecipe(new LaserDrillFluidEmiRecipe((RecipeHolder<LaserDrillFluidRecipe>) recipe));
         }
 
         //STONEWORK
         registry.addCategory(STONE_WORK_EMI_CATEGORY);
-        registry.addWorkstation(STONE_WORK_EMI_CATEGORY, EmiIngredient.of(Ingredient.of(ModuleResourceProduction.MATERIAL_STONEWORK_FACTORY.getBlock())));
+        registry.addWorkstation(STONE_WORK_EMI_CATEGORY, Emicom.buuz135.industrial.compat.Ingredients.of(com.buuz135.industrial.compat.Ingredients.of(ModuleResourceProduction.MATERIAL_STONEWORK_FACTORY.getBlock())));
         RecipeViewerHelper.getStoneWork().forEach(stoneWorkWrapper -> registry.addRecipe(new StoneWorkEmiRecipe(stoneWorkWrapper)));
 
         //STONEWORK GENERATOR
         registry.addCategory(STONE_WORK_GENERATOR);
-        registry.addWorkstation(STONE_WORK_GENERATOR, EmiIngredient.of(Ingredient.of(ModuleResourceProduction.MATERIAL_STONEWORK_FACTORY.getBlock())));
+        registry.addWorkstation(STONE_WORK_GENERATOR, Emicom.buuz135.industrial.compat.Ingredients.of(com.buuz135.industrial.compat.Ingredients.of(ModuleResourceProduction.MATERIAL_STONEWORK_FACTORY.getBlock())));
         for (RecipeHolder<?> recipe : manager.getAllRecipesFor((RecipeType<StoneWorkGenerateRecipe>) ModuleCore.STONEWORK_GENERATE_TYPE.get())) {
             registry.addRecipe(new StoneWorkGeneratorEmiRecipe((RecipeHolder<StoneWorkGenerateRecipe>) recipe));
         }
 
-        registry.addWorkstation(VanillaEmiRecipeCategories.SMELTING, EmiIngredient.of(Ingredient.of(ModuleResourceProduction.RESOURCEFUL_FURNACE.getBlock())));
+        registry.addWorkstation(VanillaEmiRecipeCategories.SMELTING, Emicom.buuz135.industrial.compat.Ingredients.of(com.buuz135.industrial.compat.Ingredients.of(ModuleResourceProduction.RESOURCEFUL_FURNACE.getBlock())));
 
         for (IMycelialGeneratorType type : IMycelialGeneratorType.TYPES) {
             ItemLike display = type.getDisplay();
@@ -188,7 +188,7 @@ public class IFEmiPlugin implements EmiPlugin {
                     display = mycelialGenerator.getBlock();
                 }
             }
-            MycelialGeneratorEmiCategory category = new MycelialGeneratorEmiCategory(ResourceLocation.fromNamespaceAndPath(Reference.MOD_ID, "mycellial_" + type.getName()), display.asItem(), type);
+            MycelialGeneratorEmiCategory category = new MycelialGeneratorEmiCategory(Identifier.fromNamespaceAndPath(Reference.MOD_ID, "mycellial_" + type.getName()), display.asItem(), type);
             registry.addCategory(category);
             registry.addWorkstation(category, EmiStack.of(display));
             var recipes = type.getRecipes(IFAttachments.registryAccess()).stream().sorted(Comparator.comparingInt(value -> ((MycelialGeneratorRecipe) value).getTicks() * ((MycelialGeneratorRecipe) value).getPowerTick()).reversed()).collect(Collectors.toList());
@@ -221,7 +221,7 @@ public class IFEmiPlugin implements EmiPlugin {
 
         registry.addCategory(SPORES_RECREATOR_EMI_CATEGORY);
         registry.addWorkstation(SPORES_RECREATOR_EMI_CATEGORY, EmiStack.of(ModuleResourceProduction.SPORES_RECREATOR));
-        for (var shroom : EmiIngredient.of(Tags.Items.MUSHROOMS).getEmiStacks()) {
+        for (var shroom : Emicom.buuz135.industrial.compat.Ingredients.of(Tags.Items.MUSHROOMS).getEmiStacks()) {
             registry.addRecipe(new SporesRecreatorEmiRecipe(shroom));
         }
         registry.addRecipe(new SporesRecreatorEmiRecipe(EmiStack.of(Items.CRIMSON_FUNGUS)));

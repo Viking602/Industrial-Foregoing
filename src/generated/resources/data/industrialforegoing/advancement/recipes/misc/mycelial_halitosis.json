@@ -1,8 +1,8 @@
 {
   "neoforge:conditions": [
     {
-      "type": "neoforge:item_exists",
-      "item": "industrialforegoing:mycelial_halitosis"
+      "type": "neoforge:registered",
+      "value": "industrialforegoing:mycelial_halitosis"
     }
   ],
   "parent": "minecraft:recipes/root",

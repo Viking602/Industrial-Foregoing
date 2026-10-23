@@ -1,0 +1,21 @@
+{
+  "name": "机械诅咒之土",
+  "icon": "industrialforegoing:mechanical_dirt",
+  "category": "industrialforegoing:resource_production",
+  "sortnum": 1,
+  "read_by_default": true,
+  "pages": [
+    {
+      "type": "text",
+      "text": "融入神秘技术的泥土，在满足条件时快速生成$(6)怪物$()。$(br2)每次操作需要$(6)1000$() RF 和$(6)20 mB$()$(6)肉汤$()；同时必须满足相应怪物的正常生成条件，且所在区块需要保持加载。$(br2)"
+    },
+    {
+      "type": "text",
+      "text": "向其中一块提供$(6)能量$()或$(6)肉汤$()时，会自动平均分配给相连的其他机械诅咒之土。"
+    },
+    {
+      "type": "industrialforegoing:dissolution",
+      "recipe": "industrialforegoing:dissolution_chamber/mechanical_dirt"
+    }
+  ]
+}

@@ -40,7 +40,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.data.recipes.RecipeOutput;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -74,7 +74,7 @@ public class ConveyorDetectorUpgrade extends ConveyorUpgrade {
 
     @Override
     public void update() {
-        if (getWorld().isClientSide)
+        if (getWorld().isClientSide())
             return;
         boolean previous = hasEntity;
         hasEntity = false;
@@ -106,9 +106,9 @@ public class ConveyorDetectorUpgrade extends ConveyorUpgrade {
     @Override
     public void deserializeNBT(HolderLookup.Provider provider, CompoundTag nbt) {
         super.deserializeNBT(provider, nbt);
-        if (nbt.contains("Filter")) filter.deserializeNBT(provider, nbt.getCompound("Filter"));
-        whitelist = nbt.getBoolean("Whitelist");
-        inverted = nbt.getBoolean("Inverted");
+        if (nbt.contains("Filter")) filter.deserializeNBT(provider, nbt.getCompoundOrEmpty("Filter"));
+        whitelist = nbt.getBooleanOr("Whitelist", false);
+        inverted = nbt.getBooleanOr("Inverted", false);
     }
 
     @Override
@@ -135,7 +135,7 @@ public class ConveyorDetectorUpgrade extends ConveyorUpgrade {
     public void handleButtonInteraction(int buttonId, CompoundTag compound) {
         super.handleButtonInteraction(buttonId, compound);
         if (buttonId >= 0 && buttonId < filter.getFilter().length) {
-            this.filter.setFilter(buttonId, ItemStack.parseOptional(IFAttachments.registryAccess(), compound));
+            this.filter.setFilter(buttonId, com.buuz135.industrial.compat.ItemNbt.parseOptional(IFAttachments.registryAccess(), compound));
             this.getContainer().requestSync();
         }
         if (buttonId == 16) {
@@ -157,7 +157,7 @@ public class ConveyorDetectorUpgrade extends ConveyorUpgrade {
                 return ConveyorDetectorUpgrade.this.filter;
             }
         });
-        ResourceLocation res = ResourceLocation.fromNamespaceAndPath(Reference.MOD_ID, "textures/gui/machines.png");
+        Identifier res = Identifier.fromNamespaceAndPath(Reference.MOD_ID, "textures/gui/machines.png");
         componentList.add(new TexturedStateButtonGuiComponent(16, 133, 20, 18, 18,
                 new StateButtonInfo(0, res, 1, 214, new String[]{"whitelist"}),
                 new StateButtonInfo(1, res, 20, 214, new String[]{"blacklist"})) {
@@ -187,8 +187,8 @@ public class ConveyorDetectorUpgrade extends ConveyorUpgrade {
         }
 
         @Override
-        public Set<ResourceLocation> getTextures() {
-            return Collections.singleton(ResourceLocation.fromNamespaceAndPath(Reference.MOD_ID, "block/conveyor_detection_upgrade"));
+        public Set<Identifier> getTextures() {
+            return Collections.singleton(Identifier.fromNamespaceAndPath(Reference.MOD_ID, "block/conveyor_detection_upgrade"));
         }
 
         @Nonnull
@@ -204,14 +204,14 @@ public class ConveyorDetectorUpgrade extends ConveyorUpgrade {
 
         @Override
         @Nonnull
-        public ResourceLocation getModel(Direction upgradeSide, Direction conveyorFacing) {
-            return ResourceLocation.fromNamespaceAndPath(Reference.MOD_ID, "block/conveyor_upgrade_detection");
+        public Identifier getModel(Direction upgradeSide, Direction conveyorFacing) {
+            return Identifier.fromNamespaceAndPath(Reference.MOD_ID, "block/conveyor_upgrade_detection");
         }
 
         @Nonnull
         @Override
-        public ResourceLocation getItemModel() {
-            return ResourceLocation.fromNamespaceAndPath(Reference.MOD_ID, "conveyor_detection_upgrade");
+        public Identifier getItemModel() {
+            return Identifier.fromNamespaceAndPath(Reference.MOD_ID, "conveyor_detection_upgrade");
         }
 
         @Override

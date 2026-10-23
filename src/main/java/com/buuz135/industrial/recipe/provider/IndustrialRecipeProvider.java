@@ -38,7 +38,7 @@ import net.minecraft.data.recipes.RecipeCategory;
 import net.minecraft.data.recipes.RecipeOutput;
 import net.minecraft.data.recipes.RecipeProvider;
 import net.minecraft.data.recipes.SimpleCookingRecipeBuilder;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.tags.ItemTags;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.Item;
@@ -99,7 +99,7 @@ public class IndustrialRecipeProvider extends RecipeProvider {
         ((IRecipeProvider) ModuleCore.PROCESSING_ADDON_1.get()).registerRecipe(consumer);
         ((IRecipeProvider) ModuleCore.PROCESSING_ADDON_2.get()).registerRecipe(consumer);
         ((IRecipeProvider) ModuleCore.MACHINE_SETTINGS_COPIER.get()).registerRecipe(consumer);
-        SimpleCookingRecipeBuilder.smelting(Ingredient.of(ModuleCore.DRY_RUBBER.get()), RecipeCategory.MISC, ModuleCore.PLASTIC.get(), 0.3f, 200).unlockedBy("has_plastic", this.has(ModuleCore.DRY_RUBBER.get())).save(consumer);
+        SimpleCookingRecipeBuilder.smelting(com.buuz135.industrial.compat.Ingredients.of(ModuleCore.DRY_RUBBER.get()), RecipeCategory.MISC, ModuleCore.PLASTIC.get(), 0.3f, 200).unlockedBy("has_plastic", this.has(ModuleCore.DRY_RUBBER.get())).save(consumer);
         TitaniumShapedRecipeBuilder.shapedRecipe(ModuleCore.PITY.get())
                 .pattern("WIW").pattern("IRI").pattern("WIW")
                 .define('W', ItemTags.LOGS)
@@ -124,9 +124,9 @@ public class IndustrialRecipeProvider extends RecipeProvider {
         }
         for (DyeColor value : DyeColor.values()) {
             TitaniumShapelessRecipeBuilder.shapelessRecipe(ModuleCore.LASER_LENS[value.getId()].get())
-                    .requires(Ingredient.of(Arrays.stream(ModuleCore.LASER_LENS).map(itemRegistryObject -> new ItemStack(itemRegistryObject.get())).collect(Collectors.toList()).stream()))
+                    .requires(com.buuz135.industrial.compat.Ingredients.of(Arrays.stream(ModuleCore.LASER_LENS).map(itemRegistryObject -> new ItemStack(itemRegistryObject.get())).collect(Collectors.toList()).stream()))
                     .requires(value.getTag())
-                    .save(consumer, ResourceLocation.fromNamespaceAndPath(Reference.MOD_ID, "laser_lens_" + value.getSerializedName() + "_recolor"));
+                    .save(consumer, Identifier.fromNamespaceAndPath(Reference.MOD_ID, "laser_lens_" + value.getSerializedName() + "_recolor"));
         }
         IndustrialSerializableProvider.init(consumer);
     }

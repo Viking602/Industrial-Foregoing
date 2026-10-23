@@ -43,7 +43,7 @@ import mezz.jei.api.recipe.RecipeIngredientRole;
 import mezz.jei.api.recipe.RecipeType;
 import mezz.jei.api.recipe.category.IRecipeCategory;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.ItemStack;
@@ -54,7 +54,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class DissolutionChamberCategory implements IRecipeCategory<DissolutionChamberRecipe> {
+public class DissolutionChamberCategory implements com.buuz135.industrial.plugin.jei.MachineRecipeCategory<DissolutionChamberRecipe> {
 
     private final IGuiHelper guiHelper;
     private final IDrawable smallTank;
@@ -91,23 +91,24 @@ public class DissolutionChamberCategory implements IRecipeCategory<DissolutionCh
         for (int i = 0; i < recipe.input.size(); i++) {
             builder.addSlot(RecipeIngredientRole.INPUT, 24 + DissolutionChamberTile.getSlotPos(i).getLeft(), 11 + DissolutionChamberTile.getSlotPos(i).getRight()).addIngredients(recipe.input.get(i));
         }
-        if (recipe.inputFluid != null && !recipe.inputFluid.ingredient().isEmpty()) {
+        if (recipe.inputFluid != null && !recipe.inputFluid.ingredient().fluids().isEmpty()) {
             builder.addSlot(RecipeIngredientRole.INPUT, 33 + 12 + 3, 32 + 3)
                 .setFluidRenderer(1000, false, 12, 13)
                 .setOverlay(smallTank, 0, 0)
-                .addIngredients(NeoForgeTypes.FLUID_STACK, Arrays.asList(recipe.inputFluid.getFluids()));
+                .addIngredients(NeoForgeTypes.FLUID_STACK, com.buuz135.industrial.compat.IngredientViews.fluids(recipe.inputFluid));
         }
-        if (!recipe.output.isEmpty()) {
-            ItemStack stack = recipe.output.get();
+        if (!recipe.output().isEmpty()) {
+            ItemStack stack = recipe.output().get();
             builder.addSlot(RecipeIngredientRole.OUTPUT, 119, 16).addIngredient(VanillaTypes.ITEM_STACK, stack);
         }
-        if (recipe.outputFluid != null && !recipe.outputFluid.isEmpty()) {
-            builder.addSlot(RecipeIngredientRole.OUTPUT, 139 + 3, 14 + 3).setFluidRenderer(1000, false, 12, 50).setOverlay(bigTank, 0, 0).addIngredient(NeoForgeTypes.FLUID_STACK, recipe.outputFluid.get());
+        if (recipe.outputFluid() != null && !recipe.outputFluid().isEmpty()) {
+            builder.addSlot(RecipeIngredientRole.OUTPUT, 139 + 3, 14 + 3).setFluidRenderer(1000, false, 12, 50).setOverlay(bigTank, 0, 0).addIngredient(NeoForgeTypes.FLUID_STACK, recipe.outputFluid().get());
         }
     }
 
     @Override
-    public void draw(DissolutionChamberRecipe recipe, IRecipeSlotsView recipeSlotsView, GuiGraphics guiGraphics, double mouseX, double mouseY) {
+    public void draw(DissolutionChamberRecipe recipe, IRecipeSlotsView recipeSlotsView, GuiGraphicsExtractor guiGraphics, double mouseX, double mouseY) {
+        getBackground().draw(guiGraphics, 0, 0);
         EnergyBarScreenAddon.drawBackground(guiGraphics, Minecraft.getInstance().screen, DefaultAssetProvider.DEFAULT_PROVIDER, 0, 12, 0, 0);
 
 

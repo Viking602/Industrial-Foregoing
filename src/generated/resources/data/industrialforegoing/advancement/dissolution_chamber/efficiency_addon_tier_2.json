@@ -1,8 +1,8 @@
 {
   "neoforge:conditions": [
     {
-      "type": "neoforge:item_exists",
-      "item": "industrialforegoing:efficiency_addon_tier_2"
+      "type": "neoforge:registered",
+      "value": "industrialforegoing:efficiency_addon_tier_2"
     }
   ],
   "parent": "minecraft:recipes/root",

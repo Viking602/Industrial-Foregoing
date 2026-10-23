@@ -43,14 +43,14 @@ public class InfinityChargerTile extends IndustrialMachineTile<InfinityChargerTi
         addInventory(chargingSlot = (SidedInventoryComponent<InfinityChargerTile>) new SidedInventoryComponent<InfinityChargerTile>("charging", 80, 40, 1, 0)
                 .setColor(DyeColor.BLUE)
                 .setSlotLimit(1)
-                .setInputFilter((stack, integer) -> stack.getCapability(Capabilities.EnergyStorage.ITEM) != null)
+                .setInputFilter((stack, integer) -> com.buuz135.industrial.compat.MachineCapabilities.energy(stack) != null)
         );
     }
 
     @Override
     public void serverTick(Level level, BlockPos pos, BlockState state, InfinityChargerTile blockEntity) {
         if (!chargingSlot.getStackInSlot(0).isEmpty() && this.shouldWork()) {
-            var iEnergyStorage = chargingSlot.getStackInSlot(0).getCapability(Capabilities.EnergyStorage.ITEM);
+            var iEnergyStorage = com.buuz135.industrial.compat.MachineCapabilities.energy(chargingSlot.getStackInSlot(0));
             if (iEnergyStorage != null && this.getEnergyStorage() instanceof InfinityEnergyStorage) {
                 if (iEnergyStorage instanceof InfinityEnergyStorage) {
                     long added = Math.min(Long.MAX_VALUE - ((InfinityEnergyStorage) iEnergyStorage).getLongEnergyStored(), Math.min(((InfinityEnergyStorage<InfinityChargerTile>) this.getEnergyStorage()).getLongCapacity(), ((InfinityEnergyStorage<InfinityChargerTile>) this.getEnergyStorage()).getLongEnergyStored()));
@@ -59,7 +59,7 @@ public class InfinityChargerTile extends IndustrialMachineTile<InfinityChargerTi
                     markForUpdate();
                 } else {
                     int extracted = this.getEnergyStorage().getEnergyStored();
-                    ((InfinityEnergyStorage<InfinityChargerTile>) this.getEnergyStorage()).setEnergyStored(((InfinityEnergyStorage<InfinityChargerTile>) this.getEnergyStorage()).getLongEnergyStored() - iEnergyStorage.receiveEnergy(extracted, false));
+                    ((InfinityEnergyStorage<InfinityChargerTile>) this.getEnergyStorage()).setEnergyStored(((InfinityEnergyStorage<InfinityChargerTile>) this.getEnergyStorage()).getLongEnergyStored() - com.buuz135.industrial.compat.MachineEnergy.receiveEnergy(iEnergyStorage, extracted, false));
                     markForUpdate();
                 }
             }

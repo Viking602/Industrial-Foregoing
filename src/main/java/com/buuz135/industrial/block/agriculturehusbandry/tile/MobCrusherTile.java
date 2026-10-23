@@ -76,7 +76,7 @@ import net.neoforged.neoforge.common.CommonHooks;
 import net.neoforged.neoforge.common.util.FakePlayer;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
-import net.neoforged.neoforge.items.ItemHandlerHelper;
+import com.buuz135.industrial.compat.MachineItems;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -101,7 +101,7 @@ public class MobCrusherTile extends IndustrialAreaWorkingTile<MobCrusherTile> {
         super(ModuleAgricultureHusbandry.MOB_CRUSHER, RangeManager.RangeType.BEHIND, true, MobCrusherConfig.powerPerOperation, blockPos, blockState);
         if (!DROP_CUSTOM_DEATH_LOOT.isAccessible()) DROP_CUSTOM_DEATH_LOOT.setAccessible(true);
         this.dropXP = true;
-        this.addTank(tank = (SidedFluidTankComponent<MobCrusherTile>) new SidedFluidTankComponent<MobCrusherTile>("essence", MobCrusherConfig.tankSize, 43, 20, 0).
+        this.addTank(tank = (SidedFluidTankComponent<MobCrusherTile>) new com.buuz135.industrial.compat.MachineFluidTank<MobCrusherTile>("essence", MobCrusherConfig.tankSize, 43, 20, 0).
                 setColor(DyeColor.LIME).
                 setTankAction(FluidTankComponent.Action.DRAIN).
                 setComponentHarness(this).
@@ -115,8 +115,7 @@ public class MobCrusherTile extends IndustrialAreaWorkingTile<MobCrusherTile> {
         );
         this.addButton(buttonComponent = new ButtonComponent(154 - 18 * 3, 84, 14, 14) {
             @Override
-            @OnlyIn(Dist.CLIENT)
-            public List<IFactory<? extends IScreenAddon>> getScreenAddons() {
+            public List<IFactory<?>> getScreenAddons() {
                 return Collections.singletonList(() -> new StateButtonAddon(this,
                         new StateButtonInfo(0, AssetTypes.BUTTON_SIDENESS_ENABLED, ChatFormatting.GOLD + LangUtil.getString("tooltip.industrialforegoing.mob_crusher.produce"), "tooltip.industrialforegoing.mob_crusher.produce_extra"),
                         new StateButtonInfo(1, AssetTypes.BUTTON_SIDENESS_DISABLED, ChatFormatting.GOLD + LangUtil.getString("tooltip.industrialforegoing.mob_crusher.consume"), "tooltip.industrialforegoing.mob_crusher.consume_extra_1", "tooltip.industrialforegoing.mob_crusher.consume_extra_2")) {
@@ -140,7 +139,7 @@ public class MobCrusherTile extends IndustrialAreaWorkingTile<MobCrusherTile> {
             if (mobs.size() > 0) {
                 Mob entity = mobs.get(0);
                 FakePlayer player = IndustrialForegoing.getFakePlayer(this.level, this.getBlockPos(), this.getUuid());
-                if (entity.getType().is(IndustrialTags.EntityTypes.MOB_CRUSHER_INSTANT_KILL_BLACKLIST)) {
+                if (entity.getType().builtInRegistryHolder().is(IndustrialTags.EntityTypes.MOB_CRUSHER_INSTANT_KILL_BLACKLIST)) {
                     return damage(entity, player);
                 } else {
                     return instantKill(entity, player);
@@ -154,7 +153,7 @@ public class MobCrusherTile extends IndustrialAreaWorkingTile<MobCrusherTile> {
         int experience = entity.getExperienceReward((ServerLevel) this.level, player);
         int looting = 0;
         if (!dropXP) {
-            looting = this.level.random.nextInt(4);
+            looting = this.level.getRandom().nextInt(4);
             ItemStack sword = new ItemStack(Items.DIAMOND_SWORD);
             var enchants = new ItemEnchantments.Mutable(ItemEnchantments.EMPTY);
             enchants.set(this.level.registryAccess().holderOrThrow(Enchantments.LOOTING), looting);
@@ -163,7 +162,7 @@ public class MobCrusherTile extends IndustrialAreaWorkingTile<MobCrusherTile> {
         }
         //Loot from table
         DamageSource source = player.damageSources().playerAttack(player);
-        LootTable table = this.level.getServer().reloadableRegistries().getLootTable(entity.getLootTable());
+        LootTable table = entity.getLootTable().map(this.level.getServer().reloadableRegistries()::getLootTable).orElse(LootTable.EMPTY);
         LootParams.Builder context = new LootParams.Builder((ServerLevel) this.level)
                 .withParameter(LootContextParams.THIS_ENTITY, entity)
                 .withParameter(LootContextParams.DAMAGE_SOURCE, source)
@@ -171,7 +170,7 @@ public class MobCrusherTile extends IndustrialAreaWorkingTile<MobCrusherTile> {
                 .withParameter(LootContextParams.ATTACKING_ENTITY, player)
                 .withParameter(LootContextParams.LAST_DAMAGE_PLAYER, player)
                 .withOptionalParameter(LootContextParams.DIRECT_ATTACKING_ENTITY, player);
-        table.getRandomItems(context.create(LootContextParamSets.ENTITY)).forEach(stack -> ItemHandlerHelper.insertItem(this.output, stack, false));
+        table.getRandomItems(context.create(LootContextParamSets.ENTITY)).forEach(stack -> MachineItems.insertItem(this.output, stack, false));
         List<ItemEntity> extra = new ArrayList<>();
         //Drop special items
         try {
@@ -185,11 +184,11 @@ public class MobCrusherTile extends IndustrialAreaWorkingTile<MobCrusherTile> {
         }
         CommonHooks.onLivingDrops(entity, source, extra, true);
         extra.forEach(itemEntity -> {
-            ItemHandlerHelper.insertItem(this.output, itemEntity.getItem(), false);
+            MachineItems.insertItem(this.output, itemEntity.getItem(), false);
             itemEntity.remove(Entity.RemovalReason.KILLED);
         });
         if (dropXP)
-            this.tank.fillForced(new FluidStack(ModuleCore.ESSENCE.getSourceFluid().get(), experience * 20), IFluidHandler.FluidAction.EXECUTE);
+            com.buuz135.industrial.compat.MachineFluids.fillForced(this.tank, new FluidStack(ModuleCore.ESSENCE.getSourceFluid().get(), experience * 20), IFluidHandler.FluidAction.EXECUTE);
         entity.setHealth(0);
         entity.remove(Entity.RemovalReason.KILLED);
         player.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
@@ -235,7 +234,7 @@ public class MobCrusherTile extends IndustrialAreaWorkingTile<MobCrusherTile> {
     @Override
     public void loadSettings(Player player, CompoundTag tag) {
         if (tag.contains("MC_drops")) {
-            this.dropXP = tag.getBoolean("MC_drops");
+            this.dropXP = tag.getBooleanOr("MC_drops", false);
         }
         super.loadSettings(player, tag);
     }

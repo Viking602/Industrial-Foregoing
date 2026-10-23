@@ -1,0 +1,17 @@
+{
+  "name": "无限钻头",
+  "icon": "industrialforegoing:infinity_drill",
+  "category": "industrialforegoing:tools",
+  "sortnum": 3,
+  "read_by_default": true,
+  "pages": [
+    {
+      "type": "text",
+      "text": "用于大范围挖掘，层级越高，工作范围越大。"
+    },
+    {
+      "type": "industrialforegoing:dissolution",
+      "recipe": "industrialforegoing:dissolution_chamber/infinity_drill"
+    }
+  ]
+}

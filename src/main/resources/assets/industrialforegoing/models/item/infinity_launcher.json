@@ -8,19 +8,5 @@
     "0": "industrialforegoing:item/infinity_launcher",
     "1": "industrialforegoing:item/infinity_launcher_projectile",
     "particle": "industrialforegoing:item/infinity_launcher"
-  },
-  "overrides": [
-    {
-      "predicate": {
-        "industrialforegoing:cooldown": 1
-      },
-      "model": "industrialforegoing:item/infinity_launcher_empty"
-    },
-    {
-      "predicate": {
-        "industrialforegoing:cooldown": 2
-      },
-      "model": "industrialforegoing:item/infinity_launcher_full"
-    }
-  ]
+  }
 }

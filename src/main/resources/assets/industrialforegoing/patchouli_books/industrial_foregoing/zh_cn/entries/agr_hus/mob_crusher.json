@@ -1,0 +1,17 @@
+{
+  "name": "屠宰机",
+  "icon": "industrialforegoing:mob_crusher",
+  "category": "industrialforegoing:agriculture_husbandry",
+  "sortnum": 6,
+  "read_by_default": true,
+  "pages": [
+    {
+      "type": "text",
+      "text": "模拟玩家$(6)击杀$()生物，获得掉落物与精华液。掉落物直接取自生物的战利品表。$(br2)也可以切换到另一种模式：不再产生精华液，而是以随机等级的$(6)时运$()增加掉落物。"
+    },
+    {
+      "type": "crafting",
+      "recipe": "industrialforegoing:mob_crusher"
+    }
+  ]
+}

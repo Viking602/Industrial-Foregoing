@@ -35,7 +35,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Fluids;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
-import net.neoforged.neoforge.items.ItemHandlerHelper;
+import com.buuz135.industrial.compat.MachineItems;
 
 import javax.annotation.Nonnull;
 
@@ -53,11 +53,11 @@ public class LatexProcessingUnitTile extends IndustrialProcessingTile<LatexProce
 
     public LatexProcessingUnitTile(BlockPos blockPos, BlockState blockState) {
         super(ModuleCore.LATEX_PROCESSING, 48 + 25, 40, blockPos, blockState);
-        this.addTank(latex = (SidedFluidTankComponent<LatexProcessingUnitTile>) new SidedFluidTankComponent<LatexProcessingUnitTile>("latex", LatexProcessingUnitConfig.maxLatexTankSize, 29, 20, 0).
+        this.addTank(latex = (SidedFluidTankComponent<LatexProcessingUnitTile>) new com.buuz135.industrial.compat.MachineFluidTank<LatexProcessingUnitTile>("latex", LatexProcessingUnitConfig.maxLatexTankSize, 29, 20, 0).
                 setColor(DyeColor.LIGHT_GRAY).
                 setComponentHarness(this).
                 setValidator(fluidStack -> fluidStack.getFluid().isSame(ModuleCore.LATEX.getSourceFluid().get())));
-        this.addTank(water = (SidedFluidTankComponent<LatexProcessingUnitTile>) new SidedFluidTankComponent<LatexProcessingUnitTile>("water", LatexProcessingUnitConfig.maxWaterTankSize, 30 + 18, 20, 1).
+        this.addTank(water = (SidedFluidTankComponent<LatexProcessingUnitTile>) new com.buuz135.industrial.compat.MachineFluidTank<LatexProcessingUnitTile>("water", LatexProcessingUnitConfig.maxWaterTankSize, 30 + 18, 20, 1).
                 setColor(DyeColor.BLUE).
                 setComponentHarness(this).
                 setValidator(fluidStack -> fluidStack.getFluid().isSame(Fluids.WATER)));
@@ -69,15 +69,15 @@ public class LatexProcessingUnitTile extends IndustrialProcessingTile<LatexProce
 
     @Override
     public boolean canIncrease() {
-        return latex.getFluidAmount() >= AMOUNT_LATEX && water.getFluidAmount() >= AMOUNT_WATER && ItemHandlerHelper.insertItem(output, new ItemStack(ModuleCore.DRY_RUBBER.get()), true).isEmpty();
+        return latex.getFluidAmount() >= AMOUNT_LATEX && water.getFluidAmount() >= AMOUNT_WATER && MachineItems.insertItem(output, new ItemStack(ModuleCore.DRY_RUBBER.get()), true).isEmpty();
     }
 
     @Override
     public Runnable onFinish() {
         return () -> {
-            latex.drain(AMOUNT_LATEX, IFluidHandler.FluidAction.EXECUTE);
-            water.drain(AMOUNT_WATER, IFluidHandler.FluidAction.EXECUTE);
-            ItemHandlerHelper.insertItem(output, new ItemStack(ModuleCore.DRY_RUBBER.get()), false);
+            com.buuz135.industrial.compat.MachineFluids.drainForced(latex, AMOUNT_LATEX, IFluidHandler.FluidAction.EXECUTE);
+            com.buuz135.industrial.compat.MachineFluids.drainForced(water, AMOUNT_WATER, IFluidHandler.FluidAction.EXECUTE);
+            MachineItems.insertItem(output, new ItemStack(ModuleCore.DRY_RUBBER.get()), false);
         };
     }
 

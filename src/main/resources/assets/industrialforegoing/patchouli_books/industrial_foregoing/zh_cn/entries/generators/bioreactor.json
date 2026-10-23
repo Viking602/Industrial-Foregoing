@@ -1,0 +1,17 @@
+{
+  "name": "生物质炉",
+  "icon": "industrialforegoing:bioreactor",
+  "category": "industrialforegoing:generators",
+  "sortnum": 2,
+  "read_by_default": true,
+  "pages": [
+    {
+      "type": "text",
+      "text": "提供水和$(6)种子$()、$(6)树苗$()、$(6)染料$()，甚至$(6)头颅$()后，可生产$(l:generators/biofuel)生物燃油$()。$(br2)材料种类越丰富，每份材料产生的燃油越多。例如只有一种材料时，每份产生$(6)80$() mB；有四种不同材料时，每份产生$(6)110$() mB，共计$(6)440$() mB。"
+    },
+    {
+      "type": "crafting",
+      "recipe": "industrialforegoing:bioreactor"
+    }
+  ]
+}

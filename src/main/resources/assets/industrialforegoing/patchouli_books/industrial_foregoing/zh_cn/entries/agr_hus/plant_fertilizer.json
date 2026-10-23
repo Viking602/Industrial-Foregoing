@@ -1,0 +1,21 @@
+{
+  "name": "施肥机",
+  "icon": "industrialforegoing:plant_fertilizer",
+  "category": "industrialforegoing:agriculture_husbandry",
+  "sortnum": 5,
+  "read_by_default": true,
+  "pages": [
+    {
+      "type": "text",
+      "text": "自动向植物$(6)施用$()骨粉。$(br2)机器会持续对同一株作物施肥，直到它不再接受骨粉，才转向下一株。因此，机器可能会卡在始终接受骨粉的植物上，例如$(6)向日葵$()，或无法达到最终生长阶段的植物。"
+    },
+    {
+      "type": "text",
+      "text": "施肥机接受以下材料：$(br)$(li)骨粉$(li)肥料"
+    },
+    {
+      "type": "crafting",
+      "recipe": "industrialforegoing:plant_fertilizer"
+    }
+  ]
+}

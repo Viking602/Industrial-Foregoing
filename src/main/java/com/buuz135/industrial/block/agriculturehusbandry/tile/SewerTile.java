@@ -56,11 +56,11 @@ public class SewerTile extends IndustrialAreaWorkingTile<SewerTile> {
 
     public SewerTile(BlockPos blockPos, BlockState blockState) {
         super(ModuleAgricultureHusbandry.SEWER, RangeManager.RangeType.TOP, true, SewerConfig.powerPerOperation, blockPos, blockState);
-        this.addTank(sewage = (SidedFluidTankComponent<SewerTile>) new SidedFluidTankComponent<SewerTile>("sewage", SewerConfig.maxSewageTankSize, 45, 20, 0).
+        this.addTank(sewage = (SidedFluidTankComponent<SewerTile>) new com.buuz135.industrial.compat.MachineFluidTank<SewerTile>("sewage", SewerConfig.maxSewageTankSize, 45, 20, 0).
                 setColor(DyeColor.BROWN).
                 setTankAction(FluidTankComponent.Action.DRAIN).
                 setComponentHarness(this));
-        this.addTank(essence = (SidedFluidTankComponent<SewerTile>) new SidedFluidTankComponent<SewerTile>("essence", SewerConfig.maxEssenceTankSize, 66, 20, 1).
+        this.addTank(essence = (SidedFluidTankComponent<SewerTile>) new com.buuz135.industrial.compat.MachineFluidTank<SewerTile>("essence", SewerConfig.maxEssenceTankSize, 66, 20, 1).
                 setColor(DyeColor.LIME).
                 setTankAction(FluidTankComponent.Action.DRAIN).
                 setComponentHarness(this));
@@ -73,13 +73,13 @@ public class SewerTile extends IndustrialAreaWorkingTile<SewerTile> {
         List<Animal> entities = this.level.getEntitiesOfClass(Animal.class, getWorkingArea().bounds());
         int amount = entities.size();
         if (amount > 0 && hasEnergy(powerPerOperation * amount)) {
-            sewage.fillForced(new FluidStack(ModuleCore.SEWAGE.getSourceFluid().get(), 50 * amount), IFluidHandler.FluidAction.EXECUTE);
+            com.buuz135.industrial.compat.MachineFluids.fillForced(sewage, new FluidStack(ModuleCore.SEWAGE.getSourceFluid().get(), 50 * amount), IFluidHandler.FluidAction.EXECUTE);
             ++amount;
         }
         List<ExperienceOrb> orb = this.level.getEntitiesOfClass(ExperienceOrb.class, getWorkingArea().bounds());
         for (ExperienceOrb experienceOrbEntity : orb) {
-            if (experienceOrbEntity.isAlive() && essence.getFluidAmount() + experienceOrbEntity.value * 20 <= essence.getCapacity()) {
-                essence.fillForced(new FluidStack(ModuleCore.ESSENCE.getSourceFluid().get(), experienceOrbEntity.value * 20), IFluidHandler.FluidAction.EXECUTE);
+            if (experienceOrbEntity.isAlive() && essence.getFluidAmount() + experienceOrbEntity.getValue() * 20 <= essence.getCapacity()) {
+                com.buuz135.industrial.compat.MachineFluids.fillForced(essence, new FluidStack(ModuleCore.ESSENCE.getSourceFluid().get(), experienceOrbEntity.getValue() * 20), IFluidHandler.FluidAction.EXECUTE);
                 experienceOrbEntity.remove(Entity.RemovalReason.KILLED);
             }
         }
@@ -88,7 +88,7 @@ public class SewerTile extends IndustrialAreaWorkingTile<SewerTile> {
             var fluidSpace = (this.essence.getCapacity() - this.essence.getFluidAmount());
             var toExtractEssence = Math.min(fluidSpace, player.totalExperience * 20);
             player.giveExperiencePoints(toExtractEssence / -20);
-            this.essence.fillForced(new FluidStack(ModuleCore.ESSENCE.getSourceFluid().get(), toExtractEssence), IFluidHandler.FluidAction.EXECUTE);
+            com.buuz135.industrial.compat.MachineFluids.fillForced(this.essence, new FluidStack(ModuleCore.ESSENCE.getSourceFluid().get(), toExtractEssence), IFluidHandler.FluidAction.EXECUTE);
         }
         return new WorkAction(1, powerPerOperation * amount);
     }

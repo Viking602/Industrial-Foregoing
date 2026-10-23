@@ -38,9 +38,9 @@ import mezz.jei.api.recipe.RecipeIngredientRole;
 import mezz.jei.api.recipe.RecipeType;
 import mezz.jei.api.recipe.category.IRecipeCategory;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
@@ -48,14 +48,14 @@ import org.apache.commons.lang3.tuple.Pair;
 
 import java.awt.*;
 
-public class OreWasherCategory implements IRecipeCategory<OreFluidEntryRaw> {
+public class OreWasherCategory implements com.buuz135.industrial.plugin.jei.MachineRecipeCategory<OreFluidEntryRaw> {
 
     private final IGuiHelper helper;
     private IDrawable tankOverlay;
 
     public OreWasherCategory(IGuiHelper helper) {
         this.helper = helper;
-        tankOverlay = helper.createDrawable(ResourceLocation.fromNamespaceAndPath(Reference.MOD_ID, "textures/gui/jei.png"), 1, 207, 12, 48);
+        tankOverlay = helper.createDrawable(Identifier.fromNamespaceAndPath(Reference.MOD_ID, "textures/gui/jei.png"), 1, 207, 12, 48);
     }
 
     @Override
@@ -70,7 +70,7 @@ public class OreWasherCategory implements IRecipeCategory<OreFluidEntryRaw> {
 
     @Override
     public IDrawable getBackground() {
-        return helper.createDrawable(ResourceLocation.fromNamespaceAndPath(Reference.MOD_ID, "textures/gui/jei.png"), 142, 29, 112, 50);
+        return helper.createDrawable(Identifier.fromNamespaceAndPath(Reference.MOD_ID, "textures/gui/jei.png"), 142, 29, 112, 50);
     }
 
     @Override
@@ -80,14 +80,15 @@ public class OreWasherCategory implements IRecipeCategory<OreFluidEntryRaw> {
 
     @Override
     public void setRecipe(IRecipeLayoutBuilder builder, OreFluidEntryRaw recipe, IFocusGroup focuses) {
-        builder.addSlot(RecipeIngredientRole.INPUT, 1, 16).addIngredients(Ingredient.of(recipe.getOre()));
+        builder.addSlot(RecipeIngredientRole.INPUT, 1, 16).addIngredients(com.buuz135.industrial.compat.Ingredients.of(recipe.getOre()));
         builder.addSlot(RecipeIngredientRole.INPUT, 47, 1).setFluidRenderer(1000, false, 12, 48).setOverlay(tankOverlay, 0, 0).addIngredient(NeoForgeTypes.FLUID_STACK, recipe.getInput());
 
         builder.addSlot(RecipeIngredientRole.OUTPUT, 99, 1).setFluidRenderer(1000, false, 12, 48).setOverlay(tankOverlay, 0, 0).addIngredient(NeoForgeTypes.FLUID_STACK, recipe.getOutput());
     }
 
     @Override
-    public void draw(OreFluidEntryRaw recipe, IRecipeSlotsView recipeSlotsView, GuiGraphics stack, double mouseX, double mouseY) {
+    public void draw(OreFluidEntryRaw recipe, IRecipeSlotsView recipeSlotsView, GuiGraphicsExtractor stack, double mouseX, double mouseY) {
+        getBackground().draw(stack, 0, 0);
         SlotsScreenAddon.drawAsset(stack, Minecraft.getInstance().screen, DefaultAssetProvider.DEFAULT_PROVIDER, 1, 16, 0, 0, 1, integer -> Pair.of(18 * (integer % 1), 18 * (integer / 1)), integer -> ItemStack.EMPTY, true, integer -> new Color(DyeColor.BLUE.getFireworkColor()), integer -> true, 1);
     }
 }

@@ -1,8 +1,8 @@
 {
   "neoforge:conditions": [
     {
-      "type": "neoforge:item_exists",
-      "item": "industrialforegoing:mycelial_frosty"
+      "type": "neoforge:registered",
+      "value": "industrialforegoing:mycelial_frosty"
     }
   ],
   "parent": "minecraft:recipes/root",

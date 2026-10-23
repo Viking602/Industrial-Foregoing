@@ -40,7 +40,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
-import net.neoforged.neoforge.items.ItemHandlerHelper;
+import com.buuz135.industrial.compat.MachineItems;
 
 import javax.annotation.Nonnull;
 import java.util.Optional;
@@ -56,7 +56,7 @@ public class SludgeRefinerTile extends IndustrialProcessingTile<SludgeRefinerTil
 
     public SludgeRefinerTile(BlockPos blockPos, BlockState blockState) {
         super(ModuleResourceProduction.SLUDGE_REFINER, 53, 40, blockPos, blockState);
-        addTank(sludge = (SidedFluidTankComponent<SludgeRefinerTile>) new SidedFluidTankComponent<SludgeRefinerTile>("sludge", SludgeRefinerConfig.maxSludgeTankSize, 31, 20, 0)
+        addTank(sludge = (SidedFluidTankComponent<SludgeRefinerTile>) new com.buuz135.industrial.compat.MachineFluidTank<SludgeRefinerTile>("sludge", SludgeRefinerConfig.maxSludgeTankSize, 31, 20, 0)
                 .setColor(DyeColor.MAGENTA)
                 .setComponentHarness(this)
                 .setTankAction(FluidTankComponent.Action.FILL)
@@ -79,11 +79,11 @@ public class SludgeRefinerTile extends IndustrialProcessingTile<SludgeRefinerTil
     @Override
     public Runnable onFinish() {
         return () -> {
-            Optional<Holder<Item>> optionalItem = BuiltInRegistries.ITEM.getRandomElementOf(IndustrialTags.Items.SLUDGE_OUTPUT, this.level.random);
+            Optional<Holder<Item>> optionalItem = BuiltInRegistries.ITEM.getRandomElementOf(IndustrialTags.Items.SLUDGE_OUTPUT, this.level.getRandom());
             optionalItem.ifPresent(item -> {
-                if (ItemHandlerHelper.insertItem(output, new ItemStack(item), true).isEmpty()) {
-                    sludge.drainForced(500, IFluidHandler.FluidAction.EXECUTE);
-                    ItemHandlerHelper.insertItem(output, new ItemStack(item), false);
+                if (MachineItems.insertItem(output, new ItemStack(item), true).isEmpty()) {
+                    com.buuz135.industrial.compat.MachineFluids.drainForced(sludge, 500, IFluidHandler.FluidAction.EXECUTE);
+                    MachineItems.insertItem(output, new ItemStack(item), false);
                 }
             });
         };

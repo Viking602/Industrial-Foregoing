@@ -1,0 +1,27 @@
+{
+  "name": "传送带",
+  "icon": "industrialforegoing:conveyor",
+  "category": "industrialforegoing:transport",
+  "sortnum": 0,
+  "read_by_default": true,
+  "pages": [
+    {
+      "type": "text",
+      "text": "可运输物品、实体和流体，并通过$(l:transport/conveyor_upgrades)升级插件$()与周围环境交互。物品和实体可以上下运输，流体只能水平运输。$(br2)手持染料右键传送带可为其染色。"
+    },
+    {
+      "type": "crafting",
+      "recipe": "industrialforegoing:conveyor"
+    },
+    {
+      "type": "spotlight",
+      "item": "minecraft:glowstone_dust",
+      "text": "使用荧石可大幅加快传送带上物品和实体的移动速度。"
+    },
+    {
+      "type": "spotlight",
+      "item": "industrialforegoing:plastic",
+      "text": "使用塑料可以防止传送带上的物品被玩家拾取。"
+    }
+  ]
+}

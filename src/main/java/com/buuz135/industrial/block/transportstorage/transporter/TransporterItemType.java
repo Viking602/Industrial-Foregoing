@@ -42,7 +42,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.data.recipes.RecipeOutput;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -52,7 +52,7 @@ import net.neoforged.api.distmarker.OnlyIn;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.common.Tags;
 import net.neoforged.neoforge.items.IItemHandler;
-import net.neoforged.neoforge.items.ItemHandlerHelper;
+import com.buuz135.industrial.compat.MachineItems;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
@@ -91,7 +91,7 @@ public class TransporterItemType extends FilteredTransporterType<ItemStack, IIte
     public void update() {
         super.update();
         float speed = getSpeed();
-        if (getLevel().isClientSide || getLevel().getGameTime() % (Math.max(1, 4 - speed)) != 0) return;
+        if (getLevel().isClientSide() || getLevel().getGameTime() % (Math.max(1, 4 - speed)) != 0) return;
 
         IBlockContainer<?> container = getContainer();
         if (getAction() != TransporterTypeFactory.TransporterAction.EXTRACT || !(container instanceof TransporterTile transporterTile)) return;
@@ -99,10 +99,10 @@ public class TransporterItemType extends FilteredTransporterType<ItemStack, IIte
         for (Direction direction : transporterTile.getTransporterTypeMap().keySet()) {
             TransporterType transporterType = transporterTile.getTransporterTypeMap().get(direction);
             if (transporterType instanceof TransporterItemType itemTransporter && transporterType.getAction() == TransporterTypeFactory.TransporterAction.INSERT) {
-                var origin = getLevel().getCapability(Capabilities.ItemHandler.BLOCK, getPos().relative(this.getSide()), getSide().getOpposite());
+                var origin = com.buuz135.industrial.compat.MachineCapabilities.items(getLevel(), getPos().relative(this.getSide()), getSide().getOpposite());
                 if (origin == null) continue;
 
-                var destination = getLevel().getCapability(Capabilities.ItemHandler.BLOCK, getPos().relative(direction), direction.getOpposite());
+                var destination = com.buuz135.industrial.compat.MachineCapabilities.items(getLevel(), getPos().relative(direction), direction.getOpposite());
                 if (destination == null) continue;
 
                 if (extractSlot >= origin.getSlots()
@@ -136,10 +136,10 @@ public class TransporterItemType extends FilteredTransporterType<ItemStack, IIte
                 simulatedAmount = Math.min(amount, simulatedAmount);
 
                 if (!extracted.isEmpty() && simulatedAmount > 0) {
-                    ItemStack returned = ItemHandlerHelper.insertItem(destination, extracted, true);
+                    ItemStack returned = MachineItems.insertItem(destination, extracted, true);
                     if (returned.isEmpty() || amount - returned.getCount() > 0) {
                         extracted = origin.extractItem(extractSlot, returned.isEmpty() ? simulatedAmount : simulatedAmount - returned.getCount(), false);
-                        ItemHandlerHelper.insertItem(destination, extracted, false);
+                        MachineItems.insertItem(destination, extracted, false);
                         itemTransporter.addTransferedStack(getSide(), extracted);
                     } else {
                         this.extractSlot++;
@@ -180,15 +180,14 @@ public class TransporterItemType extends FilteredTransporterType<ItemStack, IIte
     }
 
     public void addTransferedStack(Direction direction, @NotNull ItemStack stack) {
-        syncRender(direction, (CompoundTag) stack.saveOptional(getLevel().registryAccess()));
+        syncRender(direction, (CompoundTag) com.buuz135.industrial.compat.ItemNbt.saveOptional(stack, getLevel().registryAccess()));
     }
 
     @Override
     public void handleRenderSync(Direction origin, CompoundTag compoundNBT) {
-        this.queue.computeIfAbsent(origin, direction -> new ArrayList<>()).addFirst(ItemStack.parseOptional(getLevel().registryAccess(), compoundNBT));
+        this.queue.computeIfAbsent(origin, direction -> new ArrayList<>()).addFirst(com.buuz135.industrial.compat.ItemNbt.parseOptional(getLevel().registryAccess(), compoundNBT));
     }
 
-    @OnlyIn(Dist.CLIENT)
     @Override
     public void renderTransfer(Vector3f pos, Direction direction, int step, PoseStack stack, int combinedOverlayIn, MultiBufferSource buffer, float frame, Level level) {
         super.renderTransfer(pos, direction, step, stack, combinedOverlayIn, buffer, frame, level);
@@ -197,10 +196,10 @@ public class TransporterItemType extends FilteredTransporterType<ItemStack, IIte
             stack.scale(scale, scale, scale);
             ItemStack itemStack = queue.get(direction).get(step);
             if (!itemStack.isEmpty()) {
-                Minecraft.getInstance().getItemRenderer().renderStatic(itemStack, ItemDisplayContext.NONE, 0xF000F0, combinedOverlayIn, stack, buffer, level,0);
+                com.buuz135.industrial.compat.RenderCompat.renderStatic(itemStack, ItemDisplayContext.NONE, 0xF000F0, combinedOverlayIn, stack, buffer, level,0);
             } else {
                 stack.pushPose();
-                stack.mulPose(Minecraft.getInstance().getEntityRenderDispatcher().cameraOrientation());
+                stack.mulPose(Minecraft.getInstance().gameRenderer.getMainCamera().rotation());
                 //stack.mulPose(Axis.ZP.rotationDegrees(90f));
                 stack.mulPose(Axis.XP.rotationDegrees(-90f));
 
@@ -244,24 +243,24 @@ public class TransporterItemType extends FilteredTransporterType<ItemStack, IIte
 
         @Override
         @Nonnull
-        public ResourceLocation getModel(Direction upgradeSide, TransporterAction action) {
-            return ResourceLocation.fromNamespaceAndPath(Reference.MOD_ID, "block/transporters/item_transporter_" + action.name().toLowerCase(Locale.ROOT) + "_" + upgradeSide.getSerializedName().toLowerCase(Locale.ROOT));
+        public Identifier getModel(Direction upgradeSide, TransporterAction action) {
+            return Identifier.fromNamespaceAndPath(Reference.MOD_ID, "block/transporters/item_transporter_" + action.name().toLowerCase(Locale.ROOT) + "_" + upgradeSide.getSerializedName().toLowerCase(Locale.ROOT));
         }
 
         @Override
-        public Set<ResourceLocation> getTextures() {
-            return Sets.newHashSet(ResourceLocation.parse("industrialforegoing:block/transporters/item"), ResourceLocation.parse("industrialforegoing:block/base/bottom"));
+        public Set<Identifier> getTextures() {
+            return Sets.newHashSet(Identifier.parse("industrialforegoing:block/transporters/item"), Identifier.parse("industrialforegoing:block/base/bottom"));
         }
 
         @Override
         public boolean canBeAttachedAgainst(Level world, BlockPos pos, Direction face) {
-            return world.getCapability(Capabilities.ItemHandler.BLOCK, pos, face) != null;
+            return com.buuz135.industrial.compat.MachineCapabilities.items(world, pos, face) != null;
         }
 
         @Nonnull
         @Override
-        public ResourceLocation getItemModel() {
-            return ResourceLocation.fromNamespaceAndPath(Reference.MOD_ID, "block/transporters/item_transporter_" + TransporterAction.EXTRACT.name().toLowerCase(Locale.ROOT) + "_" + Direction.NORTH.getSerializedName().toLowerCase(Locale.ROOT));
+        public Identifier getItemModel() {
+            return Identifier.fromNamespaceAndPath(Reference.MOD_ID, "block/transporters/item_transporter_" + TransporterAction.EXTRACT.name().toLowerCase(Locale.ROOT) + "_" + Direction.NORTH.getSerializedName().toLowerCase(Locale.ROOT));
         }
 
         @Override

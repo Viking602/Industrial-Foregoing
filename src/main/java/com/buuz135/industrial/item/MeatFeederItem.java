@@ -63,27 +63,27 @@ public class MeatFeederItem extends IFCustomItem {
     @Override
     public void addTooltipDetails(@Nullable Key key, ItemStack stack, List<Component> tooltip, boolean advanced) {
         super.addTooltipDetails(key, stack, tooltip, advanced);
-        var handlerItemStack = stack.getCapability(Capabilities.FluidHandler.ITEM);
+        var handlerItemStack = com.buuz135.industrial.compat.MachineCapabilities.fluids(stack);
         if (handlerItemStack != null && key == null) {
             tooltip.add(Component.literal(NumberFormat.getNumberInstance(Locale.ROOT).format(handlerItemStack.getFluidInTank(0).getAmount()) + ChatFormatting.GOLD + "/" + ChatFormatting.WHITE + NumberFormat.getNumberInstance(Locale.ROOT).format(512000) + ChatFormatting.GOLD + Component.translatable("text.industrialforegoing.display.mb_of_meat").getString()));
         }
     }
 
     public int getFilledAmount(ItemStack stack) {
-        var handlerItemStack = stack.getCapability(Capabilities.FluidHandler.ITEM);
+        var handlerItemStack = com.buuz135.industrial.compat.MachineCapabilities.fluids(stack);
         return (handlerItemStack == null || handlerItemStack.getFluidInTank(0).isEmpty() ? 0 : handlerItemStack.getFluidInTank(0).getAmount());
     }
 
     public void drain(ItemStack stack, int amount) {
-        var handlerItemStack = stack.getCapability(Capabilities.FluidHandler.ITEM);
+        var handlerItemStack = com.buuz135.industrial.compat.MachineCapabilities.fluids(stack);
         if (handlerItemStack != null)
             handlerItemStack.drain(new FluidStack(ModuleCore.MEAT.getSourceFluid().get(), amount), IFluidHandler.FluidAction.EXECUTE);
     }
 
     @Override
-    public void inventoryTick(ItemStack stack, Level worldIn, Entity entityIn, int itemSlot, boolean isSelected) {
-        super.inventoryTick(stack, worldIn, entityIn, itemSlot, isSelected);
-        if (!worldIn.isClientSide && entityIn instanceof Player) {
+    public void inventoryTick(ItemStack stack, net.minecraft.server.level.ServerLevel worldIn, Entity entityIn, net.minecraft.world.entity.EquipmentSlot equipmentSlot) {
+        super.inventoryTick(stack, worldIn, entityIn, equipmentSlot);
+        if (!worldIn.isClientSide() && entityIn instanceof Player) {
             Player player = (Player) entityIn;
             if (player.getFoodData().needsFood() || player.getFoodData().getSaturationLevel() < 10) {
                 if (stack.getItem().equals(ModuleTool.MEAT_FEEDER.get())) {

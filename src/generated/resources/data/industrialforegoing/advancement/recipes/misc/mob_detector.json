@@ -1,8 +1,8 @@
 {
   "neoforge:conditions": [
     {
-      "type": "neoforge:item_exists",
-      "item": "industrialforegoing:mob_detector"
+      "type": "neoforge:registered",
+      "value": "industrialforegoing:mob_detector"
     }
   ],
   "parent": "minecraft:recipes/root",

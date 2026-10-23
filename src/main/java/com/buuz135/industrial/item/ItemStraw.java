@@ -31,11 +31,11 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.data.recipes.RecipeOutput;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.InteractionResultHolder;
+
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.UseAnim;
+import net.minecraft.world.item.ItemUseAnimation;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -65,7 +65,7 @@ public class ItemStraw extends IFCustomItem {
     @Override
     @Nonnull
     public ItemStack finishUsingItem(@Nonnull ItemStack heldStack, Level world, LivingEntity entity) {
-        if (!world.isClientSide && entity instanceof Player) {
+        if (!world.isClientSide() && entity instanceof Player) {
             Player player = (Player) entity;
             HitResult result = getPlayerPOVHitResult(world, player, ClipContext.Fluid.SOURCE_ONLY);
             if (result != null && result.getType() == HitResult.Type.BLOCK) {
@@ -77,14 +77,14 @@ public class ItemStraw extends IFCustomItem {
                 if (fluidState != Fluids.EMPTY.defaultFluidState() && block instanceof BucketPickup && fluidState.isSource()) {
                     StrawUtils.getStrawHandler(fluidState.getType()).ifPresent(handler -> {
                         ItemStack stack = ((BucketPickup) block).pickupBlock(player, world, pos, state);
-                        var iFluidHandlerItem = stack.getCapability(Capabilities.FluidHandler.ITEM);
+                        var iFluidHandlerItem = com.buuz135.industrial.compat.MachineCapabilities.fluids(stack);
                         if (iFluidHandlerItem != null && !iFluidHandlerItem.getFluidInTank(0).isEmpty()) {
                             handler.onDrink(world, pos, iFluidHandlerItem.getFluidInTank(0).getFluid(), player, false);
                         }
                     });
                     return heldStack;
                 }
-                var handler = world.getCapability(Capabilities.FluidHandler.BLOCK, pos, null);
+                var handler = com.buuz135.industrial.compat.MachineCapabilities.fluids(world, pos, null);
                 if (handler != null) {
                         int tanks = handler.getTanks();
                         for (int i = 0; i < tanks; i++) {
@@ -110,7 +110,7 @@ public class ItemStraw extends IFCustomItem {
 
     @Override
     @Nonnull
-    public InteractionResultHolder<ItemStack> use(Level worldIn, Player playerIn, @Nonnull InteractionHand handIn) {
+    public net.minecraft.world.InteractionResult use(Level worldIn, Player playerIn, @Nonnull InteractionHand handIn) {
         HitResult result = getPlayerPOVHitResult(worldIn, playerIn, ClipContext.Fluid.SOURCE_ONLY);
         if (result != null && result.getType() == HitResult.Type.BLOCK) {
             BlockHitResult blockRayTraceResult = (BlockHitResult) result;
@@ -122,12 +122,12 @@ public class ItemStraw extends IFCustomItem {
                 Optional<StrawHandler> handler = StrawUtils.getStrawHandler(fluid.getType());
                 if (handler.isPresent()) {
                     playerIn.startUsingItem(handIn);
-                    return InteractionResultHolder.success(playerIn.getItemInHand(handIn)); //success accepted
+                    return net.minecraft.world.InteractionResult.SUCCESS; //success accepted
                 }
             }
             BlockEntity tile = worldIn.getBlockEntity(pos);
             if (tile != null) {
-                var handler = worldIn.getCapability(Capabilities.FluidHandler.BLOCK, pos, null);
+                var handler = com.buuz135.industrial.compat.MachineCapabilities.fluids(worldIn, pos, null);
                 if (handler != null) {
                     int tanks = handler.getTanks();
                     for (int i = 0; i < tanks; i++) {
@@ -139,7 +139,7 @@ public class ItemStraw extends IFCustomItem {
                                 FluidStack out = handler.drain(stack, IFluidHandler.FluidAction.SIMULATE);
                                 if (out != null && out.getAmount() >= 1000) {
                                     playerIn.startUsingItem(handIn);
-                                    return new InteractionResultHolder(InteractionResult.SUCCESS, playerIn.getItemInHand(handIn));
+                                    return InteractionResult.SUCCESS;
                                 }
                             }
                         }
@@ -156,8 +156,8 @@ public class ItemStraw extends IFCustomItem {
     }
 
     @Override
-    public UseAnim getUseAnimation(ItemStack p_77661_1_) {
-        return UseAnim.DRINK;
+    public ItemUseAnimation getUseAnimation(ItemStack p_77661_1_) {
+        return ItemUseAnimation.DRINK;
     }
 
     @Override

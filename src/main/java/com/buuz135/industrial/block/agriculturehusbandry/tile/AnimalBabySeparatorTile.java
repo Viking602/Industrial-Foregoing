@@ -63,8 +63,7 @@ public class AnimalBabySeparatorTile extends IndustrialAreaWorkingTile<AnimalBab
         this.movingAdults = false;
         addButton(new ButtonComponent(42, 20, 18, 18) {
             @Override
-            @OnlyIn(Dist.CLIENT)
-            public List<IFactory<? extends IScreenAddon>> getScreenAddons() {
+            public List<IFactory<?>> getScreenAddons() {
                 return Collections.singletonList(() -> new StateButtonAddon(this, new StateButtonInfo(0, AssetTypes.ITEM_BACKGROUND, Component.translatable("text.industrialforegoing.display.moving_babies").getString()), new StateButtonInfo(1, AssetTypes.ITEM_BACKGROUND, Component.translatable("text.industrialforegoing.display.moving_adults").getString())) {
                     @Override
                     public int getState() {
@@ -81,7 +80,6 @@ public class AnimalBabySeparatorTile extends IndustrialAreaWorkingTile<AnimalBab
     }
 
     @Override
-    @OnlyIn(Dist.CLIENT)
     public void initClient() {
         super.initClient();
         addGuiAddonFactory(() -> new ItemGuiAddon(42, 20) {
@@ -129,7 +127,7 @@ public class AnimalBabySeparatorTile extends IndustrialAreaWorkingTile<AnimalBab
 
     @Override
     public void loadSettings(Player player, CompoundTag tag) {
-        if (tag.contains("ABS_movingAdults")) this.movingAdults = tag.getBoolean("ABS_movingAdults");
+        if (tag.contains("ABS_movingAdults")) this.movingAdults = tag.getBooleanOr("ABS_movingAdults", false);
         super.loadSettings(player, tag);
     }
 }

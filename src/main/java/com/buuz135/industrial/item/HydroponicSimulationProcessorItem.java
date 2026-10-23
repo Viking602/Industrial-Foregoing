@@ -22,20 +22,13 @@ import java.util.Objects;
 public class HydroponicSimulationProcessorItem extends IFCustomItem {
 
     public HydroponicSimulationProcessorItem(TitaniumTab tab) {
-        super("hydroponic_simulation_processor", tab, new Properties().stacksTo(1));
+        super("hydroponic_simulation_processor", tab, new Properties().stacksTo(1).component(IFAttachments.HYDROPONIC_SIMULATION_PROCESSOR.get(), new CompoundTag()));
     }
 
     public static double calculateEfficiency(long executions) {
         return Math.log(executions) / Math.log(200);
     }
 
-    @Override
-    public void verifyComponentsAfterLoad(ItemStack stack) {
-        super.verifyComponentsAfterLoad(stack);
-        if (!stack.has(IFAttachments.HYDROPONIC_SIMULATION_PROCESSOR)) {
-            stack.set(IFAttachments.HYDROPONIC_SIMULATION_PROCESSOR, new CompoundTag());
-        }
-    }
 
     @Override
     public void registerRecipe(RecipeOutput recipeOutput) {
@@ -58,7 +51,7 @@ public class HydroponicSimulationProcessorItem extends IFCustomItem {
         tooltip.add(Component.translatable("tooltip.industrialforegoing.hydroponic.simulating").withStyle(ChatFormatting.GRAY)
                 .append(Component.translatable(simulation.crop.isEmpty() ?
                         "tooltip.industrialforegoing.hydroponic.nothing" :
-                        simulation.crop.getDescriptionId()).withStyle(ChatFormatting.GOLD)));
+                        simulation.crop.getItem().getDescriptionId()).withStyle(ChatFormatting.GOLD)));
         tooltip.add(Component.translatable("tooltip.industrialforegoing.hydroponic.executions").withStyle(ChatFormatting.GRAY)
                 .append(Component.literal(new DecimalFormat().format(simulation.executions)).withStyle(ChatFormatting.GOLD)));
         tooltip.add(Component.translatable("tooltip.industrialforegoing.hydroponic.efficiency").withStyle(ChatFormatting.GRAY)
@@ -67,7 +60,7 @@ public class HydroponicSimulationProcessorItem extends IFCustomItem {
                 .append(Component.literal(getProgressBar(simulation.executions) + "").withStyle(ChatFormatting.GOLD)));
         tooltip.add(Component.translatable("tooltip.industrialforegoing.hydroponic.potential_drops").withStyle(ChatFormatting.GRAY));
         for (CountedStack stat : simulation.stats) {
-            tooltip.add(Component.literal(ChatFormatting.GRAY + " - " + ChatFormatting.WHITE + new DecimalFormat("0.00").format(((stat.amount / (double) simulation.executions) * effi)) + ChatFormatting.GRAY + "x " + ChatFormatting.GOLD + Component.translatable(stat.stack.getDescriptionId()).getString()));
+            tooltip.add(Component.literal(ChatFormatting.GRAY + " - " + ChatFormatting.WHITE + new DecimalFormat("0.00").format(((stat.amount / (double) simulation.executions) * effi)) + ChatFormatting.GRAY + "x " + ChatFormatting.GOLD + Component.translatable(stat.stack.getItem().getDescriptionId()).getString()));
         }
         tooltip.add(Component.empty());
         tooltip.add(Component.translatable("tooltip.industrialforegoing.hydroponic.function_1").withStyle(ChatFormatting.DARK_GRAY));
@@ -107,25 +100,25 @@ public class HydroponicSimulationProcessorItem extends IFCustomItem {
         }
 
         public Simulation(CompoundTag nbt) {
-            this.crop = ItemStack.parseOptional(IFAttachments.registryAccess(), nbt.getCompound("Crop"));
-            this.executions = nbt.getLong("Executions");
+            this.crop = com.buuz135.industrial.compat.ItemNbt.parseOptional(IFAttachments.registryAccess(), nbt.getCompoundOrEmpty("Crop"));
+            this.executions = nbt.getLongOr("Executions", 0L);
             this.stats = new ArrayList<>();
-            var statsCompound = nbt.getCompound("Stats");
-            for (String allKey : statsCompound.getAllKeys()) {
-                var stat = statsCompound.getCompound(allKey);
-                this.stats.add(new CountedStack(ItemStack.parseOptional(IFAttachments.registryAccess(), stat.getCompound("Stack")), stat.getLong("Count")));
+            var statsCompound = nbt.getCompoundOrEmpty("Stats");
+            for (String allKey : statsCompound.keySet()) {
+                var stat = statsCompound.getCompoundOrEmpty(allKey);
+                this.stats.add(new CountedStack(com.buuz135.industrial.compat.ItemNbt.parseOptional(IFAttachments.registryAccess(), stat.getCompoundOrEmpty("Stack")), stat.getLongOr("Count", 0L)));
             }
         }
 
         public CompoundTag toNBT(HolderLookup.Provider levelRegistryAccess) {
             CompoundTag nbt = new CompoundTag();
-            nbt.put("Crop", crop.saveOptional(levelRegistryAccess));
+            nbt.put("Crop", com.buuz135.industrial.compat.ItemNbt.saveOptional(crop, levelRegistryAccess));
             nbt.putLong("Executions", executions);
             var allStats = new CompoundTag();
             int key = 0;
             for (CountedStack stat : this.stats) {
                 var statCompound = new CompoundTag();
-                statCompound.put("Stack", stat.stack.saveOptional(levelRegistryAccess));
+                statCompound.put("Stack", com.buuz135.industrial.compat.ItemNbt.saveOptional(stat.stack, levelRegistryAccess));
                 statCompound.putLong("Count", stat.amount);
                 allStats.put(key + "", statCompound);
                 ++key;

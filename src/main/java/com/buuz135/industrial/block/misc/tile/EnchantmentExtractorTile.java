@@ -60,7 +60,7 @@ import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
-import net.neoforged.neoforge.items.ItemHandlerHelper;
+import com.buuz135.industrial.compat.MachineItems;
 
 import java.util.Collections;
 import java.util.List;
@@ -108,7 +108,7 @@ public class EnchantmentExtractorTile extends IndustrialProcessingTile<Enchantme
                 setInputFilter((stack, integer) -> false).
                 setComponentHarness(this)
         );
-        this.addTank(tank = (SidedFluidTankComponent<EnchantmentExtractorTile>) new SidedFluidTankComponent<EnchantmentExtractorTile>("essence", EnchantmentExtractorConfig.tankSize, 150, 20, 4).
+        this.addTank(tank = (SidedFluidTankComponent<EnchantmentExtractorTile>) new com.buuz135.industrial.compat.MachineFluidTank<EnchantmentExtractorTile>("essence", EnchantmentExtractorConfig.tankSize, 150, 20, 4).
                 setColor(DyeColor.LIME).
                 setTankAction(FluidTankComponent.Action.DRAIN).
                 setComponentHarness(this).
@@ -116,8 +116,7 @@ public class EnchantmentExtractorTile extends IndustrialProcessingTile<Enchantme
         );
         this.addButton(buttonComponent = new ButtonComponent(62 + 4, 40 + 18, 14, 14) {
             @Override
-            @OnlyIn(Dist.CLIENT)
-            public List<IFactory<? extends IScreenAddon>> getScreenAddons() {
+            public List<IFactory<?>> getScreenAddons() {
                 return Collections.singletonList(() -> new StateButtonAddon(this,
                         new StateButtonInfo(0, AssetTypes.BUTTON_SIDENESS_ENABLED, ChatFormatting.GOLD + LangUtil.getString("tooltip.industrialforegoing.enchantment_extractor.extract"), "tooltip.industrialforegoing.enchantment_extractor.extract_extra"),
                         new StateButtonInfo(1, AssetTypes.BUTTON_SIDENESS_DISABLED, ChatFormatting.GOLD + LangUtil.getString("tooltip.industrialforegoing.enchantment_extractor.consume"), "tooltip.industrialforegoing.enchantment_extractor.consume_extra")) {
@@ -153,13 +152,13 @@ public class EnchantmentExtractorTile extends IndustrialProcessingTile<Enchantme
                     if (map.keySet().stream().allMatch(enchantmentHolder -> enchantmentHolder.is(EnchantmentTags.CURSE))) {
                         ItemStack output = input.copy();
                         input.shrink(1);
-                        ItemHandlerHelper.insertItem(this.outputNoEnchantedItem, output, false);
+                        MachineItems.insertItem(this.outputNoEnchantedItem, output, false);
                     } else if (map.keySet().size() == 1) {
                         ItemStack output = removeEnchantments(input, input.getDamageValue(), input.getCount());
                         input.shrink(1);
-                        ItemHandlerHelper.insertItem(this.outputNoEnchantedItem, output, false);
-                        ItemHandlerHelper.insertItem(this.outputEnchantedBook, book, false);
-                        this.inputBook.getStackInSlot(0).shrink(1);
+                        MachineItems.insertItem(this.outputNoEnchantedItem, output, false);
+                        MachineItems.insertItem(this.outputEnchantedBook, book, false);
+                        com.buuz135.industrial.compat.MachineItems.shrink(this.inputBook, 0, 1);
                     } else {
                         ItemEnchantments.Mutable cleanMap = new ItemEnchantments.Mutable(EnchantmentHelper.getEnchantmentsForCrafting(input));
                         cleanMap.removeIf(enchantmentHolder -> enchantmentHolder.equals(selected));
@@ -168,17 +167,18 @@ public class EnchantmentExtractorTile extends IndustrialProcessingTile<Enchantme
                             input.remove(DataComponents.STORED_ENCHANTMENTS);
                         }
                         EnchantmentHelper.setEnchantments(input, cleanMap.toImmutable());
-                        ItemHandlerHelper.insertItem(this.outputEnchantedBook, book, false);
-                        this.inputBook.getStackInSlot(0).shrink(1);
+                        MachineItems.insertItem(this.outputEnchantedBook, book, false);
+                        com.buuz135.industrial.compat.MachineItems.shrink(this.inputBook, 0, 1);
                     }
                 }
             } else {
                 int essence = getEnchantmentXp(input) * 20;
                 ItemStack output = removeEnchantments(input, input.getDamageValue(), input.getCount());
                 input.shrink(1);
-                ItemHandlerHelper.insertItem(this.outputNoEnchantedItem, output, false);
-                this.tank.fillForced(new FluidStack(ModuleCore.ESSENCE.getSourceFluid().get(), essence), IFluidHandler.FluidAction.EXECUTE);
+                MachineItems.insertItem(this.outputNoEnchantedItem, output, false);
+                com.buuz135.industrial.compat.MachineFluids.fillForced(this.tank, new FluidStack(ModuleCore.ESSENCE.getSourceFluid().get(), essence), IFluidHandler.FluidAction.EXECUTE);
             }
+            this.inputEnchantedItem.setStackInSlot(0, input);
         };
     }
 
@@ -241,7 +241,7 @@ public class EnchantmentExtractorTile extends IndustrialProcessingTile<Enchantme
 
     @Override
     public void loadSettings(Player player, CompoundTag tag) {
-        if (tag.contains("EE_extractEnchants")) extractEnchants = tag.getBoolean("EE_extractEnchants");
+        if (tag.contains("EE_extractEnchants")) extractEnchants = tag.getBooleanOr("EE_extractEnchants", false);
         super.loadSettings(player, tag);
     }
 

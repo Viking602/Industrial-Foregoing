@@ -1,0 +1,21 @@
+{
+  "name": "收割机",
+  "icon": "industrialforegoing:plant_gatherer",
+  "category": "industrialforegoing:agriculture_husbandry",
+  "sortnum": 1,
+  "read_by_default": true,
+  "pages": [
+    {
+      "type": "text",
+      "text": "自动$(6)伐木$()和$(6)收割$()作物。每次操作会产生少量$(l:agr_hus/sludge)污泥$()。$(br2)开始砍伐工作范围内的树木后，机器会继续收集与树干底部相连的原木和树叶。"
+    },
+    {
+      "type": "text",
+      "text": "收割机会破坏作物来收获，即使该植物原本可以右键采收。提供少量以太气体后，它会自动补种。"
+    },
+    {
+      "type": "crafting",
+      "recipe": "industrialforegoing:plant_gatherer"
+    }
+  ]
+}

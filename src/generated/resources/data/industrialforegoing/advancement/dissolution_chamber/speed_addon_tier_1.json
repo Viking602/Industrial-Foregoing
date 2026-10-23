@@ -1,8 +1,8 @@
 {
   "neoforge:conditions": [
     {
-      "type": "neoforge:item_exists",
-      "item": "industrialforegoing:speed_addon_tier_1"
+      "type": "neoforge:registered",
+      "value": "industrialforegoing:speed_addon_tier_1"
     }
   ],
   "parent": "minecraft:recipes/root",

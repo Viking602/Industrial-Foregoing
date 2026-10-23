@@ -1,8 +1,8 @@
 {
   "neoforge:conditions": [
     {
-      "type": "neoforge:item_exists",
-      "item": "industrialforegoing:dissolution_chamber"
+      "type": "neoforge:registered",
+      "value": "industrialforegoing:dissolution_chamber"
     }
   ],
   "parent": "minecraft:recipes/root",

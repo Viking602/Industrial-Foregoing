@@ -38,7 +38,7 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.feature.configurations.TreeConfiguration;
-import net.neoforged.neoforge.common.util.TriState;
+import net.minecraft.util.TriState;
 
 import java.util.function.BiConsumer;
 
@@ -59,7 +59,7 @@ public class HydroponicBedBlock extends IndustrialBlock<HydroponicBedTile> {
     }
 
     @Override
-    public boolean onTreeGrow(BlockState state, LevelReader level, BiConsumer<BlockPos, BlockState> placeFunction, RandomSource randomSource, BlockPos pos, TreeConfiguration config) {
+    public boolean onTreeGrow(BlockState state, net.minecraft.world.level.WorldGenLevel level, BiConsumer<BlockPos, BlockState> placeFunction, RandomSource randomSource, BlockPos pos, TreeConfiguration config) {
         return true;
     }
 

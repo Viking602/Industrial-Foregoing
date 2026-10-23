@@ -33,7 +33,7 @@ import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.model.geom.PartPose;
 import net.minecraft.client.model.geom.builders.*;
 
-public class InfinityNukeModelArmed extends EntityModel<InfinityNukeEntity> {
+public class InfinityNukeModelArmed extends EntityModel<net.minecraft.client.renderer.entity.state.EntityRenderState> {
     private final ModelPart top;
     private final ModelPart bottom;
     private final ModelPart core;
@@ -42,6 +42,7 @@ public class InfinityNukeModelArmed extends EntityModel<InfinityNukeEntity> {
     private final ModelPart bone;
 
     public InfinityNukeModelArmed(ModelPart model) {
+        super(model);
         this.top = model;
         this.bottom = model;
         this.core = model;
@@ -91,18 +92,5 @@ public class InfinityNukeModelArmed extends EntityModel<InfinityNukeEntity> {
         return LayerDefinition.create(meshDefinition, 64, 64);
     }
 
-    @Override
-    public void renderToBuffer(PoseStack poseStack, VertexConsumer buffer, int packedLight, int packedOverlay, int color) {
-        top.render(poseStack, buffer, packedLight, packedOverlay);
-        bottom.render(poseStack, buffer, packedLight, packedOverlay);
-        core.render(poseStack, buffer, packedLight, packedOverlay);
-        leg_left.render(poseStack, buffer, packedLight, packedOverlay);
-        leg_right.render(poseStack, buffer, packedLight, packedOverlay);
-        bone.render(poseStack, buffer, packedLight, packedOverlay);
-    }
 
-    @Override
-    public void setupAnim(InfinityNukeEntity p_102618_, float p_102619_, float p_102620_, float p_102621_, float p_102622_, float p_102623_) {
-
-    }
 }

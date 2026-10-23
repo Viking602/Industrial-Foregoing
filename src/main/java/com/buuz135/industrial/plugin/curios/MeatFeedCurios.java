@@ -51,28 +51,8 @@ public class MeatFeedCurios implements ICurio, ICurioRenderer {
     public void curioTick(SlotContext slotContext) {
         ItemStack stack = CuriosPlugin.getStack(slotContext.entity(), "head", 0);
         if (stack.getItem() instanceof MeatFeederItem) {
-            ModuleTool.MEAT_FEEDER.get().inventoryTick(stack, slotContext.entity().level(), slotContext.entity(), 0, false);
+            if (slotContext.entity().level() instanceof net.minecraft.server.level.ServerLevel serverLevel) ModuleTool.MEAT_FEEDER.get().inventoryTick(stack, serverLevel, slotContext.entity(), null);
         }
     }
 
-    @Override
-    public <T extends LivingEntity, M extends EntityModel<T>> void render(ItemStack stack, SlotContext slotContext, PoseStack matrixStack, RenderLayerParent<T, M> renderLayerParent, MultiBufferSource renderTypeBuffer, int light, float limbSwing, float limbSwingAmount, float partialTicks, float ageInTicks, float netHeadYaw, float headPitch) {
-        LivingEntity entity = slotContext.entity();
-        ItemStack itemStack = CuriosPlugin.getStack(entity, "head", 0);
-        // TODO: 22/08/2021 Render system.
-//        if (itemStack.getItem() instanceof MeatFeederItem){
-//            matrixStack.push();
-//            if (livingEntity.isCrouching()) {
-//                matrixStack.translate(0D, 0.26D, 0D);
-//            }
-//            matrixStack.rotate(Vector3f.YP.rotationDegrees(90));
-//            matrixStack.rotate(Vector3f.XP.rotationDegrees(180));
-//            matrixStack.rotate(Vector3f.YN.rotationDegrees(netHeadYaw));
-//            matrixStack.rotate(Vector3f.ZN.rotationDegrees(headPitch));
-//            matrixStack.translate(0,0.25,0.265);
-//            matrixStack.scale(0.5f, 0.5f, 0.5f);
-//            Minecraft.getInstance().getItemRenderer().renderItem(itemStack, ItemCameraTransforms.TransformType.NONE, light, OverlayTexture.NO_OVERLAY, matrixStack, renderTypeBuffer);
-//            matrixStack.pop();
-//        }
-    }
 }

@@ -24,22 +24,22 @@ package com.buuz135.industrial.gui.component;
 
 import com.hrznstudio.titanium.client.screen.addon.BasicScreenAddon;
 import com.hrznstudio.titanium.client.screen.asset.IAssetProvider;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 import java.util.List;
 
 public class TextureScreenAddon extends BasicScreenAddon {
 
-    private final ResourceLocation resourceLocation;
+    private final Identifier resourceLocation;
     private final int textureX;
     private final int textureY;
     private final int xSize;
     private final int ySize;
 
-    public TextureScreenAddon(int x, int y, int xSize, int ySize, ResourceLocation resourceLocation, int textureX, int textureY) {
+    public TextureScreenAddon(int x, int y, int xSize, int ySize, Identifier resourceLocation, int textureX, int textureY) {
         super(x, y);
         this.resourceLocation = resourceLocation;
         this.textureX = textureX;
@@ -65,13 +65,13 @@ public class TextureScreenAddon extends BasicScreenAddon {
     }
 
     @Override
-    public void drawBackgroundLayer(GuiGraphics guiGraphics, Screen screen, IAssetProvider iAssetProvider, int guiX, int guiY, int mouseX, int mouseY, float partialTicks) {
-        guiGraphics.blit(resourceLocation, guiX + getPosX(), guiY + getPosY(), textureX, textureY, getXSize(), getYSize());
+    public void drawBackgroundLayer(GuiGraphicsExtractor guiGraphics, Screen screen, IAssetProvider iAssetProvider, int guiX, int guiY, int mouseX, int mouseY, float partialTicks) {
+        com.buuz135.industrial.compat.MachineGui.blit(guiGraphics, resourceLocation, guiX + getPosX(), guiY + getPosY(), textureX, textureY, getXSize(), getYSize());
 
     }
 
     @Override
-    public void drawForegroundLayer(GuiGraphics guiGraphics, Screen screen, IAssetProvider iAssetProvider, int i, int i1, int i2, int i3, float v) {
+    public void drawForegroundLayer(GuiGraphicsExtractor guiGraphics, Screen screen, IAssetProvider iAssetProvider, int i, int i1, int i2, int i3, float v) {
 
     }
 }

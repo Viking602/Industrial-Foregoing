@@ -43,7 +43,7 @@ import mezz.jei.api.recipe.RecipeIngredientRole;
 import mezz.jei.api.recipe.RecipeType;
 import mezz.jei.api.recipe.category.IRecipeCategory;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.ItemStack;
@@ -52,7 +52,7 @@ import org.apache.commons.lang3.tuple.Pair;
 
 import java.awt.*;
 
-public class SewageComposterCategory implements IRecipeCategory<SewageComposterCategory.Recipe> {
+public class SewageComposterCategory implements com.buuz135.industrial.plugin.jei.MachineRecipeCategory<SewageComposterCategory.Recipe> {
     public record Recipe() {}
     public static final RecipeType<Recipe> RECIPE_TYPE = RecipeType.create(Reference.MOD_ID, "dummy/sweage_composter", Recipe.class);
 
@@ -92,8 +92,9 @@ public class SewageComposterCategory implements IRecipeCategory<SewageComposterC
     }
 
     @Override
-    public void draw(Recipe recipe, IRecipeSlotsView recipeSlotsView, GuiGraphics guiGraphics, double mouseX, double mouseY) {
-        IRecipeCategory.super.draw(recipe, recipeSlotsView, guiGraphics, mouseX, mouseY);
+    public void draw(Recipe recipe, IRecipeSlotsView recipeSlotsView, GuiGraphicsExtractor guiGraphics, double mouseX, double mouseY) {
+        getBackground().draw(guiGraphics, 0, 0);
+        
 
         AssetUtil.drawAsset(guiGraphics, Minecraft.getInstance().screen, DefaultAssetProvider.DEFAULT_PROVIDER.getAsset(AssetTypes.ENERGY_BACKGROUND), 0, 3);
         AssetUtil.drawAsset(guiGraphics, Minecraft.getInstance().screen, DefaultAssetProvider.DEFAULT_PROVIDER.getAsset(AssetTypes.TANK_NORMAL), 24, 3);

@@ -45,7 +45,7 @@ import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.fluids.FluidStack;
-import net.neoforged.neoforge.items.ItemHandlerHelper;
+import com.buuz135.industrial.compat.MachineItems;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.ArrayList;
@@ -106,7 +106,7 @@ public class ItemInfinitySaw extends ItemInfinity {
                             }
                             consumeFuel(stack);
                         }
-                        itemStacks.forEach(itemStack -> ItemHandlerHelper.giveItemToPlayer((Player) entityLiving, itemStack));
+                        itemStacks.forEach(itemStack -> MachineItems.giveItemToPlayer((Player) entityLiving, itemStack));
                         return false;
                     }
                 } catch (ExecutionException e) {
@@ -124,14 +124,14 @@ public class ItemInfinitySaw extends ItemInfinity {
     @Override
     public void registerRecipe(RecipeOutput consumer) {
         DissolutionChamberRecipe.createRecipe(consumer, "infinity_saw", new DissolutionChamberRecipe(List.of(
-                Ingredient.of(new ItemStack(Items.DIAMOND_BLOCK)),
-                Ingredient.of(new ItemStack(Items.DIAMOND_PICKAXE)),
-                Ingredient.of(new ItemStack(Items.DIAMOND_AXE)),
-                Ingredient.of(new ItemStack(Items.DIAMOND_AXE)),
-                Ingredient.of(new ItemStack(ModuleCore.RANGE_ADDONS[11].get())),
-                Ingredient.of(IndustrialTags.Items.GEAR_GOLD),
-                Ingredient.of(IndustrialTags.Items.GEAR_GOLD),
-                Ingredient.of(IndustrialTags.Items.GEAR_GOLD)
+                com.buuz135.industrial.compat.Ingredients.of(new ItemStack(Items.DIAMOND_BLOCK)),
+                com.buuz135.industrial.compat.Ingredients.of(new ItemStack(Items.DIAMOND_PICKAXE)),
+                com.buuz135.industrial.compat.Ingredients.of(new ItemStack(Items.DIAMOND_AXE)),
+                com.buuz135.industrial.compat.Ingredients.of(new ItemStack(Items.DIAMOND_AXE)),
+                com.buuz135.industrial.compat.Ingredients.of(new ItemStack(ModuleCore.RANGE_ADDONS[11].get())),
+                com.buuz135.industrial.compat.Ingredients.of(IndustrialTags.Items.GEAR_GOLD),
+                com.buuz135.industrial.compat.Ingredients.of(IndustrialTags.Items.GEAR_GOLD),
+                com.buuz135.industrial.compat.Ingredients.of(IndustrialTags.Items.GEAR_GOLD)
         ), new FluidStack(ModuleCore.PINK_SLIME.getSourceFluid().get(), 2000), 400, Optional.of(new ItemStack(this)), Optional.empty()));
 
     }

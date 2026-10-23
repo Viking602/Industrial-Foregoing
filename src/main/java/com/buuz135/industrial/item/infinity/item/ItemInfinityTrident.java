@@ -52,15 +52,15 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.stats.Stats;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.InteractionResultHolder;
+
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.entity.projectile.AbstractArrow;
+import net.minecraft.world.entity.projectile.arrow.AbstractArrow;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.minecraft.world.item.UseAnim;
+import net.minecraft.world.item.ItemUseAnimation;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.Enchantments;
@@ -88,7 +88,7 @@ public class ItemInfinityTrident extends ItemInfinity {
     public static int FUEL_CONSUMPTION = 30;
 
     public ItemInfinityTrident(TitaniumTab group) {
-        super("infinity_trident", group, new Properties().stacksTo(1), POWER_CONSUMPTION, FUEL_CONSUMPTION, true);
+        super("infinity_trident", group, new Properties().stacksTo(1).component(IFAttachments.INFINITY_TRIDENT_LOYALTY.get(), 0).component(IFAttachments.INFINITY_TRIDENT_RIPTIDE.get(), 0).component(IFAttachments.INFINITY_TRIDENT_CHANNELING.get(), false), POWER_CONSUMPTION, FUEL_CONSUMPTION, true);
     }
 
     @Override
@@ -99,18 +99,10 @@ public class ItemInfinityTrident extends ItemInfinity {
         stack.set(IFAttachments.INFINITY_TRIDENT_CHANNELING, false);
     }
 
-    @Override
-    public void verifyComponentsAfterLoad(ItemStack stack) {
-        super.verifyComponentsAfterLoad(stack);
-        if (!stack.has(IFAttachments.INFINITY_TRIDENT_LOYALTY)) stack.set(IFAttachments.INFINITY_TRIDENT_LOYALTY, 0);
-        if (!stack.has(IFAttachments.INFINITY_TRIDENT_RIPTIDE)) stack.set(IFAttachments.INFINITY_TRIDENT_RIPTIDE, 0);
-        if (!stack.has(IFAttachments.INFINITY_TRIDENT_CHANNELING))
-            stack.set(IFAttachments.INFINITY_TRIDENT_CHANNELING, false);
-    }
 
     @Override
-    public UseAnim getUseAnimation(ItemStack stack) {
-        return UseAnim.SPEAR;
+    public ItemUseAnimation getUseAnimation(ItemStack stack) {
+        return ItemUseAnimation.SPEAR;
     }
 
 
@@ -120,14 +112,14 @@ public class ItemInfinityTrident extends ItemInfinity {
     }
 
     @Override
-    public InteractionResultHolder<ItemStack> use(Level worldIn, Player playerIn, InteractionHand handIn) {
+    public net.minecraft.world.InteractionResult use(Level worldIn, Player playerIn, InteractionHand handIn) {
         ItemStack itemstack = playerIn.getItemInHand(handIn);
         if (getCurrentRiptide(itemstack) > 0 && !playerIn.isShiftKeyDown()) {
             playerIn.startUsingItem(handIn);
-            return InteractionResultHolder.consume(itemstack);
+            return net.minecraft.world.InteractionResult.CONSUME;
         } else if (!playerIn.isShiftKeyDown()) {
             playerIn.startUsingItem(handIn);
-            return InteractionResultHolder.consume(itemstack);
+            return net.minecraft.world.InteractionResult.CONSUME;
         }
         return super.use(worldIn, playerIn, handIn);
     }
@@ -140,14 +132,14 @@ public class ItemInfinityTrident extends ItemInfinity {
     }
 
     @Override
-    public void releaseUsing(ItemStack stack, Level worldIn, LivingEntity entityLiving, int timeLeft) {
+    public boolean releaseUsing(ItemStack stack, Level worldIn, LivingEntity entityLiving, int timeLeft) {
         if (entityLiving instanceof Player) {
             Player playerentity = (Player) entityLiving;
             int i = this.getUseDuration(stack, entityLiving) - timeLeft;
             if (i >= 10) {
                 int riptideModifier = getCurrentRiptide(stack);
                 if (riptideModifier <= 0 && enoughFuel(stack)) {
-                    if (!worldIn.isClientSide) {
+                    if (!worldIn.isClientSide()) {
                         stack.hurtAndBreak(1, playerentity, EquipmentSlot.MAINHAND);
                         if (riptideModifier == 0) {
                             consumeFuel(stack);
@@ -197,6 +189,7 @@ public class ItemInfinityTrident extends ItemInfinity {
                 }
             }
         }
+        return entityLiving instanceof Player && this.getUseDuration(stack, entityLiving) - timeLeft >= 10;
     }
 
     //Trident stuff
@@ -240,10 +233,9 @@ public class ItemInfinityTrident extends ItemInfinity {
     }
 
     //GUI Stuff
-    @OnlyIn(Dist.CLIENT)
     @Override
-    public List<IFactory<? extends IScreenAddon>> getScreenAddons(Supplier<ItemStack> stack) {
-        List<IFactory<? extends IScreenAddon>> factory = super.getScreenAddons(stack);
+    public List<IFactory<?>> getScreenAddons(Supplier<ItemStack> stack) {
+        List<IFactory<?>> factory = super.getScreenAddons(stack);
         factory.add(() -> new ArrowButtonScreenAddon((ArrowButtonComponent) new ArrowButtonComponent(154, 20 + 16 * 2, 14, 14, FacingUtil.Sideness.RIGHT).setId(4)));
         factory.add(() -> new ArrowButtonScreenAddon((ArrowButtonComponent) new ArrowButtonComponent(54, 20 + 16 * 2, 14, 14, FacingUtil.Sideness.LEFT).setId(5)));
         factory.add(() -> new TextScreenAddon("", 54 + 14 + 4, 24 + 16 * 2, false) {
@@ -301,14 +293,14 @@ public class ItemInfinityTrident extends ItemInfinity {
     @Override
     public void registerRecipe(RecipeOutput consumer) {
         DissolutionChamberRecipe.createRecipe(consumer, "infinity_trident", new DissolutionChamberRecipe(List.of(
-                Ingredient.of(new ItemStack(Items.DIAMOND_BLOCK)),
-                Ingredient.of(new ItemStack(Items.TRIDENT)),
-                Ingredient.of(new ItemStack(Items.DIAMOND_BLOCK)),
-                Ingredient.of(new ItemStack(Items.DIAMOND_HOE)),
-                Ingredient.of(new ItemStack(ModuleCore.RANGE_ADDONS[11].get())),
-                Ingredient.of(IndustrialTags.Items.GEAR_GOLD),
-                Ingredient.of(IndustrialTags.Items.GEAR_GOLD),
-                Ingredient.of(IndustrialTags.Items.GEAR_GOLD)
+                com.buuz135.industrial.compat.Ingredients.of(new ItemStack(Items.DIAMOND_BLOCK)),
+                com.buuz135.industrial.compat.Ingredients.of(new ItemStack(Items.TRIDENT)),
+                com.buuz135.industrial.compat.Ingredients.of(new ItemStack(Items.DIAMOND_BLOCK)),
+                com.buuz135.industrial.compat.Ingredients.of(new ItemStack(Items.DIAMOND_HOE)),
+                com.buuz135.industrial.compat.Ingredients.of(new ItemStack(ModuleCore.RANGE_ADDONS[11].get())),
+                com.buuz135.industrial.compat.Ingredients.of(IndustrialTags.Items.GEAR_GOLD),
+                com.buuz135.industrial.compat.Ingredients.of(IndustrialTags.Items.GEAR_GOLD),
+                com.buuz135.industrial.compat.Ingredients.of(IndustrialTags.Items.GEAR_GOLD)
         ), new FluidStack(ModuleCore.PINK_SLIME.getSourceFluid().get(), 2000), 400, Optional.of(new ItemStack(this)), Optional.empty()));
 
     }

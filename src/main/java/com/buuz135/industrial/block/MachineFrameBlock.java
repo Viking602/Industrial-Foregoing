@@ -56,14 +56,13 @@ public class MachineFrameBlock extends BasicBlock {
         private TitaniumTab group;
 
         public MachineFrameItem(Block blockIn, Rarity rarity, TitaniumTab group) {
-            super(blockIn, new Item.Properties().rarity(rarity));
+            super(blockIn, com.hrznstudio.titanium.module.DeferredRegistryHelper.applyItemRegistrationId(new Item.Properties().useBlockDescriptionPrefix()).rarity(rarity));
             this.group = group;
         }
 
         @Nullable
-        @Override
         public String getCreatorModId(ItemStack itemStack) {
-            return Component.translatable("itemGroup.industrialforegoing_" + this.group.getResourceLocation().getPath()).getString();
+            return Component.translatable("itemGroup.industrialforegoing_" + this.group.getIdentifier().getPath()).getString();
         }
 
     }

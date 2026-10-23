@@ -29,17 +29,17 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.texture.OverlayTexture;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 
-public class InfinityLauncherProjectileRenderer extends EntityRenderer<InfinityLauncherProjectileEntity> {
+public class InfinityLauncherProjectileRenderer extends com.buuz135.industrial.compat.CapturedEntityRenderer<InfinityLauncherProjectileEntity> {
 
-    public static final ModelLayerLocation PROJECTILE_LAYER = new ModelLayerLocation(ResourceLocation.fromNamespaceAndPath(Reference.MOD_ID, "infinity_launcher_projectile"), "main");
-    public static final ResourceLocation PROJECTILE = ResourceLocation.fromNamespaceAndPath(Reference.MOD_ID, "textures/item/infinity_launcher_projectile.png");
+    public static final ModelLayerLocation PROJECTILE_LAYER = new ModelLayerLocation(Identifier.fromNamespaceAndPath(Reference.MOD_ID, "infinity_launcher_projectile"), "main");
+    public static final Identifier PROJECTILE = Identifier.fromNamespaceAndPath(Reference.MOD_ID, "textures/item/infinity_launcher_projectile.png");
     private final InfinityLauncherProjectileModel projectileModel;
 
     public InfinityLauncherProjectileRenderer(EntityRendererProvider.Context p_174008_) {
@@ -53,14 +53,13 @@ public class InfinityLauncherProjectileRenderer extends EntityRenderer<InfinityL
         matrixStackIn.mulPose(Axis.YP.rotationDegrees(Mth.lerp(partialTicks, entityIn.yRotO, entityIn.getYRot()) - 90.0F));
         matrixStackIn.mulPose(Axis.ZP.rotationDegrees(Mth.lerp(partialTicks, entityIn.xRotO, entityIn.getXRot()) + 90.0F));
         matrixStackIn.translate(0, -0.8, 0);
-        VertexConsumer ivertexbuilder = bufferIn.getBuffer(RenderType.entityCutout(this.getTextureLocation(entityIn)));
-        this.projectileModel.renderToBuffer(matrixStackIn, ivertexbuilder, packedLightIn, OverlayTexture.NO_OVERLAY, 0xFFFFFF);
+        VertexConsumer ivertexbuilder = bufferIn.getBuffer(net.minecraft.client.renderer.rendertype.RenderTypes.entityCutout(this.getTextureLocation(entityIn)));
+        this.projectileModel.renderToBuffer(matrixStackIn, ivertexbuilder, packedLightIn, OverlayTexture.NO_OVERLAY, 0xFFFFFFFF);
         matrixStackIn.popPose();
-        super.render(entityIn, entityYaw, partialTicks, matrixStackIn, bufferIn, packedLightIn);
     }
 
     @Override
-    public ResourceLocation getTextureLocation(InfinityLauncherProjectileEntity p_114482_) {
+    public Identifier getTextureLocation(InfinityLauncherProjectileEntity p_114482_) {
         return PROJECTILE;
     }
 }

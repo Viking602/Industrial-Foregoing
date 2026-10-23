@@ -1,0 +1,17 @@
+{
+  "name": "自动化附魔铁砧",
+  "icon": "industrialforegoing:enchantment_applicator",
+  "category": "industrialforegoing:misc",
+  "sortnum": 3,
+  "read_by_default": true,
+  "pages": [
+    {
+      "type": "text",
+      "text": "功能类似铁砧，但用$(l:agr_hus/essence)精华液$()代替经验。单次消耗过高时，可以从上方的储罐补充精华液。"
+    },
+    {
+      "type": "crafting",
+      "recipe": "industrialforegoing:enchantment_applicator"
+    }
+  ]
+}

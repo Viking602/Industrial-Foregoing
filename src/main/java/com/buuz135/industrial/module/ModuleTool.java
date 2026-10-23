@@ -50,7 +50,7 @@ import com.hrznstudio.titanium.tab.TitaniumTab;
 import com.mojang.datafixers.types.Type;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
@@ -68,7 +68,7 @@ import net.neoforged.neoforge.server.ServerLifecycleHooks;
 
 public class ModuleTool implements IModule {
 
-    public static TitaniumTab TAB_TOOL = new TitaniumTab(ResourceLocation.fromNamespaceAndPath(Reference.MOD_ID, "tool"));
+    public static TitaniumTab TAB_TOOL = new TitaniumTab(Identifier.fromNamespaceAndPath(Reference.MOD_ID, "tool"));
 
     public static DeferredHolder<Item, Item> MEAT_FEEDER;
     public static DeferredHolder<Item, Item> MOB_IMPRISONMENT_TOOL;
@@ -101,51 +101,51 @@ public class ModuleTool implements IModule {
         INFINITY_TRIDENT = registryHelper.registerGeneric(Registries.ITEM, "infinity_trident", () -> new ItemInfinityTrident(TAB_TOOL));
         TRIDENT_ENTITY_TYPE = registryHelper.registerEntityType("trident_entity", () -> EntityType.Builder.<InfinityTridentEntity>of(InfinityTridentEntity::new, MobCategory.MISC).sized(0.5F, 0.5F)
                 .setShouldReceiveVelocityUpdates(true)
-                /*.setCustomClientFactory((spawnEntity, world) -> new InfinityTridentEntity((EntityType<? extends InfinityTridentEntity>) TRIDENT_ENTITY_TYPE.get(), world))*/.clientTrackingRange(5).updateInterval(1).build("trident_entity"));
+                /*.setCustomClientFactory((spawnEntity, world) -> new InfinityTridentEntity((EntityType<? extends InfinityTridentEntity>) TRIDENT_ENTITY_TYPE.get(), world))*/.clientTrackingRange(5).updateInterval(1).build(net.minecraft.resources.ResourceKey.create(Registries.ENTITY_TYPE, Identifier.fromNamespaceAndPath(Reference.MOD_ID, "trident_entity"))));
         INFINITY_BACKPACK = registryHelper.registerGeneric(Registries.ITEM, "infinity_backpack", () -> new ItemInfinityBackpack());
         INFINITY_BACKPACK_BLOCK = new BlockWithTile(
                 registryHelper.registerGeneric(Registries.BLOCK, "infinity_backpack_block", InfinityBackpackBlock::new),
-                registryHelper.registerBlockEntityType("infinity_backpack", () -> BlockEntityType.Builder.of(((BasicTileBlock) INFINITY_BACKPACK_BLOCK.getBlock()).getTileEntityFactory(), new Block[]{INFINITY_BACKPACK_BLOCK.getBlock()}).build((Type) null))
+                registryHelper.registerBlockEntityType("infinity_backpack", () -> new BlockEntityType<>(((BasicTileBlock) INFINITY_BACKPACK_BLOCK.getBlock()).getTileEntityFactory(), INFINITY_BACKPACK_BLOCK.getBlock()))
         );
         INFINITY_LAUNCHER = registryHelper.registerGeneric(Registries.ITEM, "infinity_launcher", () -> new ItemInfinityLauncher(TAB_TOOL));
         INFINITY_LAUNCHER_PROJECTILE_ENTITY_TYPE = registryHelper.registerEntityType("launcher_projectile_entity", () -> EntityType.Builder.<InfinityLauncherProjectileEntity>of(InfinityLauncherProjectileEntity::new, MobCategory.MISC).sized(0.5F, 0.5F)
                 .setShouldReceiveVelocityUpdates(true)
-                /*.setCustomClientFactory((spawnEntity, world) -> new InfinityLauncherProjectileEntity((EntityType<? extends InfinityLauncherProjectileEntity>) INFINITY_LAUNCHER_PROJECTILE_ENTITY_TYPE.get(), world))*/.clientTrackingRange(4).updateInterval(20).build("launcher_projectile_entity"));
+                /*.setCustomClientFactory((spawnEntity, world) -> new InfinityLauncherProjectileEntity((EntityType<? extends InfinityLauncherProjectileEntity>) INFINITY_LAUNCHER_PROJECTILE_ENTITY_TYPE.get(), world))*/.clientTrackingRange(4).updateInterval(20).build(net.minecraft.resources.ResourceKey.create(Registries.ENTITY_TYPE, Identifier.fromNamespaceAndPath(Reference.MOD_ID, "launcher_projectile_entity"))));
         INFINITY_NUKE = registryHelper.registerGeneric(Registries.ITEM, "infinity_nuke", () -> new ItemInfinityNuke(TAB_TOOL));
         INFINITY_NUKE_ENTITY_TYPE = registryHelper.registerEntityType("infinity_nuke", () -> EntityType.Builder.<InfinityNukeEntity>of(InfinityNukeEntity::new, MobCategory.MISC).sized(0.5F, 1.5F)
                 .setShouldReceiveVelocityUpdates(true)
-                /*.setCustomClientFactory((spawnEntity, world) -> new InfinityNukeEntity((EntityType<? extends InfinityNukeEntity>) INFINITY_NUKE_ENTITY_TYPE.get(), world))*/.fireImmune().clientTrackingRange(8).updateInterval(20).build("infinity_nuke"));
-        NUKE_CHARGING = registryHelper.registerGeneric(Registries.SOUND_EVENT, "nuke_charging", () -> SoundEvent.createFixedRangeEvent(ResourceLocation.fromNamespaceAndPath(Reference.MOD_ID, "nuke_charging"), 128));
-        NUKE_ARMING = registryHelper.registerGeneric(Registries.SOUND_EVENT, "nuke_arming", () -> SoundEvent.createFixedRangeEvent(ResourceLocation.fromNamespaceAndPath(Reference.MOD_ID, "nuke_arming"), 16));
-        NUKE_EXPLOSION = registryHelper.registerGeneric(Registries.SOUND_EVENT, "nuke_explosion", () -> SoundEvent.createFixedRangeEvent(ResourceLocation.fromNamespaceAndPath(Reference.MOD_ID, "nuke_explosion"), 128));
+                /*.setCustomClientFactory((spawnEntity, world) -> new InfinityNukeEntity((EntityType<? extends InfinityNukeEntity>) INFINITY_NUKE_ENTITY_TYPE.get(), world))*/.fireImmune().clientTrackingRange(8).updateInterval(20).build(net.minecraft.resources.ResourceKey.create(Registries.ENTITY_TYPE, Identifier.fromNamespaceAndPath(Reference.MOD_ID, "infinity_nuke"))));
+        NUKE_CHARGING = registryHelper.registerGeneric(Registries.SOUND_EVENT, "nuke_charging", () -> SoundEvent.createFixedRangeEvent(Identifier.fromNamespaceAndPath(Reference.MOD_ID, "nuke_charging"), 128));
+        NUKE_ARMING = registryHelper.registerGeneric(Registries.SOUND_EVENT, "nuke_arming", () -> SoundEvent.createFixedRangeEvent(Identifier.fromNamespaceAndPath(Reference.MOD_ID, "nuke_arming"), 16));
+        NUKE_EXPLOSION = registryHelper.registerGeneric(Registries.SOUND_EVENT, "nuke_explosion", () -> SoundEvent.createFixedRangeEvent(Identifier.fromNamespaceAndPath(Reference.MOD_ID, "nuke_explosion"), 128));
 
-        ItemStackHarnessRegistry.register(INFINITY_SAW, stack -> new ItemStackHarness(stack, null, (IButtonHandler) stack.getItem(), Capabilities.EnergyStorage.ITEM, Capabilities.FluidHandler.ITEM, CapabilityItemStackHolder.ITEMSTACK_HOLDER_CAPABILITY));
-        ItemStackHarnessRegistry.register(INFINITY_DRILL, stack -> new ItemStackHarness(stack, null, (IButtonHandler) stack.getItem(), Capabilities.EnergyStorage.ITEM, Capabilities.FluidHandler.ITEM, CapabilityItemStackHolder.ITEMSTACK_HOLDER_CAPABILITY));
-        ItemStackHarnessRegistry.register(INFINITY_HAMMER, stack -> new ItemStackHarness(stack, null, (IButtonHandler) stack.getItem(), Capabilities.EnergyStorage.ITEM, Capabilities.FluidHandler.ITEM, CapabilityItemStackHolder.ITEMSTACK_HOLDER_CAPABILITY));
-        ItemStackHarnessRegistry.register(INFINITY_TRIDENT, stack -> new ItemStackHarness(stack, null, (IButtonHandler) stack.getItem(), Capabilities.EnergyStorage.ITEM, Capabilities.FluidHandler.ITEM, CapabilityItemStackHolder.ITEMSTACK_HOLDER_CAPABILITY));
-        ItemStackHarnessRegistry.register(INFINITY_BACKPACK, stack -> new ItemStackHarness(stack, null, (IButtonHandler) stack.getItem(), Capabilities.EnergyStorage.ITEM, Capabilities.FluidHandler.ITEM, CapabilityItemStackHolder.ITEMSTACK_HOLDER_CAPABILITY));
-        ItemStackHarnessRegistry.register(INFINITY_LAUNCHER, stack -> new ItemStackHarness(stack, null, (IButtonHandler) stack.getItem(), Capabilities.EnergyStorage.ITEM, Capabilities.FluidHandler.ITEM, CapabilityItemStackHolder.ITEMSTACK_HOLDER_CAPABILITY));
-        ItemStackHarnessRegistry.register(INFINITY_NUKE, stack -> new ItemStackHarness(stack, null, (IButtonHandler) stack.getItem(), Capabilities.EnergyStorage.ITEM, Capabilities.FluidHandler.ITEM, CapabilityItemStackHolder.ITEMSTACK_HOLDER_CAPABILITY));
-        EventManager.forge(BlockEvent.BreakEvent.class).filter(breakEvent -> breakEvent.getPlayer().getMainHandItem().getItem() == INFINITY_SAW.get() && BlockUtils.isLog((Level) breakEvent.getLevel(), breakEvent.getPos())).process(breakEvent -> {
+        ItemStackHarnessRegistry.register(INFINITY_SAW, stack -> new com.buuz135.industrial.compat.InfinityItemHarness(stack));
+        ItemStackHarnessRegistry.register(INFINITY_DRILL, stack -> new com.buuz135.industrial.compat.InfinityItemHarness(stack));
+        ItemStackHarnessRegistry.register(INFINITY_HAMMER, stack -> new com.buuz135.industrial.compat.InfinityItemHarness(stack));
+        ItemStackHarnessRegistry.register(INFINITY_TRIDENT, stack -> new com.buuz135.industrial.compat.InfinityItemHarness(stack));
+        ItemStackHarnessRegistry.register(INFINITY_BACKPACK, stack -> new com.buuz135.industrial.compat.InfinityItemHarness(stack));
+        ItemStackHarnessRegistry.register(INFINITY_LAUNCHER, stack -> new com.buuz135.industrial.compat.InfinityItemHarness(stack));
+        ItemStackHarnessRegistry.register(INFINITY_NUKE, stack -> new com.buuz135.industrial.compat.InfinityItemHarness(stack));
+        EventManager.forge(net.neoforged.neoforge.event.level.block.BreakBlockEvent.class).filter(breakEvent -> breakEvent.getPlayer().getMainHandItem().getItem() == INFINITY_SAW.get() && BlockUtils.isLog((Level) breakEvent.getLevel(), breakEvent.getPos())).process(breakEvent -> {
             breakEvent.setCanceled(true);
             breakEvent.getPlayer().getMainHandItem().mineBlock((Level) breakEvent.getLevel(), breakEvent.getState(), breakEvent.getPos(), breakEvent.getPlayer());
         }).subscribe();
         EventManager.mod(RegisterCapabilitiesEvent.class).process(event -> {
-            event.registerItem(Capabilities.EnergyStorage.ITEM, (o, unused) -> {
+            event.registerItem(Capabilities.Energy.ITEM, (o, unused) -> {
                 if (o.getItem() instanceof ItemInfinity itemInfinity) {
-                    return itemInfinity.getEnergyConstructor(o).create();
+                    return new com.buuz135.industrial.compat.InfinityItemEnergy(unused);
                 }
                 return null;
             }, INFINITY_SAW.get(), INFINITY_DRILL.get(), INFINITY_HAMMER.get(), INFINITY_TRIDENT.get(), INFINITY_BACKPACK.get(), INFINITY_LAUNCHER.get(), INFINITY_NUKE.get());
-            event.registerItem(Capabilities.FluidHandler.ITEM, (o, unused) -> {
+            event.registerItem(Capabilities.Fluid.ITEM, (o, unused) -> {
                 if (o.getItem() instanceof ItemInfinity itemInfinity) {
-                    return itemInfinity.getTankConstructor(o).create();
+                    return itemInfinity.getTankConstructor(o).create().asNative(unused);
                 }
                 return null;
             }, INFINITY_SAW.get(), INFINITY_DRILL.get(), INFINITY_HAMMER.get(), INFINITY_TRIDENT.get(), INFINITY_BACKPACK.get(), INFINITY_LAUNCHER.get(), INFINITY_NUKE.get());
-            event.registerItem(Capabilities.FluidHandler.ITEM, (o, unused) -> new InfinityTankStorage(o, new InfinityTankStorage.TankDefinition("meat", 512_000, 0, 0, fluidStack -> fluidStack.is(ModuleCore.MEAT.getSourceFluid()), true, true, FluidTankComponent.Type.SMALL, new FluidStack(ModuleCore.MEAT.getSourceFluid().get(), 1000))), MEAT_FEEDER.get());
+            event.registerItem(Capabilities.Fluid.ITEM, (o, unused) -> new InfinityTankStorage(o, new InfinityTankStorage.TankDefinition("meat", 512_000, 0, 0, fluidStack -> fluidStack.is(ModuleCore.MEAT.getSourceFluid()), true, true, FluidTankComponent.Type.SMALL, new FluidStack(ModuleCore.MEAT.getSourceFluid().get(), 1000))).asNative(unused), MEAT_FEEDER.get());
             event.registerItem(CapabilityItemStackHolder.ITEMSTACK_HOLDER_CAPABILITY, (o, unused) -> new InfinityStackHolder(), INFINITY_SAW.get(), INFINITY_DRILL.get(), INFINITY_HAMMER.get(), INFINITY_TRIDENT.get(), INFINITY_BACKPACK.get(), INFINITY_LAUNCHER.get(), INFINITY_NUKE.get());
-            event.registerItem(Capabilities.ItemHandler.ITEM, (o, unused) -> {
+            event.registerItem(Capabilities.Item.ITEM, (o, unused) -> {
                 if (o.getItem() instanceof ItemInfinityBackpack itemInfinity && o.has(IFAttachments.INFINITY_BACKPACK_ID)) {
                     String id = o.get(IFAttachments.INFINITY_BACKPACK_ID);
                     if (BackpackDataManager.CLIENT_SIDE_BACKPACKS.containsKey(id)) {
@@ -159,7 +159,7 @@ public class ModuleTool implements IModule {
                 }
                 return null;
             }, INFINITY_BACKPACK.get());
-            event.registerBlockEntity(Capabilities.ItemHandler.BLOCK, INFINITY_BACKPACK_BLOCK.type().get(), (object, context) -> {
+            event.registerBlockEntity(Capabilities.Item.BLOCK, INFINITY_BACKPACK_BLOCK.type().get(), (object, context) -> {
                 if (object instanceof InfinityBackpackTile tile) {
                     String id = tile.getBackpack().get(IFAttachments.INFINITY_BACKPACK_ID);
                     BackpackDataManager manager = BackpackDataManager.getData(tile.getLevel());
@@ -169,16 +169,16 @@ public class ModuleTool implements IModule {
                 }
                 return null;
             });
-            event.registerBlockEntity(Capabilities.FluidHandler.BLOCK, INFINITY_BACKPACK_BLOCK.type().get(), (object, context) -> {
+            event.registerBlockEntity(Capabilities.Fluid.BLOCK, INFINITY_BACKPACK_BLOCK.type().get(), (object, context) -> {
                 if (object instanceof InfinityBackpackTile tile) {
-                    return tile.getBackpack().getCapability(Capabilities.FluidHandler.ITEM);
+                    return net.neoforged.neoforge.transfer.access.ItemAccess.forStack(tile.getBackpack()).getCapability(Capabilities.Fluid.ITEM);
                 } else {
                     return null;
                 }
             });
-            event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, INFINITY_BACKPACK_BLOCK.type().get(), (object, context) -> {
+            event.registerBlockEntity(Capabilities.Energy.BLOCK, INFINITY_BACKPACK_BLOCK.type().get(), (object, context) -> {
                 if (object instanceof InfinityBackpackTile tile) {
-                    return tile.getBackpack().getCapability(Capabilities.EnergyStorage.ITEM);
+                    return net.neoforged.neoforge.transfer.access.ItemAccess.forStack(tile.getBackpack()).getCapability(Capabilities.Energy.ITEM);
                 } else {
                     return null;
                 }

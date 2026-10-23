@@ -56,7 +56,6 @@ import net.minecraft.world.level.Level;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 
-@OnlyIn(Dist.CLIENT)
 public class TickeableSound extends AbstractSoundInstance implements TickableSoundInstance {
 
     private boolean done;

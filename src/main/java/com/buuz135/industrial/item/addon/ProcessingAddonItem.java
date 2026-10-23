@@ -52,35 +52,30 @@ public class ProcessingAddonItem extends AddonItem implements ISpecialCreativeTa
     private int tier;
 
     public ProcessingAddonItem(int tier, TitaniumTab group) {
-        super("processing_addon_tier_" + tier, group, new Properties().stacksTo(16));
+        super("processing_addon_tier_" + tier, group, new Properties().stacksTo(16).component(AugmentWrapper.ATTACHMENT.get(), java.util.Map.of(PROCESSING.getType(), (float) (1 + tier))));
         this.tier = tier;
     }
 
-    @Override
-    public void verifyComponentsAfterLoad(ItemStack stack) {
-        super.verifyComponentsAfterLoad(stack);
-        AugmentWrapper.setType(stack, PROCESSING, 1 + tier);
-    }
 
     @Override
     public void registerRecipe(RecipeOutput consumer) {
         TagKey<Item> tierMaterial = tier == 1 ? IndustrialTags.Items.GEAR_GOLD : IndustrialTags.Items.GEAR_DIAMOND;
         DissolutionChamberRecipe.createRecipe(consumer, "processing_addon_tier_" + tier, new DissolutionChamberRecipe(List.of(
-                Ingredient.of(new ItemStack(Items.REDSTONE)),
-                Ingredient.of(new ItemStack(Items.REDSTONE)),
-                Ingredient.of(new ItemStack(Items.GLASS_PANE)),
-                Ingredient.of(new ItemStack(Items.GLASS_PANE)),
-                Ingredient.of(tierMaterial),
-                Ingredient.of(tierMaterial),
-                Ingredient.of(new ItemStack(Items.FURNACE)),
-                Ingredient.of(new ItemStack(Items.CRAFTING_TABLE))
+                com.buuz135.industrial.compat.Ingredients.of(new ItemStack(Items.REDSTONE)),
+                com.buuz135.industrial.compat.Ingredients.of(new ItemStack(Items.REDSTONE)),
+                com.buuz135.industrial.compat.Ingredients.of(new ItemStack(Items.GLASS_PANE)),
+                com.buuz135.industrial.compat.Ingredients.of(new ItemStack(Items.GLASS_PANE)),
+                com.buuz135.industrial.compat.Ingredients.of(tierMaterial),
+                com.buuz135.industrial.compat.Ingredients.of(tierMaterial),
+                com.buuz135.industrial.compat.Ingredients.of(new ItemStack(Items.FURNACE)),
+                com.buuz135.industrial.compat.Ingredients.of(new ItemStack(Items.CRAFTING_TABLE))
         ), new FluidStack(ModuleCore.LATEX.getSourceFluid().get(), 1000), 200, Optional.of(new ItemStack(this)), Optional.empty()));
 
     }
 
     @Override
-    public String getDescriptionId() {
-        return Component.translatable("item.industrialforegoing.addon").getString() + Component.translatable("item.industrialforegoing.processing").getString() + Component.translatable("item.industrialforegoing.tier").getString() + tier + " ";
+    public Component getName(ItemStack stack) {
+        return Component.literal(Component.translatable("item.industrialforegoing.addon").getString() + Component.translatable("item.industrialforegoing.processing").getString() + Component.translatable("item.industrialforegoing.tier").getString() + tier + " ");
     }
 
     @Override

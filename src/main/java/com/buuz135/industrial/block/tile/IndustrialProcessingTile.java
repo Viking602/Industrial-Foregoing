@@ -36,7 +36,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.ItemInteractionResult;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.api.distmarker.Dist;
@@ -57,8 +57,7 @@ public abstract class IndustrialProcessingTile<T extends IndustrialProcessingTil
         //this.addGuiAddonFactory(() -> new EnergyBarScreenAddon(10, 20, getEnergyStorage()));
         this.addProgressBar(progressBar = new ProgressBarComponent<T>(x, y, getMaxProgress()) {
                     @Override
-                    @OnlyIn(Dist.CLIENT)
-                    public List<IFactory<? extends IScreenAddon>> getScreenAddons() {
+                    public List<IFactory<?>> getScreenAddons() {
                         return Collections.singletonList(() -> new ProgressBarScreenAddon(x, y, progressBar) {
                             @Override
                             public List<Component> getTooltipLines() {
@@ -82,7 +81,7 @@ public abstract class IndustrialProcessingTile<T extends IndustrialProcessingTil
                         }).
                         setCanIncrease(tileEntity -> this.shouldWork() && getEnergyStorage().getEnergyStored() >= getTickPower() && canIncrease()).
                         setOnTickWork(() -> {
-                            getEnergyStorage().extractEnergy(getTickPower(), false);
+                            com.buuz135.industrial.compat.MachineEnergy.extractEnergy(getEnergyStorage(), getTickPower(), false);
                             progressBar.setProgressIncrease(this.hasAugmentInstalled(AugmentTypes.SPEED) ? (int) AugmentWrapper.getType(this.getInstalledAugments(AugmentTypes.SPEED).get(0), AugmentTypes.SPEED) : 1);
                         }).
                         setOnFinishWork(() -> {
@@ -102,11 +101,11 @@ public abstract class IndustrialProcessingTile<T extends IndustrialProcessingTil
     }
 
     @Override
-    public ItemInteractionResult onActivated(Player playerIn, InteractionHand hand, Direction facing, double hitX, double hitY, double hitZ) {
-        if (super.onActivated(playerIn, hand, facing, hitX, hitY, hitZ) == ItemInteractionResult.SUCCESS)
-            return ItemInteractionResult.SUCCESS;
+    public InteractionResult onActivated(Player playerIn, InteractionHand hand, Direction facing, double hitX, double hitY, double hitZ) {
+        if (super.onActivated(playerIn, hand, facing, hitX, hitY, hitZ) == InteractionResult.SUCCESS)
+            return InteractionResult.SUCCESS;
         openGui(playerIn);
-        return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+        return InteractionResult.TRY_WITH_EMPTY_HAND;
     }
 
     public int getMaxProgress() {

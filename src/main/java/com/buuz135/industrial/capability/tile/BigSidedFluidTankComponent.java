@@ -42,7 +42,7 @@ public abstract class BigSidedFluidTankComponent<T extends IComponentHarness> ex
     }
 
     @Override
-    protected void onContentsChanged() {
+    protected void onContentsChanged(int index, net.neoforged.neoforge.fluids.FluidStack previousContents) {
         sync();
     }
 

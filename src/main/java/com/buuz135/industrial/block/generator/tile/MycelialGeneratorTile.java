@@ -45,7 +45,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
-import net.neoforged.neoforge.common.util.INBTSerializable;
+import com.hrznstudio.titanium.nbthandler.INBTSerializable;
 import org.apache.commons.lang3.tuple.Pair;
 
 import javax.annotation.Nonnull;
@@ -59,7 +59,7 @@ public class MycelialGeneratorTile extends IndustrialGeneratorTile<MycelialGener
     @Save
     private int powerGeneration;
     private IMycelialGeneratorType type;
-    private INBTSerializable<CompoundTag>[] inputs;
+    private net.neoforged.neoforge.common.util.ValueIOSerializable[] inputs;
     private ProgressBarComponent<MycelialGeneratorTile> bar;
     @Save
     private String owner;
@@ -68,7 +68,7 @@ public class MycelialGeneratorTile extends IndustrialGeneratorTile<MycelialGener
         super(basicTileBlock, blockPos, blockState);
         this.type = type;
         this.powerGeneration = 10;
-        this.inputs = new INBTSerializable[this.type.getInputs().length];
+        this.inputs = new net.neoforged.neoforge.common.util.ValueIOSerializable[this.type.getInputs().length];
         for (int i = 0; i < this.type.getInputs().length; i++) {
             if (this.type.getInputs()[i] == IMycelialGeneratorType.Input.SLOT) {
                 SidedInventoryComponent<MycelialGeneratorTile> slot = (SidedInventoryComponent<MycelialGeneratorTile>) new SidedInventoryComponent<MycelialGeneratorTile>(this.type.getName() + ".input_" + i, 44 + i * 21, 22, 1, i)
@@ -78,7 +78,7 @@ public class MycelialGeneratorTile extends IndustrialGeneratorTile<MycelialGener
                 this.addInventory(slot);
                 this.inputs[i] = slot;
             } else if (this.type.getInputs()[i] == IMycelialGeneratorType.Input.TANK) {
-                SidedFluidTankComponent<MycelialGeneratorTile> slot = (SidedFluidTankComponent<MycelialGeneratorTile>) new SidedFluidTankComponent<MycelialGeneratorTile>(this.type.getName() + ".input_" + i, 8000, 44 + i * 21, 20, i)
+                SidedFluidTankComponent<MycelialGeneratorTile> slot = (SidedFluidTankComponent<MycelialGeneratorTile>) new com.buuz135.industrial.compat.MachineFluidTank<MycelialGeneratorTile>(this.type.getName() + ".input_" + i, 8000, 44 + i * 21, 20, i)
                         .setColor(this.type.getInputColors()[i])
                         .setTankAction(FluidTankComponent.Action.FILL)
                         .setValidator(this.type.getTankInputPredicates().get(i));
@@ -89,7 +89,6 @@ public class MycelialGeneratorTile extends IndustrialGeneratorTile<MycelialGener
     }
 
     @Override
-    @OnlyIn(Dist.CLIENT)
     public void initClient() {
         super.initClient();
         addGuiAddonFactory(() -> new GeneratorBackgroundScreenAddon(128, 39, type));
@@ -116,11 +115,9 @@ public class MycelialGeneratorTile extends IndustrialGeneratorTile<MycelialGener
     public ProgressBarComponent<MycelialGeneratorTile> getProgressBar() {
         bar = new ProgressBarComponent<MycelialGeneratorTile>(30, 20, 0, 100) {
             @Override
-            @OnlyIn(Dist.CLIENT)
-            public List<IFactory<? extends IScreenAddon>> getScreenAddons() {
+            public List<IFactory<?>> getScreenAddons() {
                 return Collections.singletonList(() -> new ProgressBarScreenAddon(30, 20, bar) {
                     @Override
-                    @OnlyIn(Dist.CLIENT)
                     public List<Component> getTooltipLines() {
                         List<Component> tooltip = new ArrayList<>();
                         tooltip.add(Component.literal(ChatFormatting.GOLD + Component.translatable("tooltip.titanium.progressbar.progress").getString() + ChatFormatting.WHITE + new DecimalFormat().format(bar.getProgress()) + ChatFormatting.GOLD + "/" + ChatFormatting.WHITE + new DecimalFormat().format(bar.getMaxProgress())));
@@ -149,19 +146,19 @@ public class MycelialGeneratorTile extends IndustrialGeneratorTile<MycelialGener
     }
 
     @Override
-    protected void saveAdditional(CompoundTag compoundTag, HolderLookup.Provider provider) {
-        super.saveAdditional(compoundTag, provider);
+    protected void saveAdditional(net.minecraft.world.level.storage.ValueOutput compoundTag) {
+        super.saveAdditional(compoundTag);
         for (int i = 0; i < this.inputs.length; i++) {
-            compoundTag.put("input_" + i, this.inputs[i].serializeNBT(provider));
+            this.inputs[i].serialize(compoundTag.child("input_" + i));
         }
     }
 
     @Override
-    public void loadAdditional(CompoundTag compound, HolderLookup.Provider provider) {
+    public void loadAdditional(net.minecraft.world.level.storage.ValueInput compound) {
         for (int i = 0; i < this.inputs.length; i++) {
-            this.inputs[i].deserializeNBT(provider, compound.getCompound("input_" + i));
+            this.inputs[i].deserialize(compound.childOrEmpty("input_" + i));
         }
-        super.loadAdditional(compound, provider);
+        super.loadAdditional(compound);
     }
 
     @Override

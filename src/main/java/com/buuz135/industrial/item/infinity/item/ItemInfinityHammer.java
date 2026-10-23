@@ -46,7 +46,7 @@ import net.minecraft.core.component.DataComponents;
 import net.minecraft.data.recipes.RecipeOutput;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -56,9 +56,9 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.boss.enderdragon.EnderDragon;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.monster.Creeper;
-import net.minecraft.world.entity.monster.Skeleton;
-import net.minecraft.world.entity.monster.WitherSkeleton;
-import net.minecraft.world.entity.monster.Zombie;
+import net.minecraft.world.entity.monster.skeleton.Skeleton;
+import net.minecraft.world.entity.monster.skeleton.WitherSkeleton;
+import net.minecraft.world.entity.monster.zombie.Zombie;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.EvokerFangs;
 import net.minecraft.world.item.ItemStack;
@@ -104,12 +104,12 @@ public class ItemInfinityHammer extends ItemInfinity {
 
     public ItemInfinityHammer(TitaniumTab group) {
         //.addToolType(ToolType.get("sword"), 1)
-        super("infinity_hammer", group, new Properties().stacksTo(1), POWER_CONSUMPTION, FUEL_CONSUMPTION, true);
+        super("infinity_hammer", group, new Properties().stacksTo(1).component(IFAttachments.INFINITY_HAMMER_BEHEADING.get(), 0), POWER_CONSUMPTION, FUEL_CONSUMPTION, true);
     }
 
     public static ItemStack createHead(GameProfile gameProfile) {
         ItemStack stack = new ItemStack(Items.PLAYER_HEAD);
-        stack.set(DataComponents.PROFILE, new ResolvableProfile(gameProfile));
+        stack.set(DataComponents.PROFILE, ResolvableProfile.createResolved(gameProfile));
         return stack;
     }
 
@@ -119,11 +119,6 @@ public class ItemInfinityHammer extends ItemInfinity {
         stack.set(IFAttachments.INFINITY_HAMMER_BEHEADING, 0);
     }
 
-    @Override
-    public void verifyComponentsAfterLoad(ItemStack stack) {
-        super.verifyComponentsAfterLoad(stack);
-        if (!stack.has(IFAttachments.INFINITY_HAMMER_BEHEADING)) stack.set(IFAttachments.INFINITY_HAMMER_BEHEADING, 0);
-    }
 
     @Override
     public boolean supportsEnchantment(ItemStack stack, Holder<Enchantment> enchantment) {
@@ -131,12 +126,12 @@ public class ItemInfinityHammer extends ItemInfinity {
     }
 
     @Override
-    public boolean canAttackBlock(BlockState state, Level worldIn, BlockPos pos, Player player) {
-        return !player.isCreative();
+    public boolean canDestroyBlock(ItemStack stack, BlockState state, Level worldIn, BlockPos pos, LivingEntity player) {
+        return !(player instanceof Player p && p.isCreative());
     }
 
     @Override
-    public boolean onEntitySwing(ItemStack stack, LivingEntity entity) {
+    public boolean onEntitySwing(ItemStack stack, LivingEntity entity, InteractionHand hand) {
         return false;
     }
 
@@ -150,31 +145,31 @@ public class ItemInfinityHammer extends ItemInfinity {
     }
 
     @Override
-    public boolean hurtEnemy(ItemStack stack, LivingEntity target, LivingEntity attacker) {
+    public void hurtEnemy(ItemStack stack, LivingEntity target, LivingEntity attacker) {
         InfinityTier infinityTier = getSelectedTier(stack);
         if (infinityTier.getRadius() > 1 && attacker instanceof Player) {
             AABB area = new AABB(target.getX(), target.getY(), target.getZ(), target.getX(), target.getY(), target.getZ()).inflate(infinityTier.getRadius());
-            List<Mob> mobs = attacker.getCommandSenderWorld().getEntitiesOfClass(Mob.class, new AABB(target.getX(), target.getY(), target.getZ(), target.getX(), target.getY(), target.getZ()).inflate(infinityTier.getRadius()));
+            List<Mob> mobs = attacker.level().getEntitiesOfClass(Mob.class, new AABB(target.getX(), target.getY(), target.getZ(), target.getX(), target.getY(), target.getZ()).inflate(infinityTier.getRadius()));
             mobs.forEach(mobEntity -> {
                 if (enoughFuel(stack)) {
                     mobEntity.hurt(target.damageSources().playerAttack((Player) attacker), (float) (DAMAGE + Math.pow(2, infinityTier.getRadius())) * 0.8f);
                     consumeFuel(stack);
-                    if (mobEntity.getHealth() <= 0 && attacker.getCommandSenderWorld().random.nextDouble() <= getCurrentBeheading(stack) * 0.15) {
+                    if (mobEntity.getHealth() <= 0 && attacker.level().getRandom().nextDouble() <= getCurrentBeheading(stack) * 0.15) {
                         ItemStack head = HEADS.getOrDefault(mobEntity.getClass(), (entity) -> ItemStack.EMPTY).apply(mobEntity);
                         Block.popResource(attacker.level(), attacker.blockPosition(), head);
                     }
                 }
             });
-            attacker.getCommandSenderWorld().getEntitiesOfClass(ItemEntity.class, area.inflate(1)).forEach(itemEntity -> {
+            attacker.level().getEntitiesOfClass(ItemEntity.class, area.inflate(1)).forEach(itemEntity -> {
                 itemEntity.setNoPickUpDelay();
                 itemEntity.teleportTo(attacker.blockPosition().getX(), attacker.blockPosition().getY() + 1, attacker.blockPosition().getZ());
             });
-            attacker.getCommandSenderWorld().getEntitiesOfClass(ExperienceOrb.class, area.inflate(1)).forEach(entityXPOrb -> entityXPOrb.teleportTo(attacker.blockPosition().getX(), attacker.blockPosition().getY(), attacker.blockPosition().getZ()));
+            attacker.level().getEntitiesOfClass(ExperienceOrb.class, area.inflate(1)).forEach(entityXPOrb -> entityXPOrb.teleportTo(attacker.blockPosition().getX(), attacker.blockPosition().getY(), attacker.blockPosition().getZ()));
         }
         if (target.getHealth() <= 0 && target instanceof Player) {
             Block.popResource(attacker.level(), attacker.blockPosition(), createHead(((Player) target).getGameProfile()));
         }
-        return true;
+
     }
 
     @Override
@@ -194,7 +189,7 @@ public class ItemInfinityHammer extends ItemInfinity {
                     consumeFuel(stack);
                 }
             }
-            player.getCooldowns().addCooldown(this, 12);
+            player.getCooldowns().addCooldown(stack, 12);
             return InteractionResult.SUCCESS;
         }
         return super.useOn(context);
@@ -242,8 +237,8 @@ public class ItemInfinityHammer extends ItemInfinity {
     public ItemAttributeModifiers getDefaultAttributeModifiers(ItemStack stack) {
         var attributes = super.getDefaultAttributeModifiers(stack);
         InfinityTier infinityTier = InfinityTier.getTierBraquet(getPowerFromStack(stack)).getLeft();
-        attributes = attributes.withModifierAdded(Attributes.ATTACK_DAMAGE, new AttributeModifier(ResourceLocation.fromNamespaceAndPath(Reference.MOD_ID, "base_attack_damage"), DAMAGE + Math.pow(2, infinityTier.getRadius()), AttributeModifier.Operation.ADD_VALUE), EquipmentSlotGroup.MAINHAND);
-        attributes = attributes.withModifierAdded(Attributes.ATTACK_SPEED, new AttributeModifier(ResourceLocation.fromNamespaceAndPath(Reference.MOD_ID, "base_attack_speed"), ATTACK_SPEED, AttributeModifier.Operation.ADD_VALUE), EquipmentSlotGroup.MAINHAND);
+        attributes = attributes.withModifierAdded(Attributes.ATTACK_DAMAGE, new AttributeModifier(Identifier.fromNamespaceAndPath(Reference.MOD_ID, "base_attack_damage"), DAMAGE + Math.pow(2, infinityTier.getRadius()), AttributeModifier.Operation.ADD_VALUE), EquipmentSlotGroup.MAINHAND);
+        attributes = attributes.withModifierAdded(Attributes.ATTACK_SPEED, new AttributeModifier(Identifier.fromNamespaceAndPath(Reference.MOD_ID, "base_attack_speed"), ATTACK_SPEED, AttributeModifier.Operation.ADD_VALUE), EquipmentSlotGroup.MAINHAND);
         return attributes;
     }
 
@@ -279,10 +274,9 @@ public class ItemInfinityHammer extends ItemInfinity {
         tooltip.add(Component.translatable("text.industrialforegoing.display.beheading").append(" " + level).withStyle(ChatFormatting.GRAY));
     }
 
-    @OnlyIn(Dist.CLIENT)
     @Override
-    public List<IFactory<? extends IScreenAddon>> getScreenAddons(Supplier<ItemStack> stack) {
-        List<IFactory<? extends IScreenAddon>> factory = super.getScreenAddons(stack);
+    public List<IFactory<?>> getScreenAddons(Supplier<ItemStack> stack) {
+        List<IFactory<?>> factory = super.getScreenAddons(stack);
         factory.add(() -> new ArrowButtonScreenAddon((ArrowButtonComponent) new ArrowButtonComponent(154, 20 + 16 * 2, 14, 14, FacingUtil.Sideness.RIGHT).setId(4)));
         factory.add(() -> new ArrowButtonScreenAddon((ArrowButtonComponent) new ArrowButtonComponent(54, 20 + 16 * 2, 14, 14, FacingUtil.Sideness.LEFT).setId(5)));
         factory.add(() -> new TextScreenAddon("", 54 + 14 + 4, 24 + 16 * 2, false) {
@@ -311,14 +305,14 @@ public class ItemInfinityHammer extends ItemInfinity {
     @Override
     public void registerRecipe(RecipeOutput consumer) {
         DissolutionChamberRecipe.createRecipe(consumer, "infinity_hammer", new DissolutionChamberRecipe(List.of(
-                Ingredient.of(new ItemStack(Items.DIAMOND_BLOCK)),
-                Ingredient.of(new ItemStack(Items.DIAMOND_SWORD)),
-                Ingredient.of(new ItemStack(Items.DIAMOND_BLOCK)),
-                Ingredient.of(new ItemStack(Items.DIAMOND_AXE)),
-                Ingredient.of(new ItemStack(ModuleCore.RANGE_ADDONS[11].get())),
-                Ingredient.of(IndustrialTags.Items.GEAR_GOLD),
-                Ingredient.of(IndustrialTags.Items.GEAR_GOLD),
-                Ingredient.of(IndustrialTags.Items.GEAR_GOLD)
+                com.buuz135.industrial.compat.Ingredients.of(new ItemStack(Items.DIAMOND_BLOCK)),
+                com.buuz135.industrial.compat.Ingredients.of(new ItemStack(Items.DIAMOND_SWORD)),
+                com.buuz135.industrial.compat.Ingredients.of(new ItemStack(Items.DIAMOND_BLOCK)),
+                com.buuz135.industrial.compat.Ingredients.of(new ItemStack(Items.DIAMOND_AXE)),
+                com.buuz135.industrial.compat.Ingredients.of(new ItemStack(ModuleCore.RANGE_ADDONS[11].get())),
+                com.buuz135.industrial.compat.Ingredients.of(IndustrialTags.Items.GEAR_GOLD),
+                com.buuz135.industrial.compat.Ingredients.of(IndustrialTags.Items.GEAR_GOLD),
+                com.buuz135.industrial.compat.Ingredients.of(IndustrialTags.Items.GEAR_GOLD)
         ), new FluidStack(ModuleCore.PINK_SLIME.getSourceFluid().get(), 2000), 400, Optional.of(new ItemStack(this)), Optional.empty()));
 
     }

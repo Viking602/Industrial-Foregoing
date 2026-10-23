@@ -1,0 +1,17 @@
+{
+  "name": "溶解成型机",
+  "icon": "industrialforegoing:dissolution_chamber",
+  "category": "industrialforegoing:basics",
+  "sortnum": 6,
+  "read_by_default": true,
+  "pages": [
+    {
+      "type": "text",
+      "text": "可以使用最多$(6)八种$()物品和$(6)一种$()流体加工材料，产物可以是物品、流体，或两者兼有。$(br2)所有配方都是无序配方，材料可以放在任意输入槽中。$(br2)配方匹配后，机器会锁定输入槽，防止继续插入物品。"
+    },
+    {
+      "type": "crafting",
+      "recipe": "industrialforegoing:dissolution_chamber"
+    }
+  ]
+}

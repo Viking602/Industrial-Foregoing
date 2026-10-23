@@ -41,9 +41,9 @@ import mezz.jei.api.recipe.RecipeIngredientRole;
 import mezz.jei.api.recipe.RecipeType;
 import mezz.jei.api.recipe.category.IRecipeCategory;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
@@ -53,7 +53,7 @@ import java.awt.*;
 import java.util.Arrays;
 import java.util.List;
 
-public class MachineProduceCategory implements IRecipeCategory<MachineProduceWrapper> {
+public class MachineProduceCategory implements com.buuz135.industrial.plugin.jei.MachineRecipeCategory<MachineProduceWrapper> {
     private IGuiHelper guiHelper;
     private final IDrawable smallTank;
     private final IDrawable icon;
@@ -63,7 +63,7 @@ public class MachineProduceCategory implements IRecipeCategory<MachineProduceWra
         this.guiHelper = guiHelper;
         this.smallTank = guiHelper.createDrawable(DefaultAssetProvider.DEFAULT_LOCATION, 235 + 3, 1 + 3, 12, 13);
         this.icon = guiHelper.createDrawableIngredient(VanillaTypes.ITEM_STACK, new ItemStack(ModuleCore.LATEX_PROCESSING.getBlock()));
-        this.background = guiHelper.drawableBuilder(ResourceLocation.fromNamespaceAndPath(Reference.MOD_ID, "textures/gui/jei.png"), 0, 0, 54, 26).addPadding(0, 0, 0, 26).build();
+        this.background = guiHelper.drawableBuilder(Identifier.fromNamespaceAndPath(Reference.MOD_ID, "textures/gui/jei.png"), 0, 0, 54, 26).addPadding(0, 0, 0, 26).build();
     }
 
     @Override
@@ -99,14 +99,15 @@ public class MachineProduceCategory implements IRecipeCategory<MachineProduceWra
                     .setOverlay(smallTank, 0, 0)
                     .addIngredient(NeoForgeTypes.FLUID_STACK, recipe.getOutputFluid());
         } else {
-            List<ItemStack> output = Arrays.asList(outputItem.getItems().clone());
+            List<ItemStack> output = Arrays.asList(outputItem.items().map(net.minecraft.world.item.ItemStack::new).toArray(net.minecraft.world.item.ItemStack[]::new).clone());
             builder.addSlot(RecipeIngredientRole.OUTPUT, 57, 5)
                     .addItemStacks(output);
         }
     }
 
     @Override
-    public void draw(MachineProduceWrapper recipe, IRecipeSlotsView recipeSlotsView, GuiGraphics guiGraphics, double mouseX, double mouseY) {
+    public void draw(MachineProduceWrapper recipe, IRecipeSlotsView recipeSlotsView, GuiGraphicsExtractor guiGraphics, double mouseX, double mouseY) {
+        getBackground().draw(guiGraphics, 0, 0);
         if (recipe.getOutputItem() == null) {
             AssetUtil.drawAsset(guiGraphics, Minecraft.getInstance().screen, DefaultAssetProvider.DEFAULT_PROVIDER.getAsset(AssetTypes.TANK_SMALL), 56, Minecraft.getInstance().font.lineHeight / 2);
         } else {

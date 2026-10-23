@@ -1,8 +1,8 @@
 {
   "neoforge:conditions": [
     {
-      "type": "neoforge:item_exists",
-      "item": "industrialforegoing:enchantment_extractor"
+      "type": "neoforge:registered",
+      "value": "industrialforegoing:enchantment_extractor"
     }
   ],
   "parent": "minecraft:recipes/root",

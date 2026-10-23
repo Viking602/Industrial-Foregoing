@@ -50,7 +50,7 @@ public class WaterCondensatorTile extends IndustrialWorkingTile<WaterCondensator
 
     public WaterCondensatorTile(BlockPos blockPos, BlockState blockState) {
         super(ModuleResourceProduction.WATER_CONDENSATOR, WaterCondensatorConfig.powerPerOperation, blockPos, blockState);
-        this.addTank(water = (SidedFluidTankComponent<WaterCondensatorTile>) new SidedFluidTankComponent<WaterCondensatorTile>("water", WaterCondensatorConfig.maxWaterTankSize, 30 + 13, 20, 0).
+        this.addTank(water = (SidedFluidTankComponent<WaterCondensatorTile>) new com.buuz135.industrial.compat.MachineFluidTank<WaterCondensatorTile>("water", WaterCondensatorConfig.maxWaterTankSize, 30 + 13, 20, 0).
                 setColor(DyeColor.BLUE).
                 setComponentHarness(this).
                 setTankAction(FluidTankComponent.Action.DRAIN).
@@ -64,10 +64,10 @@ public class WaterCondensatorTile extends IndustrialWorkingTile<WaterCondensator
         int water = getWaterSources();
         if (water >= 2) {
             if (hasEnergy(getPowerPerOperation)) {
-                this.water.fillForced(new FluidStack(Fluids.WATER, water * 100), IFluidHandler.FluidAction.EXECUTE);
+                com.buuz135.industrial.compat.MachineFluids.fillForced(this.water, new FluidStack(Fluids.WATER, water * 100), IFluidHandler.FluidAction.EXECUTE);
                 return new WorkAction(0.1f, getPowerPerOperation);
             } else {
-                this.water.fillForced(new FluidStack(Fluids.WATER, water * 50), IFluidHandler.FluidAction.EXECUTE);
+                com.buuz135.industrial.compat.MachineFluids.fillForced(this.water, new FluidStack(Fluids.WATER, water * 50), IFluidHandler.FluidAction.EXECUTE);
                 return new WorkAction(0.5f, 0);
             }
         }

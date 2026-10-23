@@ -39,7 +39,7 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.common.util.FakePlayer;
-import net.neoforged.neoforge.items.ItemHandlerHelper;
+import com.buuz135.industrial.compat.MachineItems;
 
 import javax.annotation.Nonnull;
 
@@ -69,7 +69,7 @@ public class BlockBreakerTile extends IndustrialAreaWorkingTile<BlockBreakerTile
                 fakePlayer.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Items.NETHERITE_PICKAXE));
                 if (this.level.getBlockState(pointed).getDestroySpeed(this.level, pointed) >= 0 && this.level.getBlockState(pointed).canHarvestBlock(this.level, pointed, fakePlayer)) {
                     for (ItemStack blockDrop : BlockUtils.getBlockDrops(this.level, pointed)) {
-                        ItemStack result = ItemHandlerHelper.insertItem(output, blockDrop, false);
+                        ItemStack result = MachineItems.insertItem(output, blockDrop, false);
                         if (!result.isEmpty()) {
                             BlockUtils.spawnItemStack(result, this.level, pointed);
                         }

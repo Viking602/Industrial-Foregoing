@@ -26,7 +26,7 @@ import com.buuz135.industrial.plugin.jei.generator.MycelialGeneratorRecipe;
 import com.buuz135.industrial.utils.IndustrialTags;
 import com.hrznstudio.titanium.component.inventory.SidedInventoryComponent;
 import net.minecraft.core.RegistryAccess;
-import net.minecraft.data.recipes.ShapedRecipeBuilder;
+import com.hrznstudio.titanium.recipe.generator.TitaniumShapedRecipeBuilder;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.Item;
@@ -34,7 +34,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.level.block.Blocks;
-import net.neoforged.neoforge.common.util.INBTSerializable;
+import com.hrznstudio.titanium.nbthandler.INBTSerializable;
 import net.neoforged.neoforge.fluids.FluidStack;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -67,15 +67,15 @@ public class HalitosisGeneratorType implements IMycelialGeneratorType {
     }
 
     @Override
-    public boolean canStart(INBTSerializable<CompoundTag>[] inputs) {
+    public boolean canStart(net.neoforged.neoforge.common.util.ValueIOSerializable[] inputs) {
         return inputs.length > 0 && inputs[0] instanceof SidedInventoryComponent && ((SidedInventoryComponent<?>) inputs[0]).getStackInSlot(0).getCount() > 0;
     }
 
     @Override
-    public Pair<Integer, Integer> getTimeAndPowerGeneration(INBTSerializable<CompoundTag>[] inputs) {
+    public Pair<Integer, Integer> getTimeAndPowerGeneration(net.neoforged.neoforge.common.util.ValueIOSerializable[] inputs) {
         if (inputs.length > 0 && inputs[0] instanceof SidedInventoryComponent && ((SidedInventoryComponent<?>) inputs[0]).getStackInSlot(0).getCount() > 0) {
             ItemStack stack = ((SidedInventoryComponent<?>) inputs[0]).getStackInSlot(0).copy();
-            ((SidedInventoryComponent<?>) inputs[0]).getStackInSlot(0).shrink(1);
+            com.buuz135.industrial.compat.MachineItems.shrink(((SidedInventoryComponent<?>) inputs[0]), 0, 1);
             return calculate(stack);
         }
         return Pair.of(0, 80);
@@ -102,7 +102,7 @@ public class HalitosisGeneratorType implements IMycelialGeneratorType {
         for (Item item : new Item[]{Items.DRAGON_BREATH}) {
             ItemStack stack = new ItemStack(item);
             Pair<Integer, Integer> power = calculate(stack);
-            recipes.add(new MycelialGeneratorRecipe(Collections.singletonList(Collections.singletonList(Ingredient.of(stack))), new ArrayList<>(), power.getLeft(), power.getRight()));
+            recipes.add(new MycelialGeneratorRecipe(Collections.singletonList(Collections.singletonList(com.buuz135.industrial.compat.Ingredients.of(stack))), new ArrayList<>(), power.getLeft(), power.getRight()));
         }
         return recipes;
     }
@@ -112,7 +112,7 @@ public class HalitosisGeneratorType implements IMycelialGeneratorType {
     }
 
     @Override
-    public ShapedRecipeBuilder addIngredients(ShapedRecipeBuilder recipeBuilder) {
+    public TitaniumShapedRecipeBuilder addIngredients(TitaniumShapedRecipeBuilder recipeBuilder) {
         recipeBuilder = recipeBuilder.define('B', Blocks.PURPUR_BLOCK)
                 .define('C', Blocks.END_ROD)
                 .define('M', IndustrialTags.Items.MACHINE_FRAME_SUPREME);

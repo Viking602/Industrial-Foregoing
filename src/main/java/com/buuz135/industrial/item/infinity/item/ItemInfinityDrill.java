@@ -96,7 +96,7 @@ public class ItemInfinityDrill extends ItemInfinity {
                         if (!tempState.is(BlockTags.MINEABLE_WITH_PICKAXE) && !tempState.is(BlockTags.MINEABLE_WITH_SHOVEL)) return;
                         if (tempState.getDestroySpeed(worldIn, blockPos) < 0) return;
                         var xp = EnchantmentHelper.processBlockExperience(serverLevel, stack, block.getExpDrop(tempState, worldIn, blockPos, worldIn.getBlockEntity(blockPos), entityLiving, stack));
-                        if (block.onDestroyedByPlayer(tempState, worldIn, blockPos, (Player) entityLiving, true, tempState.getFluidState())) {
+                        if (block.onDestroyedByPlayer(tempState, worldIn, blockPos, (Player) entityLiving, stack, true, tempState.getFluidState())) {
 
                             block.destroy(worldIn, blockPos, tempState);
                             //block.harvestBlock(worldIn, (PlayerEntity) entityLiving, blockPos, tempState, null, stack);
@@ -131,14 +131,14 @@ public class ItemInfinityDrill extends ItemInfinity {
     @Override
     public void registerRecipe(RecipeOutput consumer) {
         DissolutionChamberRecipe.createRecipe(consumer, "infinity_drill", new DissolutionChamberRecipe(List.of(
-                Ingredient.of(new ItemStack(Items.DIAMOND_BLOCK)),
-                Ingredient.of(new ItemStack(Items.DIAMOND_SHOVEL)),
-                Ingredient.of(new ItemStack(Items.DIAMOND_BLOCK)),
-                Ingredient.of(new ItemStack(Items.DIAMOND_BLOCK)),
-                Ingredient.of(new ItemStack(ModuleCore.RANGE_ADDONS[11].get())),
-                Ingredient.of(IndustrialTags.Items.GEAR_GOLD),
-                Ingredient.of(IndustrialTags.Items.GEAR_GOLD),
-                Ingredient.of(IndustrialTags.Items.GEAR_GOLD)
+                com.buuz135.industrial.compat.Ingredients.of(new ItemStack(Items.DIAMOND_BLOCK)),
+                com.buuz135.industrial.compat.Ingredients.of(new ItemStack(Items.DIAMOND_SHOVEL)),
+                com.buuz135.industrial.compat.Ingredients.of(new ItemStack(Items.DIAMOND_BLOCK)),
+                com.buuz135.industrial.compat.Ingredients.of(new ItemStack(Items.DIAMOND_BLOCK)),
+                com.buuz135.industrial.compat.Ingredients.of(new ItemStack(ModuleCore.RANGE_ADDONS[11].get())),
+                com.buuz135.industrial.compat.Ingredients.of(IndustrialTags.Items.GEAR_GOLD),
+                com.buuz135.industrial.compat.Ingredients.of(IndustrialTags.Items.GEAR_GOLD),
+                com.buuz135.industrial.compat.Ingredients.of(IndustrialTags.Items.GEAR_GOLD)
         ), new FluidStack(ModuleCore.PINK_SLIME.getSourceFluid().get(), 2000), 400, Optional.of(new ItemStack(this)), Optional.empty()));
 
     }

@@ -40,7 +40,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.entity.projectile.AbstractArrow;
+import net.minecraft.world.entity.projectile.arrow.AbstractArrow;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.level.Level;
@@ -65,7 +65,6 @@ public class InfinityLauncherProjectileEntity extends AbstractArrow {
         this.entityData.set(TIER, tier);
     }
 
-    @OnlyIn(Dist.CLIENT)
     public InfinityLauncherProjectileEntity(Level worldIn, double x, double y, double z) {
         super((EntityType<? extends AbstractArrow>) ModuleTool.INFINITY_LAUNCHER_PROJECTILE_ENTITY_TYPE.value(), x, y, z, worldIn, ItemStack.EMPTY, ItemStack.EMPTY);
     }
@@ -81,7 +80,7 @@ public class InfinityLauncherProjectileEntity extends AbstractArrow {
         Entity player = this.getOwner();
         ItemInfinityLauncher.PlungerAction action = ItemInfinityLauncher.PlungerAction.getFromId(this.entityData.get(PLUNGER_ACTION));
         if (player instanceof Player && action == ItemInfinityLauncher.PlungerAction.RELEASE) {
-            for (ItemStack itemStack : ((Player) player).getInventory().items) {
+            for (ItemStack itemStack : ((Player) player).getInventory().getNonEquipmentItems()) {
                 if (itemStack.getItem() instanceof MobImprisonmentToolItem && itemStack.has(IFAttachments.MOB_IMPRISONMENT_TOOL)) {
                     ItemStack copy = itemStack.copy();
                     if (((MobImprisonmentToolItem) itemStack.getItem()).release((Player) player, result.getBlockPos(), result.getDirection(), this.level(), copy)) {
@@ -113,12 +112,10 @@ public class InfinityLauncherProjectileEntity extends AbstractArrow {
         return ItemStack.EMPTY;
     }
 
-    @OnlyIn(Dist.CLIENT)
     public boolean isEnchanted() {
         return false;
     }
 
-    @OnlyIn(Dist.CLIENT)
     @Override
     public boolean shouldRender(double x, double y, double z) {
         return true;
@@ -146,7 +143,7 @@ public class InfinityLauncherProjectileEntity extends AbstractArrow {
 
         if (action == ItemInfinityLauncher.PlungerAction.DAMAGE) {
             if (this.isCritArrow()) {
-                long j = (long) this.random.nextInt(i / 2 + 2);
+                long j = (long) this.getRandom().nextInt(i / 2 + 2);
                 i = (int) Math.min(j + (long) i, 2147483647L);
             }
             Entity entity1 = this.getOwner();
@@ -164,13 +161,13 @@ public class InfinityLauncherProjectileEntity extends AbstractArrow {
             if (this.isOnFire() && !flag) {
                 entity.igniteForSeconds(5);
             }
-            if (entity.hurt(damagesource, (float) i)) {
+            if (entity.hurtOrSimulate(damagesource, (float) i)) {
                 if (flag) {
                     return;
                 }
                 if (entity instanceof LivingEntity) {
                     LivingEntity livingentity = (LivingEntity) entity;
-                    if (!this.level().isClientSide && livingentity instanceof Player) {
+                    if (!this.level().isClientSide() && livingentity instanceof Player) {
                         IndustrialForegoing.NETWORK.sendToNearby(this.level(), this.blockPosition(), 256, new PlungerPlayerHitMessage(livingentity.getUUID()));
                     }
                     if (1 > 0) {
@@ -184,10 +181,10 @@ public class InfinityLauncherProjectileEntity extends AbstractArrow {
                     }
                     this.doPostHurtEffects(livingentity);
                     if (entity1 != null && livingentity != entity1 && livingentity instanceof Player && entity1 instanceof ServerPlayer && !this.isSilent()) {
-                        ((ServerPlayer) entity1).connection.send(new ClientboundGameEventPacket(ClientboundGameEventPacket.ARROW_HIT_PLAYER, 0.0F));
+                        ((ServerPlayer) entity1).connection.send(new ClientboundGameEventPacket(ClientboundGameEventPacket.PLAY_ARROW_HIT_SOUND, 0.0F));
                     }
                 }
-                this.playSound(SoundEvents.ITEM_FRAME_REMOVE_ITEM, 1.0F, 1.2F / (this.random.nextFloat() * 0.2F + 0.9F));
+                this.playSound(SoundEvents.ITEM_FRAME_REMOVE_ITEM, 1.0F, 1.2F / (this.getRandom().nextFloat() * 0.2F + 0.9F));
                 if (this.getPierceLevel() <= 0) {
                     this.onClientRemoval();
                 }
@@ -196,9 +193,9 @@ public class InfinityLauncherProjectileEntity extends AbstractArrow {
                 this.setDeltaMovement(this.getDeltaMovement().scale(-0.1D));
                 this.setYRot(180.0F);
                 this.yRotO += 180.0F;
-                if (!this.level().isClientSide && this.getDeltaMovement().lengthSqr() < 1.0E-7D) {
+                if (!this.level().isClientSide() && this.getDeltaMovement().lengthSqr() < 1.0E-7D) {
                     if (this.pickup == AbstractArrow.Pickup.ALLOWED) {
-                        this.spawnAtLocation(this.getPickupItem(), 0.1F);
+                        this.spawnAtLocation((net.minecraft.server.level.ServerLevel) this.level(), this.getPickupItem(), 0.1F);
                     }
 
                     this.onClientRemoval();
@@ -207,7 +204,7 @@ public class InfinityLauncherProjectileEntity extends AbstractArrow {
         }
         Entity player = this.getOwner();
         if (player instanceof Player && entity instanceof LivingEntity && action == ItemInfinityLauncher.PlungerAction.CAPTURE) {
-            for (ItemStack itemStack : ((Player) player).getInventory().items) {
+            for (ItemStack itemStack : ((Player) player).getInventory().getNonEquipmentItems()) {
                 if (itemStack.getItem() instanceof MobImprisonmentToolItem && !itemStack.has(IFAttachments.MOB_IMPRISONMENT_TOOL)) {
                     ItemStack copy = itemStack.copy();
                     if (((MobImprisonmentToolItem) itemStack.getItem()).capture(copy, (LivingEntity) entity,((Player) player))) {

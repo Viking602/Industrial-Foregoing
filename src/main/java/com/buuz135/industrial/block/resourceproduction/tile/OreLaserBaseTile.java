@@ -47,7 +47,7 @@ import com.hrznstudio.titanium.component.sideness.IFacingComponent;
 import com.hrznstudio.titanium.item.AugmentWrapper;
 import com.hrznstudio.titanium.network.locator.instance.TileEntityLocatorInstance;
 import com.hrznstudio.titanium.network.messages.ButtonClickNetworkMessage;
-import com.hrznstudio.titanium.util.RecipeUtil;
+import com.buuz135.industrial.compat.MachineRecipes;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.EditBox;
@@ -69,7 +69,7 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
-import net.neoforged.neoforge.items.ItemHandlerHelper;
+import com.buuz135.industrial.compat.MachineItems;
 
 import java.text.DecimalFormat;
 import java.util.ArrayList;
@@ -95,8 +95,7 @@ public class OreLaserBaseTile extends IndustrialMachineTile<OreLaserBaseTile> im
         this.miningDepth = this.getBlockPos().getY();
         this.addProgressBar(work = new ProgressBarComponent<OreLaserBaseTile>(12, 22, 0, OreLaserBaseConfig.maxProgress) {
                     @Override
-                    @OnlyIn(Dist.CLIENT)
-                    public List<IFactory<? extends IScreenAddon>> getScreenAddons() {
+                    public List<IFactory<?>> getScreenAddons() {
                         return Collections.singletonList(() -> new ProgressBarScreenAddon<OreLaserBaseTile>(work.getPosX(), work.getPosY(), this) {
                             @Override
                             public List<Component> getTooltipLines() {
@@ -132,48 +131,53 @@ public class OreLaserBaseTile extends IndustrialMachineTile<OreLaserBaseTile> im
     }
 
     @Override
-    @OnlyIn(Dist.CLIENT)
     public void initClient() {
         super.initClient();
-        this.addGuiAddonFactory(() -> new TextScreenAddon("", 70, 84 + 3, false) {
-            @Override
-            public String getText() {
-                return ChatFormatting.DARK_GRAY + Component.translatable("text.industrialforegoing.depth").getString();
-            }
-        });
-        this.addGuiAddonFactory(() -> {
-            var edit = new EditBox(Minecraft.getInstance().font, 80, 26, 40, 12, Component.literal(this.miningDepth + "")) {
+        new ClientUi().setup();
+    }
+
+    private final class ClientUi {
+        private void setup() {
+            OreLaserBaseTile.this.addGuiAddonFactory(() -> new TextScreenAddon("", 70, 84 + 3, false) {
                 @Override
-                public String getValue() {
-                    return miningDepth + "";
-                }
-            };
-            edit.setValue(miningDepth + "");
-            edit.setFilter(string -> {
-                if (string.isEmpty() || string.equals("-")) return true;
-                try {
-                    Integer.decode(string);
-                    return true;
-                } catch (NumberFormatException e) {
-                    return false;
+                public String getText() {
+                    return ChatFormatting.DARK_GRAY + Component.translatable("text.industrialforegoing.depth").getString();
                 }
             });
-            edit.setResponder(string -> {
-                if (!string.isEmpty() && !string.equals("-")) {
-                    CompoundTag compoundTag = new CompoundTag();
-                    compoundTag.putInt("MiningLevel", Integer.decode(string));
-                    Titanium.NETWORK.sendToServer(new ButtonClickNetworkMessage(new TileEntityLocatorInstance(this.getBlockPos()), 5487, compoundTag));
-                }
+            OreLaserBaseTile.this.addGuiAddonFactory(() -> {
+                var edit = new EditBox(Minecraft.getInstance().font, 80, 26, 40, 12, Component.literal(OreLaserBaseTile.this.miningDepth + "")) {
+                    @Override
+                    public String getValue() {
+                        return miningDepth + "";
+                    }
+                };
+                edit.setValue(miningDepth + "");
+                edit.setFilter(string -> {
+                    if (string.isEmpty() || string.equals("-")) return true;
+                    try {
+                        Integer.decode(string);
+                        return true;
+                    } catch (NumberFormatException e) {
+                        return false;
+                    }
+                });
+                edit.setResponder(string -> {
+                    if (!string.isEmpty() && !string.equals("-")) {
+                        CompoundTag compoundTag = new CompoundTag();
+                        compoundTag.putInt("MiningLevel", Integer.decode(string));
+                        Titanium.NETWORK.sendToServer(new ButtonClickNetworkMessage(new TileEntityLocatorInstance(OreLaserBaseTile.this.getBlockPos()), 5487, compoundTag));
+                    }
+                });
+                return new WidgetScreenAddon(102, 85, edit);
             });
-            return new WidgetScreenAddon(102, 85, edit);
-        });
+        }
     }
 
     @Override
     public void handleButtonMessage(int id, Player playerEntity, CompoundTag compound) {
         super.handleButtonMessage(id, playerEntity, compound);
         if (id == 5487) {
-            this.miningDepth = compound.getInt("MiningLevel");
+            this.miningDepth = compound.getIntOr("MiningLevel", 0);
             syncObject(this.miningDepth);
         }
     }
@@ -187,14 +191,14 @@ public class OreLaserBaseTile extends IndustrialMachineTile<OreLaserBaseTile> im
     private void onWork() {
         if (!ItemStackUtils.isInventoryFull(this.output)) {
             VoxelShape box = Shapes.box(-1, 0, -1, 2, 3, 2).move(this.worldPosition.getX(), this.worldPosition.getY() - 1, this.worldPosition.getZ());
-            List<ItemStackWeightedItem> items = RecipeUtil.getRecipes(this.level, (RecipeType<LaserDrillOreRecipe>) ModuleCore.LASER_DRILL_TYPE.get()).stream()
+            List<ItemStackWeightedItem> items = MachineRecipes.getRecipes(this.level, (RecipeType<LaserDrillOreRecipe>) ModuleCore.LASER_DRILL_TYPE.get()).stream()
                 .filter(laserDrillOreRecipe -> LaserDrillRarity.getValidRarity(this.level, laserDrillOreRecipe.rarity, this.level.dimensionType(), this.level.getBiome(this.worldPosition), this.miningDepth) != null)
                 .map(recipe -> processRecipe(recipe, box))
                 .filter(Objects::nonNull)
                 .toList();
             if (!items.isEmpty()) {
-                ItemStack stack = WeightedRandom.getRandomItem(this.level.getRandom(), items).get().getStack();
-                ItemHandlerHelper.insertItem(output, stack, false);
+                ItemStack stack = WeightedRandom.getRandomItem(this.level.getRandom(), items, ItemStackWeightedItem::getWeight).map(ItemStackWeightedItem::getStack).orElse(ItemStack.EMPTY);
+                MachineItems.insertItem(output, stack, false);
             }
         }
     }
@@ -207,7 +211,7 @@ public class OreLaserBaseTile extends IndustrialMachineTile<OreLaserBaseTile> im
 
             List<Entity> filtered = entities.stream().filter(entity -> {
                 CompoundTag data = new CompoundTag();
-                entity.saveWithoutId(data);
+                com.buuz135.industrial.compat.EntityNbt.saveWithoutId(entity, data);
                 return NbtUtils.compareNbt(recipe.entityData.get().getData(), data, true);
             }).collect(Collectors.toList());
 
@@ -233,7 +237,7 @@ public class OreLaserBaseTile extends IndustrialMachineTile<OreLaserBaseTile> im
         }
         ItemStack stack = ItemStack.EMPTY;
         for (String modid : TagConfig.ITEM_PREFERENCE) {
-            for (ItemStack matchingStack : recipe.output.getItems()) {
+            for (ItemStack matchingStack : recipe.output.ingredient().items().map(holder -> new ItemStack(holder, recipe.output.count())).toArray(ItemStack[]::new)) {
                 if (BuiltInRegistries.ITEM.getKey(matchingStack.getItem()).getNamespace().equals(modid)) {
                     stack = matchingStack;
                     break;
@@ -241,7 +245,7 @@ public class OreLaserBaseTile extends IndustrialMachineTile<OreLaserBaseTile> im
             }
             if (!stack.isEmpty()) break;
         }
-        if (stack.isEmpty()) stack = recipe.output.getItems()[0];
+        if (stack.isEmpty()) stack = recipe.output.ingredient().items().map(holder -> new ItemStack(holder, recipe.output.count())).toArray(ItemStack[]::new)[0];
         return new ItemStackWeightedItem(stack.copy(), weight);
     }
 
@@ -277,7 +281,7 @@ public class OreLaserBaseTile extends IndustrialMachineTile<OreLaserBaseTile> im
     @Override
     public void loadSettings(Player player, CompoundTag tag) {
         if (tag.contains("OL_miningDepth")) {
-            this.miningDepth = tag.getInt("OL_miningDepth");
+            this.miningDepth = tag.getIntOr("OL_miningDepth", 0);
         }
         super.loadSettings(player, tag);
     }

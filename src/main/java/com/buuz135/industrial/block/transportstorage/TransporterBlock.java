@@ -33,7 +33,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.NonNullList;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.ItemInteractionResult;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.BlockGetter;
@@ -69,7 +69,7 @@ import static net.minecraft.world.level.block.state.properties.BlockStatePropert
 public class TransporterBlock extends BasicTileBlock<TransporterTile> implements SimpleWaterloggedBlock {
 
     public TransporterBlock() {
-        super(Properties.ofFullCopy(Blocks.IRON_BLOCK).noCollission().strength(2.0f), TransporterTile.class);
+        super(Properties.ofFullCopy(Blocks.IRON_BLOCK).noCollision().strength(2.0f), TransporterTile.class);
         //this.setRegistryName(Reference.MOD_ID, "transporter");
         this.registerDefaultState(this.defaultBlockState().setValue(WATERLOGGED, false));
     }
@@ -94,10 +94,10 @@ public class TransporterBlock extends BasicTileBlock<TransporterTile> implements
     }
 
     @Override
-    public ItemStack getCloneItemStack(BlockState state, HitResult target, LevelReader world, BlockPos pos, Player player) {
+    public ItemStack getCloneItemStack(LevelReader world, BlockPos pos, BlockState state, boolean includeData, Player player) {
         BlockEntity tileEntity = world.getBlockEntity(pos);
         if (tileEntity instanceof TransporterTile) {
-            if (target instanceof BlockHitResult) {
+            if (player != null) {
                 Pair<Direction, Boolean> upgradePair = getFacingUpgradeHit(state, player.level(), pos, player);
                 if (upgradePair != null) {
                     TransporterType upgrade = ((TransporterTile) tileEntity).getTransporterTypeMap().get(upgradePair.getKey());
@@ -171,7 +171,7 @@ public class TransporterBlock extends BasicTileBlock<TransporterTile> implements
     }
 
     @Override
-    public ItemInteractionResult useItemOn(ItemStack handStack, BlockState state, Level worldIn, BlockPos pos, Player player, InteractionHand hand, BlockHitResult ray) {
+    public InteractionResult useItemOn(ItemStack handStack, BlockState state, Level worldIn, BlockPos pos, Player player, InteractionHand hand, BlockHitResult ray) {
         BlockEntity tileEntity = worldIn.getBlockEntity(pos);
         if (tileEntity instanceof TransporterTile) {
             Pair<Direction, Boolean> info = getFacingUpgradeHit(state, worldIn, pos, player);
@@ -181,20 +181,20 @@ public class TransporterBlock extends BasicTileBlock<TransporterTile> implements
                 if (player.isShiftKeyDown() && handStack.isEmpty()) {
                     if (((TransporterTile) tileEntity).hasUpgrade(facing)) {
                         ((TransporterTile) tileEntity).removeUpgrade(facing, true);
-                        return ItemInteractionResult.SUCCESS;
+                        return InteractionResult.SUCCESS;
                     }
                 } else {
                     if (isMiddle) {
                         if (((TransporterTile) tileEntity).hasUpgrade(facing)) {
                             ((TransporterTile) tileEntity).getTransporterTypeMap().get(facing).toggleAction();
-                            return ItemInteractionResult.SUCCESS;
+                            return InteractionResult.SUCCESS;
                         }
                     } else {
                         if (((TransporterTile) tileEntity).hasUpgrade(facing)) {
                             TransporterType transporterType = ((TransporterTile) tileEntity).getTransporterTypeMap().get(facing);
                             if (transporterType.hasGui()) {
                                 ((TransporterTile) tileEntity).openGui(player, facing);
-                                return ItemInteractionResult.SUCCESS;
+                                return InteractionResult.SUCCESS;
                             }
                         }
                     }

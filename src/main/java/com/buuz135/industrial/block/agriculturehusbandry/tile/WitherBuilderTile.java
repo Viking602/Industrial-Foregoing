@@ -42,7 +42,7 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import net.neoforged.neoforge.items.ItemStackHandler;
+
 import org.apache.commons.lang3.tuple.Pair;
 
 import javax.annotation.Nonnull;
@@ -93,19 +93,19 @@ public class WitherBuilderTile extends IndustrialAreaWorkingTile<WitherBuilderTi
             }
         }
         //CHECK IF WE HAVE ITEMS
-        for (ItemStackHandler handler : new ItemStackHandler[]{top, middle}) {
+        for (com.hrznstudio.titanium.component.inventory.InventoryComponent handler : new com.hrznstudio.titanium.component.inventory.InventoryComponent[]{top, middle}) {
             for (int slot = 0; slot < handler.getSlots(); ++slot) {
                 if (handler.getStackInSlot(slot).isEmpty()) return new WorkAction(1, 0);
             }
         }
-        for (ItemStackHandler handler : new ItemStackHandler[]{top, middle}) {
+        for (com.hrznstudio.titanium.component.inventory.InventoryComponent handler : new com.hrznstudio.titanium.component.inventory.InventoryComponent[]{top, middle}) {
             for (int slot = 0; slot < handler.getSlots(); ++slot) {
-                handler.getStackInSlot(slot).shrink(1);
+                com.buuz135.industrial.compat.MachineItems.shrink(handler, slot, 1);
             }
         }
-        var wither = (WitherBoss) EntityType.WITHER.create(level);
+        var wither = (WitherBoss) EntityType.WITHER.create(level, net.minecraft.world.entity.EntitySpawnReason.MOB_SUMMONED);
         BlockPos pos = this.worldPosition.offset(0, 2, 0);
-        wither.moveTo(pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5f);
+        wither.snapTo(pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5f);
         wither.yBodyRot = this.getFacingDirection().getAxis() != Direction.Axis.X ? 0.0F : 90.0F;
         wither.makeInvulnerable();
         level.addFreshEntity(wither);
@@ -151,9 +151,9 @@ public class WitherBuilderTile extends IndustrialAreaWorkingTile<WitherBuilderTi
     }
 
 
-    public ItemStack getDefaultOrFind(int i, ItemStackHandler handler, ItemStack filter) {
+    public ItemStack getDefaultOrFind(int i, com.hrznstudio.titanium.component.inventory.InventoryComponent handler, ItemStack filter) {
         if (ItemStack.isSameItem(handler.getStackInSlot(i), filter)) return handler.getStackInSlot(i);
-        for (ItemStackHandler h : new ItemStackHandler[]{top, middle}) {
+        for (com.hrznstudio.titanium.component.inventory.InventoryComponent h : new com.hrznstudio.titanium.component.inventory.InventoryComponent[]{top, middle}) {
             for (int s = 0; s < h.getSlots(); ++s) {
                 if (ItemStack.isSameItem(h.getStackInSlot(s), filter)) return h.getStackInSlot(s);
             }

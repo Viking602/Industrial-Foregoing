@@ -14,7 +14,7 @@ import dev.emi.emi.api.widget.WidgetHolder;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -31,7 +31,7 @@ public class MycelialGeneratorEmiRecipe extends CustomEmiRecipe {
     private final IMycelialGeneratorType type;
 
     public MycelialGeneratorEmiRecipe(IMycelialGeneratorType type, MycelialGeneratorRecipe recipe, EmiRecipeCategory category) {
-        super(ResourceLocation.fromNamespaceAndPath(Reference.MOD_ID, "emi_" + type.getName().toLowerCase(Locale.ROOT) + "_" + UUID.randomUUID().toString()), category,
+        super(Identifier.fromNamespaceAndPath(Reference.MOD_ID, "emi_" + type.getName().toLowerCase(Locale.ROOT) + "_" + UUID.randomUUID().toString()), category,
                 transformRecipe(recipe),
                 fromOutput(EmiStack.EMPTY));
         this.type = type;
@@ -50,7 +50,7 @@ public class MycelialGeneratorEmiRecipe extends CustomEmiRecipe {
         }
 
         for (int i = 0; i < items.size(); i++) {
-            list.set(i, EmiIngredient.of(items.get(i).stream().map(EmiIngredient::of).toList()));
+            list.set(i, Emicom.buuz135.industrial.compat.Ingredients.of(items.get(i).stream().map(EmiIngredient::of).toList()));
         }
 
         for (int i = 0; i < fluids.size(); i++) {
@@ -92,9 +92,9 @@ public class MycelialGeneratorEmiRecipe extends CustomEmiRecipe {
                 }
             }
             int x = 20 * type.getInputs().length + 3;
-            draw.drawString(Minecraft.getInstance().font, ChatFormatting.DARK_GRAY + Component.translatable("text.industrialforegoing.jei.recipe.time").getString() + ChatFormatting.DARK_AQUA + new DecimalFormat().format(recipe.getTicks() / 20D) + ChatFormatting.DARK_GRAY + Component.translatable("tooltip.industrialforegoing.sec_short").getString(), x, Minecraft.getInstance().font.lineHeight * 0, 0xFFFFFFFF, false);
-            draw.drawString(Minecraft.getInstance().font, ChatFormatting.DARK_GRAY + Component.translatable("text.industrialforegoing.jei.recipe.production").getString() + ChatFormatting.DARK_AQUA + recipe.getPowerTick() + ChatFormatting.DARK_GRAY + Component.translatable("tooltip.industrialforegoing.fe_t").getString(), x, Minecraft.getInstance().font.lineHeight * 1, 0xFFFFFFFF, false);
-            draw.drawString(Minecraft.getInstance().font, ChatFormatting.DARK_GRAY + Component.translatable("text.industrialforegoing.jei.recipe.total").getString() + ChatFormatting.DARK_AQUA + new DecimalFormat().format(recipe.getTicks() * recipe.getPowerTick()) + ChatFormatting.DARK_GRAY + " FE", x, Minecraft.getInstance().font.lineHeight * 2, 0xFFFFFFFF, false);
+            draw.text(Minecraft.getInstance().font, ChatFormatting.DARK_GRAY + Component.translatable("text.industrialforegoing.jei.recipe.time").getString() + ChatFormatting.DARK_AQUA + new DecimalFormat().format(recipe.getTicks() / 20D) + ChatFormatting.DARK_GRAY + Component.translatable("tooltip.industrialforegoing.sec_short").getString(), x, Minecraft.getInstance().font.lineHeight * 0, 0xFFFFFFFF, false);
+            draw.text(Minecraft.getInstance().font, ChatFormatting.DARK_GRAY + Component.translatable("text.industrialforegoing.jei.recipe.production").getString() + ChatFormatting.DARK_AQUA + recipe.getPowerTick() + ChatFormatting.DARK_GRAY + Component.translatable("tooltip.industrialforegoing.fe_t").getString(), x, Minecraft.getInstance().font.lineHeight * 1, 0xFFFFFFFF, false);
+            draw.text(Minecraft.getInstance().font, ChatFormatting.DARK_GRAY + Component.translatable("text.industrialforegoing.jei.recipe.total").getString() + ChatFormatting.DARK_AQUA + new DecimalFormat().format(recipe.getTicks() * recipe.getPowerTick()) + ChatFormatting.DARK_GRAY + " FE", x, Minecraft.getInstance().font.lineHeight * 2, 0xFFFFFFFF, false);
         });
 
 

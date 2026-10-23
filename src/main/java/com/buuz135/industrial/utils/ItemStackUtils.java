@@ -23,7 +23,7 @@
 package com.buuz135.industrial.utils;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -36,9 +36,9 @@ import net.neoforged.neoforge.items.ItemStackHandler;
 
 public class ItemStackUtils {
 
-    public static ResourceLocation getOreTag(ItemStack stack) {
+    public static Identifier getOreTag(ItemStack stack) {
         Item item = stack.getItem();
-        for (ResourceLocation resourceLocation : stack.getTags().map(TagKey::location).toList()) {
+        for (Identifier resourceLocation : stack.typeHolder().tags().map(TagKey::location).toList()) {
             if (resourceLocation.toString().startsWith("c:raw_materials/")) {
                 return resourceLocation;
             }
@@ -46,7 +46,7 @@ public class ItemStackUtils {
         return null;
     }
 
-    public static boolean isInventoryFull(ItemStackHandler handler) {
+    public static boolean isInventoryFull(com.hrznstudio.titanium.component.inventory.InventoryComponent<?> handler) {
         for (int i = 0; i < handler.getSlots(); ++i) {
             if (handler.getStackInSlot(i).isEmpty()) return false;
         }
@@ -58,13 +58,15 @@ public class ItemStackUtils {
     }
 
     public static boolean acceptsFluidItem(ItemStack stack) {
-        return stack.getCapability(Capabilities.FluidHandler.ITEM) != null;// && !stack.getItem().equals(ForgeModContainer.getInstance().universalBucket);
+        return com.buuz135.industrial.compat.MachineCapabilities.fluids(stack) != null;// && !stack.getItem().equals(ForgeModContainer.getInstance().universalBucket);
     }
 
 
-    @OnlyIn(Dist.CLIENT)
     public static int getColor(ItemStack stack) {
-        return ColorUtils.getColorFrom(Minecraft.getInstance().getItemRenderer().getModel(stack, Minecraft.getInstance().level, Minecraft.getInstance().player, 0).getParticleIcon());
+        var state = new net.minecraft.client.renderer.item.ItemStackRenderState();
+        Minecraft.getInstance().getItemModelResolver().updateForTopItem(state, stack, net.minecraft.world.item.ItemDisplayContext.NONE, Minecraft.getInstance().level, null, 0);
+        var material = state.pickParticleMaterial(net.minecraft.util.RandomSource.create(0));
+        return material == null ? -1 : ColorUtils.getColorFrom(material.sprite());
     }
 
 }

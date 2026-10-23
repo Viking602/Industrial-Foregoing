@@ -1,8 +1,8 @@
 {
   "neoforge:conditions": [
     {
-      "type": "neoforge:item_exists",
-      "item": "industrialforegoing:infinity_charger"
+      "type": "neoforge:registered",
+      "value": "industrialforegoing:infinity_charger"
     }
   ],
   "parent": "minecraft:recipes/root",

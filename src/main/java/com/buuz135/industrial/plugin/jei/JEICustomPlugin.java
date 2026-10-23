@@ -67,7 +67,7 @@ import com.buuz135.industrial.recipe.StoneWorkGenerateRecipe;
 import com.buuz135.industrial.utils.IFAttachments;
 import com.buuz135.industrial.utils.Reference;
 import com.hrznstudio.titanium.module.BlockWithTile;
-import com.hrznstudio.titanium.util.RecipeUtil;
+import com.buuz135.industrial.compat.MachineRecipes;
 import com.hrznstudio.titanium.util.TagUtil;
 import mezz.jei.api.IModPlugin;
 import mezz.jei.api.JeiPlugin;
@@ -86,7 +86,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.tags.ItemTags;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
@@ -249,11 +249,11 @@ public class JEICustomPlugin implements IModPlugin {
 
     @Override
     public void registerRecipes(IRecipeRegistration registration) {
-        registration.addRecipes(IndustrialRecipeTypes.FLUID_EXTRACTOR, RecipeUtil.getRecipes(Minecraft.getInstance().level, (RecipeType<FluidExtractorRecipe>) ModuleCore.FLUID_EXTRACTOR_TYPE.get()));
-        registration.addRecipes(IndustrialRecipeTypes.DISSOLUTION, RecipeUtil.getRecipes(Minecraft.getInstance().level, (RecipeType<DissolutionChamberRecipe>) ModuleCore.DISSOLUTION_TYPE.get()));
+        registration.addRecipes(IndustrialRecipeTypes.FLUID_EXTRACTOR, MachineRecipes.getRecipes(Minecraft.getInstance().level, (RecipeType<FluidExtractorRecipe>) ModuleCore.FLUID_EXTRACTOR_TYPE.get()));
+        registration.addRecipes(IndustrialRecipeTypes.DISSOLUTION, MachineRecipes.getRecipes(Minecraft.getInstance().level, (RecipeType<DissolutionChamberRecipe>) ModuleCore.DISSOLUTION_TYPE.get()));
         registration.addRecipes(IndustrialRecipeTypes.BIOREACTOR, generateBioreactorRecipes());
-        registration.addRecipes(IndustrialRecipeTypes.LASER_ORE, RecipeUtil.getRecipes(Minecraft.getInstance().level, (RecipeType<LaserDrillOreRecipe>) ModuleCore.LASER_DRILL_TYPE.get()).stream().filter(laserDrillOreRecipe -> !laserDrillOreRecipe.output.ingredient().isEmpty()).collect(Collectors.toList()));
-        registration.addRecipes(IndustrialRecipeTypes.LASER_FLUID, RecipeUtil.getRecipes(Minecraft.getInstance().level, (RecipeType<LaserDrillFluidRecipe>) ModuleCore.LASER_DRILL_FLUID_TYPE.get()));
+        registration.addRecipes(IndustrialRecipeTypes.LASER_ORE, MachineRecipes.getRecipes(Minecraft.getInstance().level, (RecipeType<LaserDrillOreRecipe>) ModuleCore.LASER_DRILL_TYPE.get()).stream().filter(laserDrillOreRecipe -> !laserDrillOreRecipe.output.ingredient().isEmpty()).collect(Collectors.toList()));
+        registration.addRecipes(IndustrialRecipeTypes.LASER_FLUID, MachineRecipes.getRecipes(Minecraft.getInstance().level, (RecipeType<LaserDrillFluidRecipe>) ModuleCore.LASER_DRILL_FLUID_TYPE.get()));
         for (int i = 0; i < IMycelialGeneratorType.TYPES.size(); i++) {
             registration.addRecipes(mycelialGeneratorCategories.get(i).getRecipeType(), IMycelialGeneratorType.TYPES.get(i).getRecipes(IFAttachments.registryAccess()).stream().sorted(Comparator.comparingInt(value -> ((MycelialGeneratorRecipe) value).getTicks() * ((MycelialGeneratorRecipe) value).getPowerTick()).reversed()).collect(Collectors.toList()));
         }
@@ -274,17 +274,17 @@ public class JEICustomPlugin implements IModPlugin {
                 )
         );
 
-        registration.addRecipes(IndustrialRecipeTypes.STONE_WORK_GENERATOR, RecipeUtil.getRecipes(Minecraft.getInstance().level, (RecipeType<StoneWorkGenerateRecipe>) ModuleCore.STONEWORK_GENERATE_TYPE.get()));
+        registration.addRecipes(IndustrialRecipeTypes.STONE_WORK_GENERATOR, MachineRecipes.getRecipes(Minecraft.getInstance().level, (RecipeType<StoneWorkGenerateRecipe>) ModuleCore.STONEWORK_GENERATE_TYPE.get()));
 
         List<OreFluidEntryRaw> washer = new ArrayList<>();
         List<OreFluidEntryFermenter> fluidEntryFermenters = new ArrayList<>();
         List<OreFluidEntrySieve> fluidSieve = new ArrayList<>();
 
-        BuiltInRegistries.ITEM.getTagNames().map(itemTagKey -> itemTagKey.location())
+        BuiltInRegistries.ITEM.getTags().map(net.minecraft.core.HolderSet.Named::key).map(itemTagKey -> itemTagKey.location())
                 .filter(resourceLocation -> resourceLocation.toString().startsWith("c:raw_materials/") && OreTitaniumFluidType.isValid(resourceLocation))
                 .forEach(resourceLocation -> {
                     TagKey<Item> tag = TagUtil.getItemTag(resourceLocation);
-                    TagKey<Item> dust = TagUtil.getItemTag(ResourceLocation.parse(resourceLocation.toString().replace("c:raw_materials/", "c:dusts/")));
+                    TagKey<Item> dust = TagUtil.getItemTag(Identifier.parse(resourceLocation.toString().replace("c:raw_materials/", "c:dusts/")));
                     washer.add(new OreFluidEntryRaw(tag, new FluidStack(ModuleCore.MEAT.getSourceFluid().get(), 100), OreTitaniumFluidType.getFluidWithTag(ModuleCore.RAW_ORE_MEAT, 100, resourceLocation)));
                     fluidEntryFermenters.add(new OreFluidEntryFermenter(OreTitaniumFluidType.getFluidWithTag(ModuleCore.RAW_ORE_MEAT, 100, resourceLocation), OreTitaniumFluidType.getFluidWithTag(ModuleCore.FERMENTED_ORE_MEAT, 200, resourceLocation)));
                     fluidSieve.add(new OreFluidEntrySieve(OreTitaniumFluidType.getFluidWithTag(ModuleCore.FERMENTED_ORE_MEAT, 100, resourceLocation), TagUtil.getItemWithPreference(dust), ItemTags.SAND));
@@ -303,7 +303,7 @@ public class JEICustomPlugin implements IModPlugin {
         }
         registration.addRecipes(DyeMixerCategory.RECIPE_TYPE, mixerRecipes);
 
-        registration.addRecipes(SporesRecreatorCategory.RECIPE_TYPE, List.of(new SporesRecreatorCategory.Recipe(Ingredient.of(Tags.Items.MUSHROOMS)), new SporesRecreatorCategory.Recipe(Ingredient.of(Items.CRIMSON_FUNGUS, Items.WARPED_FUNGUS))));
+        registration.addRecipes(SporesRecreatorCategory.RECIPE_TYPE, List.of(new SporesRecreatorCategory.Recipe(com.buuz135.industrial.compat.Ingredients.of(Tags.Items.MUSHROOMS)), new SporesRecreatorCategory.Recipe(com.buuz135.industrial.compat.Ingredients.of(Items.CRIMSON_FUNGUS, Items.WARPED_FUNGUS))));
     }
 
 
@@ -345,7 +345,7 @@ public class JEICustomPlugin implements IModPlugin {
     }
 
     @Override
-    public ResourceLocation getPluginUid() {
-        return ResourceLocation.fromNamespaceAndPath(Reference.MOD_ID, "default");
+    public Identifier getPluginUid() {
+        return Identifier.fromNamespaceAndPath(Reference.MOD_ID, "default");
     }
 }

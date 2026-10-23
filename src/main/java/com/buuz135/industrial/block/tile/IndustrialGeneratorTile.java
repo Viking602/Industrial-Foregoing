@@ -33,7 +33,7 @@ import com.hrznstudio.titanium.module.BlockWithTile;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.ItemInteractionResult;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.api.distmarker.Dist;
@@ -47,7 +47,6 @@ public abstract class IndustrialGeneratorTile<T extends IndustrialGeneratorTile<
         super((BasicTileBlock<T>) basicTileBlock.getBlock(), basicTileBlock.type().get(), blockPos, blockState);
     }
 
-    @OnlyIn(Dist.CLIENT)
     @Override
     public void initClient() {
         super.initClient();
@@ -55,12 +54,12 @@ public abstract class IndustrialGeneratorTile<T extends IndustrialGeneratorTile<
     }
 
     @Override
-    public ItemInteractionResult onActivated(Player playerIn, InteractionHand hand, Direction facing, double hitX, double hitY, double hitZ) {
-        if (super.onActivated(playerIn, hand, facing, hitX, hitY, hitZ) == ItemInteractionResult.SUCCESS) {
-            return ItemInteractionResult.SUCCESS;
+    public InteractionResult onActivated(Player playerIn, InteractionHand hand, Direction facing, double hitX, double hitY, double hitZ) {
+        if (super.onActivated(playerIn, hand, facing, hitX, hitY, hitZ) == InteractionResult.SUCCESS) {
+            return InteractionResult.SUCCESS;
         }
         openGui(playerIn);
-        return ItemInteractionResult.SUCCESS;
+        return InteractionResult.SUCCESS;
     }
 
     @Nonnull

@@ -16,7 +16,7 @@ public interface IMachineSettings {
         for (int i = 0; i < component.getSlots(); i++) {
             var stack = component.getStackInSlot(i);
             if (!stack.isEmpty()) {
-                tag.put(i + "", stack.save(registryAccess));
+                tag.put(i + "", com.buuz135.industrial.compat.ItemNbt.saveOptional(stack, registryAccess));
             }
         }
         return tag;
@@ -24,8 +24,8 @@ public interface IMachineSettings {
 
     public static List<ItemStack> readInventory(RegistryAccess registryAccess, CompoundTag tag) {
         List<ItemStack> stacks = new ArrayList<>();
-        for (String allKey : tag.getAllKeys()) {
-            stacks.add(ItemStack.parseOptional(registryAccess, tag.getCompound(allKey)));
+        for (String allKey : tag.keySet()) {
+            stacks.add(com.buuz135.industrial.compat.ItemNbt.parseOptional(registryAccess, tag.getCompoundOrEmpty(allKey)));
         }
         return stacks;
     }

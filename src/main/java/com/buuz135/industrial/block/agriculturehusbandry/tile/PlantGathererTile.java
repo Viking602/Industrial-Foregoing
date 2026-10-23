@@ -44,7 +44,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
-import net.neoforged.neoforge.items.ItemHandlerHelper;
+import com.buuz135.industrial.compat.MachineItems;
 
 import javax.annotation.Nonnull;
 import java.util.List;
@@ -70,12 +70,12 @@ public class PlantGathererTile extends IndustrialAreaWorkingTile<PlantGathererTi
                 .setColor(DyeColor.ORANGE)
                 .setRange(5, 3)
                 .setComponentHarness(this));
-        addTank(tank = (SidedFluidTankComponent<PlantGathererTile>) new SidedFluidTankComponent<PlantGathererTile>("sludge", PlantGathererConfig.maxSludgeTankSize, 43, 20, 1)
+        addTank(tank = (SidedFluidTankComponent<PlantGathererTile>) new com.buuz135.industrial.compat.MachineFluidTank<PlantGathererTile>("sludge", PlantGathererConfig.maxSludgeTankSize, 43, 20, 1)
                 .setColor(DyeColor.MAGENTA)
                 .setTankAction(FluidTankComponent.Action.DRAIN)
                 .setTankType(FluidTankComponent.Type.SMALL)
                 .setComponentHarness(this));
-        addTank(ether = (SidedFluidTankComponent<PlantGathererTile>) new SidedFluidTankComponent<PlantGathererTile>("ether", PlantGathererConfig.maxEtherTankSize, 43, 57, 2)
+        addTank(ether = (SidedFluidTankComponent<PlantGathererTile>) new com.buuz135.industrial.compat.MachineFluidTank<PlantGathererTile>("ether", PlantGathererConfig.maxEtherTankSize, 43, 57, 2)
                 .setColor(DyeColor.CYAN)
                 .setTankAction(FluidTankComponent.Action.FILL)
                 .setTankType(FluidTankComponent.Type.SMALL)
@@ -95,7 +95,7 @@ public class PlantGathererTile extends IndustrialAreaWorkingTile<PlantGathererTi
     public IndustrialWorkingTile.WorkAction work() {
         if (this.etherBar.getProgress() == 0 && this.ether.getFluidAmount() > 0) {
             this.etherBar.setProgress(this.etherBar.getMaxProgress());
-            this.ether.drainForced(1, IFluidHandler.FluidAction.EXECUTE);
+            com.buuz135.industrial.compat.MachineFluids.drainForced(this.ether, 1, IFluidHandler.FluidAction.EXECUTE);
         }
         if (hasEnergy(powerPerOperation)) {
             int amount = Math.max(1, BlockUtils.getBlockPosInAABB(getWorkingArea().bounds()).size() / 20);
@@ -107,15 +107,15 @@ public class PlantGathererTile extends IndustrialAreaWorkingTile<PlantGathererTi
                             Optional<PlantRecollectable> optional = IFRegistries.PLANT_RECOLLECTABLES_REGISTRY.stream().filter(plantRecollectable -> plantRecollectable.canBeHarvested(level, pointed, this.level.getBlockState(pointed))).findFirst();
                             return optional.orElse(null);
                         }, ItemStack.EMPTY)) {
-                            tank.fillForced(new FluidStack(ModuleCore.SLUDGE.getSourceFluid().get(), 10), IFluidHandler.FluidAction.EXECUTE);
+                            com.buuz135.industrial.compat.MachineFluids.fillForced(tank, new FluidStack(ModuleCore.SLUDGE.getSourceFluid().get(), 10), IFluidHandler.FluidAction.EXECUTE);
                             return new WorkAction(0.3f, powerPerOperation);
                         }
                     } else {
                         Optional<PlantRecollectable> optional = IFRegistries.PLANT_RECOLLECTABLES_REGISTRY.stream().filter(plantRecollectable -> plantRecollectable.canBeHarvested(this.level, pointed, this.level.getBlockState(pointed))).findFirst();
                         if (optional.isPresent()) {
                             List<ItemStack> drops = optional.get().doHarvestOperation(this.level, pointed, this.level.getBlockState(pointed));
-                            tank.fillForced(new FluidStack(ModuleCore.SLUDGE.getSourceFluid().get(), 10 * drops.size()), IFluidHandler.FluidAction.EXECUTE);
-                            drops.forEach(stack -> ItemHandlerHelper.insertItem(output, stack, false));
+                            com.buuz135.industrial.compat.MachineFluids.fillForced(tank, new FluidStack(ModuleCore.SLUDGE.getSourceFluid().get(), 10 * drops.size()), IFluidHandler.FluidAction.EXECUTE);
+                            drops.forEach(stack -> MachineItems.insertItem(output, stack, false));
                             if (optional.get().shouldCheckNextPlant(this.level, pointed, this.level.getBlockState(pointed))) {
                                 increasePointer();
                             }

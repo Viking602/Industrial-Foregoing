@@ -7,17 +7,32 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.item.context.UseOnContext;
 
 public abstract class AddonItem extends IFCustomItem {
+    private static final ThreadLocal<net.minecraft.resources.Identifier> REGISTRATION_ID = new ThreadLocal<>();
+
+    /** Supplies the required item ID for integrations constructing addons outside Titanium's registry. */
+    public static <T extends AddonItem> T withRegistrationId(net.minecraft.resources.Identifier id, java.util.function.Supplier<T> factory) {
+        var previous = REGISTRATION_ID.get();
+        REGISTRATION_ID.set(id);
+        try { return factory.get(); }
+        finally { if (previous == null) REGISTRATION_ID.remove(); else REGISTRATION_ID.set(previous); }
+    }
+
+    private static Properties registeredProperties(Properties properties) {
+        var id = REGISTRATION_ID.get();
+        return id == null ? properties : properties.setId(net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.ITEM, id));
+    }
+
     public AddonItem(String name, TitaniumTab tab, Properties builder) {
-        super(name, tab, builder);
+        super(name, tab, registeredProperties(builder));
     }
 
     public AddonItem(String name, TitaniumTab tab) {
-        super(name, tab);
+        this(name, tab, new Properties());
     }
 
     @Override
     public InteractionResult useOn(UseOnContext context) {
-        if (!context.getLevel().isClientSide) {
+        if (!context.getLevel().isClientSide()) {
             var blockpos = context.getClickedPos();
             var entity = context.getLevel().getBlockEntity(blockpos);
             if (entity instanceof MachineTile<?> machineTile) {
@@ -28,7 +43,7 @@ public abstract class AddonItem extends IFCustomItem {
                         if (augmentInv.getStackInSlot(i).isEmpty()) {
                             augmentInv.setStackInSlot(i, stack);
                             context.getItemInHand().shrink(1);
-                            return InteractionResult.CONSUME_PARTIAL;
+                            return InteractionResult.CONSUME;
                         }
                     }
                 }

@@ -1,8 +1,8 @@
 {
   "neoforge:conditions": [
     {
-      "type": "neoforge:item_exists",
-      "item": "industrialforegoing:infinity_nuke"
+      "type": "neoforge:registered",
+      "value": "industrialforegoing:infinity_nuke"
     }
   ],
   "parent": "minecraft:recipes/root",

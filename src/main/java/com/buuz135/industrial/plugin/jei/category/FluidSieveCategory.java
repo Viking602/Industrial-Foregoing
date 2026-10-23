@@ -39,9 +39,9 @@ import mezz.jei.api.recipe.RecipeIngredientRole;
 import mezz.jei.api.recipe.RecipeType;
 import mezz.jei.api.recipe.category.IRecipeCategory;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
@@ -49,7 +49,7 @@ import org.apache.commons.lang3.tuple.Pair;
 
 import java.awt.*;
 
-public class FluidSieveCategory implements IRecipeCategory<OreFluidEntrySieve> {
+public class FluidSieveCategory implements com.buuz135.industrial.plugin.jei.MachineRecipeCategory<OreFluidEntrySieve> {
 
 
     private final IGuiHelper helper;
@@ -57,7 +57,7 @@ public class FluidSieveCategory implements IRecipeCategory<OreFluidEntrySieve> {
 
     public FluidSieveCategory(IGuiHelper helper) {
         this.helper = helper;
-        tankOverlay = helper.createDrawable(ResourceLocation.fromNamespaceAndPath(Reference.MOD_ID, "textures/gui/jei.png"), 1, 207, 12, 48);
+        tankOverlay = helper.createDrawable(Identifier.fromNamespaceAndPath(Reference.MOD_ID, "textures/gui/jei.png"), 1, 207, 12, 48);
     }
 
     @Override
@@ -72,7 +72,7 @@ public class FluidSieveCategory implements IRecipeCategory<OreFluidEntrySieve> {
 
     @Override
     public IDrawable getBackground() {
-        return helper.drawableBuilder(ResourceLocation.fromNamespaceAndPath(Reference.MOD_ID, "textures/gui/jei.png"), 4, 78, 47, 50).addPadding(0, 4, 0, 20).build();
+        return helper.drawableBuilder(Identifier.fromNamespaceAndPath(Reference.MOD_ID, "textures/gui/jei.png"), 4, 78, 47, 50).addPadding(0, 4, 0, 20).build();
     }
 
     @Override
@@ -82,13 +82,14 @@ public class FluidSieveCategory implements IRecipeCategory<OreFluidEntrySieve> {
 
     @Override
     public void setRecipe(IRecipeLayoutBuilder builder, OreFluidEntrySieve recipe, IFocusGroup focuses) {
-        builder.addSlot(RecipeIngredientRole.INPUT, 24, 36).addIngredients(Ingredient.of(recipe.getSieveItem()));
+        builder.addSlot(RecipeIngredientRole.INPUT, 24, 36).addIngredients(com.buuz135.industrial.compat.Ingredients.of(recipe.getSieveItem()));
         builder.addSlot(RecipeIngredientRole.INPUT, 1, 1).setFluidRenderer(200, false, 12, 48).setOverlay(tankOverlay, 0, 0).addIngredient(NeoForgeTypes.FLUID_STACK, recipe.getInput());
         builder.addSlot(RecipeIngredientRole.OUTPUT, 50, 17).addIngredient(VanillaTypes.ITEM_STACK, recipe.getOutput());
     }
 
     @Override
-    public void draw(OreFluidEntrySieve recipe, IRecipeSlotsView recipeSlotsView, GuiGraphics guiGraphics, double mouseX, double mouseY) {
+    public void draw(OreFluidEntrySieve recipe, IRecipeSlotsView recipeSlotsView, GuiGraphicsExtractor guiGraphics, double mouseX, double mouseY) {
+        getBackground().draw(guiGraphics, 0, 0);
         SlotsScreenAddon.drawAsset(guiGraphics, Minecraft.getInstance().screen, DefaultAssetProvider.DEFAULT_PROVIDER, 24, 36, 0, 0, 1, integer -> Pair.of(18 * (integer % 1), 18 * (integer / 1)), integer -> ItemStack.EMPTY, true, integer -> new Color(DyeColor.BLUE.getFireworkColor()), integer -> true, 1);
         SlotsScreenAddon.drawAsset(guiGraphics, Minecraft.getInstance().screen, DefaultAssetProvider.DEFAULT_PROVIDER, 50, 17, 0, 0, 1, integer -> Pair.of(18 * (integer % 1), 18 * (integer / 1)), integer -> ItemStack.EMPTY, true, integer -> new Color(DyeColor.ORANGE.getFireworkColor()), integer -> true, 1);
 

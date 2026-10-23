@@ -27,7 +27,7 @@ import com.buuz135.industrial.utils.IndustrialTags;
 import com.hrznstudio.titanium.component.fluid.SidedFluidTankComponent;
 import com.hrznstudio.titanium.component.inventory.SidedInventoryComponent;
 import net.minecraft.core.RegistryAccess;
-import net.minecraft.data.recipes.ShapedRecipeBuilder;
+import com.hrznstudio.titanium.recipe.generator.TitaniumShapedRecipeBuilder;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.Item;
@@ -36,7 +36,7 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.level.material.Fluids;
 import net.neoforged.neoforge.common.Tags;
-import net.neoforged.neoforge.common.util.INBTSerializable;
+import com.hrznstudio.titanium.nbthandler.INBTSerializable;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import org.apache.commons.lang3.tuple.Pair;
@@ -70,18 +70,18 @@ public class MagmaGeneratorType implements IMycelialGeneratorType {
     }
 
     @Override
-    public boolean canStart(INBTSerializable<CompoundTag>[] inputs) {
+    public boolean canStart(net.neoforged.neoforge.common.util.ValueIOSerializable[] inputs) {
         return inputs.length >= 2 && inputs[0] instanceof SidedFluidTankComponent && inputs[1] instanceof SidedInventoryComponent && ((SidedFluidTankComponent<?>) inputs[0]).getFluidAmount() >= 250;
     }
 
     @Override
-    public Pair<Integer, Integer> getTimeAndPowerGeneration(INBTSerializable<CompoundTag>[] inputs) {
+    public Pair<Integer, Integer> getTimeAndPowerGeneration(net.neoforged.neoforge.common.util.ValueIOSerializable[] inputs) {
         if (inputs.length >= 2 && inputs[0] instanceof SidedFluidTankComponent && inputs[1] instanceof SidedInventoryComponent) {
             if (((SidedFluidTankComponent<?>) inputs[0]).getFluidAmount() >= 250) {
-                ((SidedFluidTankComponent<?>) inputs[0]).drainForced(250, IFluidHandler.FluidAction.EXECUTE);
+                com.buuz135.industrial.compat.MachineFluids.drainForced(((SidedFluidTankComponent<?>) inputs[0]), 250, IFluidHandler.FluidAction.EXECUTE);
                 boolean hasRedstone = false;
                 if (((SidedInventoryComponent<?>) inputs[1]).getStackInSlot(0).getCount() > 0) {
-                    ((SidedInventoryComponent<?>) inputs[1]).getStackInSlot(0).shrink(1);
+                    com.buuz135.industrial.compat.MachineItems.shrink(((SidedInventoryComponent<?>) inputs[1]), 0, 1);
                     hasRedstone = true;
                 }
                 return Pair.of(2 * 250, hasRedstone ? 100 : 50);
@@ -109,12 +109,12 @@ public class MagmaGeneratorType implements IMycelialGeneratorType {
     public List<MycelialGeneratorRecipe> getRecipes(RegistryAccess registryAccess) {
         List<MycelialGeneratorRecipe> recipes = new ArrayList<>();
         recipes.add(new MycelialGeneratorRecipe(Arrays.asList(new ArrayList<>(), new ArrayList<>()), Arrays.asList(Arrays.asList(new FluidStack(Fluids.LAVA, 250)), Arrays.asList()), 2 * 250, 50));
-        recipes.add(new MycelialGeneratorRecipe(Arrays.asList(new ArrayList<>(), Arrays.asList(Ingredient.of(Tags.Items.DUSTS_REDSTONE))), Arrays.asList(Arrays.asList(new FluidStack(Fluids.LAVA, 250)), Arrays.asList()), 2 * 250, 100));
+        recipes.add(new MycelialGeneratorRecipe(Arrays.asList(new ArrayList<>(), Arrays.asList(com.buuz135.industrial.compat.Ingredients.of(Tags.Items.DUSTS_REDSTONE))), Arrays.asList(Arrays.asList(new FluidStack(Fluids.LAVA, 250)), Arrays.asList()), 2 * 250, 100));
         return recipes;
     }
 
     @Override
-    public ShapedRecipeBuilder addIngredients(ShapedRecipeBuilder recipeBuilder) {
+    public TitaniumShapedRecipeBuilder addIngredients(TitaniumShapedRecipeBuilder recipeBuilder) {
         recipeBuilder = recipeBuilder.define('B', Tags.Items.STORAGE_BLOCKS_REDSTONE)
                 .define('C', Items.LAVA_BUCKET)
                 .define('M', IndustrialTags.Items.MACHINE_FRAME_ADVANCED);

@@ -48,7 +48,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Inventory;
@@ -61,7 +61,7 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
-import net.neoforged.neoforge.client.model.data.ModelData;
+import net.neoforged.neoforge.model.data.ModelData;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -86,7 +86,6 @@ public class TransporterTile extends ActiveTile<TransporterTile> implements IBlo
     }
 
     @Override
-    @OnlyIn(Dist.CLIENT)
     public void initClient() {
         super.initClient();
         addGuiAddonFactory(getAugmentBackground());
@@ -146,14 +145,14 @@ public class TransporterTile extends ActiveTile<TransporterTile> implements IBlo
         if (!hasUpgrade(facing)) {
             transporterTypeMap.put(facing, factory.create(this, facing, TransporterTypeFactory.TransporterAction.EXTRACT));
             requestSync();
-            if (level.isClientSide) this.getLevel().getModelDataManager().requestRefresh(this);
+            if (level.isClientSide()) this.getLevel().getModelDataManager().requestRefresh(this);
         }
     }
 
     @Override
     public void removeUpgrade(Direction facing, boolean drop) {
         if (hasUpgrade(facing)) {
-            if (!level.isClientSide && drop) {
+            if (!level.isClientSide() && drop) {
                 TransporterType upgrade = transporterTypeMap.get(facing);
                 for (ItemStack stack : upgrade.getDrops()) {
                     ItemEntity item = new ItemEntity(level, worldPosition.getX() + 0.5, worldPosition.getY() + 0.5, worldPosition.getZ() + 0.5, stack);
@@ -164,7 +163,7 @@ public class TransporterTile extends ActiveTile<TransporterTile> implements IBlo
             transporterTypeMap.get(facing).onUpgradeRemoved();
             transporterTypeMap.remove(facing);
             requestSync();
-            if (level.isClientSide) this.getLevel().getModelDataManager().requestRefresh(this);
+            if (level.isClientSide()) this.getLevel().getModelDataManager().requestRefresh(this);
         }
         if (transporterTypeMap.isEmpty()) {
             this.level.setBlockAndUpdate(this.worldPosition, Blocks.AIR.defaultBlockState());
@@ -202,8 +201,8 @@ public class TransporterTile extends ActiveTile<TransporterTile> implements IBlo
     }
 
     @Override
-    protected void saveAdditional(CompoundTag compoundTag, HolderLookup.Provider provider) {
-        super.saveAdditional(compoundTag, provider);
+    protected void saveAdditional(net.minecraft.world.level.storage.ValueOutput compoundTag) {
+        super.saveAdditional(compoundTag);
         CompoundTag upgrades = new CompoundTag();
         for (Direction facing : Direction.values()) {
             if (!hasUpgrade(facing)) {
@@ -212,27 +211,27 @@ public class TransporterTile extends ActiveTile<TransporterTile> implements IBlo
             CompoundTag upgradeTag = new CompoundTag();
             TransporterType upgrade = getTransporterTypeMap().get(facing);
             upgradeTag.putString("factory", BuiltInRegistries.ITEM.getKey(upgrade.getFactory().getUpgradeItem()).toString());
-            CompoundTag customNBT = upgrade.serializeNBT(provider);
+            CompoundTag customNBT = upgrade.serializeNBT(com.buuz135.industrial.utils.IFAttachments.registryAccess());
             if (customNBT != null)
                 upgradeTag.put("customNBT", customNBT);
             upgrades.put(facing.getSerializedName(), upgradeTag);
         }
-        compoundTag.put("Transporters", upgrades);
+        compoundTag.store("Transporters", CompoundTag.CODEC, upgrades);
     }
 
     @Override
-    public void loadAdditional(CompoundTag compound, HolderLookup.Provider provider) {
-        super.loadAdditional(compound, provider);
-        if (compound.contains("Transporters")) {
-            CompoundTag upgradesTag = compound.getCompound("Transporters");
+    public void loadAdditional(net.minecraft.world.level.storage.ValueInput compound) {
+        super.loadAdditional(compound);
+        if (compound.child("Transporters").isPresent()) {
+            CompoundTag upgradesTag = compound.read("Transporters", CompoundTag.CODEC).orElseGet(CompoundTag::new);
             //upgradeMap.clear();
             for (Direction facing : Direction.values()) {
                 if (!upgradesTag.contains(facing.getSerializedName()))
                     continue;
-                CompoundTag upgradeTag = upgradesTag.getCompound(facing.getSerializedName());
+                CompoundTag upgradeTag = upgradesTag.getCompoundOrEmpty(facing.getSerializedName());
                 TransporterTypeFactory factory = null;
                 for (TransporterTypeFactory transporterTypeFactory : TransporterTypeFactory.FACTORIES) {
-                    if (BuiltInRegistries.ITEM.getKey(transporterTypeFactory.getUpgradeItem()).equals(ResourceLocation.parse(upgradeTag.getString("factory")))) {
+                    if (BuiltInRegistries.ITEM.getKey(transporterTypeFactory.getUpgradeItem()).equals(Identifier.parse(upgradeTag.getStringOr("factory", "")))) {
                         factory = transporterTypeFactory;
                         break;
                     }
@@ -240,8 +239,8 @@ public class TransporterTile extends ActiveTile<TransporterTile> implements IBlo
                 if (factory != null) {
                     TransporterType upgrade = transporterTypeMap.getOrDefault(facing, factory.create(this, facing, TransporterTypeFactory.TransporterAction.EXTRACT));
                     if (upgradeTag.contains("customNBT")) {
-                        upgrade.deserializeNBT(provider, upgradeTag.getCompound("customNBT"));
-                        //upgradeMap.get(facing).deserializeNBT(upgradeTag.getCompound("customNBT"));
+                        upgrade.deserializeNBT(compound.lookup(), upgradeTag.getCompoundOrEmpty("customNBT"));
+                        //upgradeMap.get(facing).deserializeNBT(upgradeTag.getCompoundOrEmpty("customNBT"));
                     }
                     transporterTypeMap.put(facing, upgrade);
                 }
@@ -269,8 +268,7 @@ public class TransporterTile extends ActiveTile<TransporterTile> implements IBlo
                 .setRange(1, 4);
     }
 
-    @OnlyIn(Dist.CLIENT)
-    public IFactory<? extends IScreenAddon> getAugmentBackground() {
+    public IFactory<?> getAugmentBackground() {
         return () -> new AssetScreenAddon(AssetTypes.AUGMENT_BACKGROUND, 175, 4, true);
     }
 

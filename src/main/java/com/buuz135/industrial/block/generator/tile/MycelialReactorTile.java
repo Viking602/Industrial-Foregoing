@@ -121,11 +121,9 @@ public class MycelialReactorTile extends IndustrialGeneratorTile<MycelialReactor
     public ProgressBarComponent<MycelialReactorTile> getProgressBar() {
         bar = new ProgressBarComponent<MycelialReactorTile>(30, 20, 0, 100) {
             @Override
-            @OnlyIn(Dist.CLIENT)
-            public List<IFactory<? extends IScreenAddon>> getScreenAddons() {
+            public List<IFactory<?>> getScreenAddons() {
                 return Collections.singletonList(() -> new ProgressBarScreenAddon(30, 20, bar) {
                     @Override
-                    @OnlyIn(Dist.CLIENT)
                     public List<Component> getTooltipLines() {
                         List<Component> tooltip = new ArrayList<>();
                         tooltip.add(Component.literal(ChatFormatting.GOLD + Component.translatable("tooltip.titanium.progressbar.progress").getString() + ChatFormatting.WHITE + new DecimalFormat().format(bar.getProgress()) + ChatFormatting.GOLD + "/" + ChatFormatting.WHITE + new DecimalFormat().format(bar.getMaxProgress())));

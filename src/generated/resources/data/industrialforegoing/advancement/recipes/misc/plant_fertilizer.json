@@ -1,8 +1,8 @@
 {
   "neoforge:conditions": [
     {
-      "type": "neoforge:item_exists",
-      "item": "industrialforegoing:plant_fertilizer"
+      "type": "neoforge:registered",
+      "value": "industrialforegoing:plant_fertilizer"
     }
   ],
   "parent": "minecraft:recipes/root",

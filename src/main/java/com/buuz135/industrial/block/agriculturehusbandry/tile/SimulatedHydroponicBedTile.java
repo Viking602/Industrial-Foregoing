@@ -12,7 +12,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.state.BlockState;
-import net.neoforged.neoforge.items.ItemHandlerHelper;
+import com.buuz135.industrial.compat.MachineItems;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
@@ -92,12 +92,12 @@ public class SimulatedHydroponicBedTile extends IndustrialWorkingTile<SimulatedH
 
                             // Handle fractional amounts with probability
                             double fraction = amount - fullAmount;
-                            if (fraction > 0 && this.level.random.nextDouble() < fraction) {
+                            if (fraction > 0 && this.level.getRandom().nextDouble() < fraction) {
                                 ItemStack extraDrop = statStack.copy();
                                 extraDrop.setCount(1);
                                 generatedDrops.add(extraDrop);
                             }
-                        } else if (amount > 0 && this.level.random.nextDouble() < amount) {
+                        } else if (amount > 0 && this.level.getRandom().nextDouble() < amount) {
                             ItemStack drop = statStack.copy();
                             drop.setCount(1);
                             generatedDrops.add(drop);
@@ -105,7 +105,7 @@ public class SimulatedHydroponicBedTile extends IndustrialWorkingTile<SimulatedH
                     }
 
                     //ADD A RANDOM INCREASE CHANCE
-                    if (this.level.random.nextDouble() <= SimulatedHydroponicBedConfig.chanceToIncreaseExecutions) {
+                    if (this.level.getRandom().nextDouble() <= SimulatedHydroponicBedConfig.chanceToIncreaseExecutions) {
                         var boostDrops = new ArrayList<ItemStack>();
                         for (var simulationStack : simulation.getStats()) {
                             ItemStack statStack = simulationStack.stack();
@@ -118,12 +118,12 @@ public class SimulatedHydroponicBedTile extends IndustrialWorkingTile<SimulatedH
                                 boostDrops.add(drop);
 
                                 double fraction = amount - fullAmount;
-                                if (fraction > 0 && this.level.random.nextDouble() < fraction) {
+                                if (fraction > 0 && this.level.getRandom().nextDouble() < fraction) {
                                     ItemStack extraDrop = statStack.copy();
                                     extraDrop.setCount(1);
                                     boostDrops.add(extraDrop);
                                 }
-                            } else if (amount > 0 && this.level.random.nextDouble() < amount) {
+                            } else if (amount > 0 && this.level.getRandom().nextDouble() < amount) {
                                 ItemStack drop = statStack.copy();
                                 drop.setCount(1);
                                 boostDrops.add(drop);
@@ -131,11 +131,12 @@ public class SimulatedHydroponicBedTile extends IndustrialWorkingTile<SimulatedH
                         }
                         this.simulation.acceptExecution(crop, boostDrops);
                         simulationProcessor.set(IFAttachments.HYDROPONIC_SIMULATION_PROCESSOR, simulation.toNBT(level.registryAccess()));
+                        this.simulation_slot.setStackInSlot(0, simulationProcessor);
 
                     }
 
                     // Add drops to output
-                    generatedDrops.forEach(stack -> ItemHandlerHelper.insertItem(output, stack, false));
+                    generatedDrops.forEach(stack -> MachineItems.insertItem(output, stack, false));
                     return new WorkAction(1, SimulatedHydroponicBedConfig.powerPerOperation);
 
                 }

@@ -38,7 +38,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.ItemInteractionResult;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.ItemStack;
@@ -60,8 +60,7 @@ public abstract class IndustrialWorkingTile<T extends IndustrialWorkingTile<T>> 
         super(basicTileBlock, blockPos, blockState);
         this.addProgressBar(workingBar = new ProgressBarComponent<T>(30, 20, getMaxProgress(), getMaxProgress()) {
             @Override
-            @OnlyIn(Dist.CLIENT)
-            public List<IFactory<? extends IScreenAddon>> getScreenAddons() {
+            public List<IFactory<?>> getScreenAddons() {
                 return Collections.singletonList(() -> new ProgressBarScreenAddon(30, 20, workingBar) {
                     @Override
                     public List<Component> getTooltipLines() {
@@ -83,11 +82,11 @@ public abstract class IndustrialWorkingTile<T extends IndustrialWorkingTile<T>> 
                 .setOnFinishWork(() -> {
                     if (isServer()) {
                         WorkAction work = work();
-                        this.getEnergyStorage().extractEnergy(work.getEnergyConsumed(), false);
+                        com.buuz135.industrial.compat.MachineEnergy.extractEnergy(this.getEnergyStorage(), work.getEnergyConsumed(), false);
                         int operations = (int) (this.hasAugmentInstalled(ProcessingAddonItem.PROCESSING) ? AugmentWrapper.getType(this.getInstalledAugments(ProcessingAddonItem.PROCESSING).get(0), ProcessingAddonItem.PROCESSING) - 1 : 0);
                         for (int i = 0; i < operations; i++) {
                             work = work();
-                            this.getEnergyStorage().extractEnergy(work.getEnergyConsumed(), false);
+                            com.buuz135.industrial.compat.MachineEnergy.extractEnergy(this.getEnergyStorage(), work.getEnergyConsumed(), false);
                         }
                         int maxProgress = (int) Math.floor(getMaxProgress() * (this.hasAugmentInstalled(AugmentTypes.EFFICIENCY) ? AugmentWrapper.getType(this.getInstalledAugments(AugmentTypes.EFFICIENCY).get(0), AugmentTypes.EFFICIENCY) : 1));
                         workingBar.setMaxProgress(maxProgress);
@@ -104,11 +103,11 @@ public abstract class IndustrialWorkingTile<T extends IndustrialWorkingTile<T>> 
     }
 
     @Override
-    public ItemInteractionResult onActivated(Player playerIn, InteractionHand hand, Direction facing, double hitX, double hitY, double hitZ) {
-        if (super.onActivated(playerIn, hand, facing, hitX, hitY, hitZ) == ItemInteractionResult.SUCCESS)
-            return ItemInteractionResult.SUCCESS;
+    public InteractionResult onActivated(Player playerIn, InteractionHand hand, Direction facing, double hitX, double hitY, double hitZ) {
+        if (super.onActivated(playerIn, hand, facing, hitX, hitY, hitZ) == InteractionResult.SUCCESS)
+            return InteractionResult.SUCCESS;
         openGui(playerIn);
-        return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+        return InteractionResult.TRY_WITH_EMPTY_HAND;
     }
 
     public abstract WorkAction work();

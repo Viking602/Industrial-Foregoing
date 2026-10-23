@@ -30,8 +30,8 @@ import com.hrznstudio.titanium.util.TagUtil;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.data.DataGenerator;
-import net.minecraft.data.tags.ItemTagsProvider;
-import net.minecraft.resources.ResourceLocation;
+import net.neoforged.neoforge.common.data.ItemTagsProvider;
+import net.minecraft.resources.Identifier;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.level.block.Block;
 import net.neoforged.neoforge.common.Tags;
@@ -63,8 +63,8 @@ public class IndustrialTagsProvider {
             tag(BlockTags.MOSS_REPLACEABLE).remove(ModuleAgricultureHusbandry.HYDROPONIC_BED.getBlock());
 
             TagAppender<Block> tTagAppender = this.tag(BlockTags.MINEABLE_WITH_PICKAXE);
-            tag(TagUtil.getBlockTag(ResourceLocation.parse("c:storage_blocks"))).add(ModuleCore.PINK_SLIME_BLOCK.get());
-            tag(TagUtil.getBlockTag(ResourceLocation.parse("c:storage_blocks/pink_slime"))).add(ModuleCore.PINK_SLIME_BLOCK.get());
+            tag(TagUtil.getBlockTag(Identifier.parse("c:storage_blocks"))).add(ModuleCore.PINK_SLIME_BLOCK.get());
+            tag(TagUtil.getBlockTag(Identifier.parse("c:storage_blocks/pink_slime"))).add(ModuleCore.PINK_SLIME_BLOCK.get());
             BuiltInRegistries.BLOCK.stream().filter(block -> BuiltInRegistries.BLOCK.getKey(block).getNamespace().equals(Reference.MOD_ID)).forEach(block -> tTagAppender.add(BuiltInRegistries.BLOCK.getResourceKey(block).get()));
         }
     }
@@ -84,14 +84,14 @@ public class IndustrialTagsProvider {
 
             tag(IndustrialTags.Items.PLASTIC).add(ModuleCore.PLASTIC.get());
             tag(IndustrialTags.Items.SLUDGE_OUTPUT).add(net.minecraft.world.item.Items.DIRT, net.minecraft.world.item.Items.CLAY, net.minecraft.world.item.Items.GRAVEL, net.minecraft.world.item.Items.SAND, net.minecraft.world.item.Items.RED_SAND, net.minecraft.world.item.Items.SOUL_SAND);
-            tag(Tags.Items.SLIMEBALLS).add(ModuleCore.PINK_SLIME_ITEM.get());
+            tag(Tags.Items.SLIME_BALLS).add(ModuleCore.PINK_SLIME_ITEM.get());
             tag(IndustrialTags.Items.GEAR_DIAMOND).add(ModuleCore.DIAMOND_GEAR.get());
             tag(IndustrialTags.Items.GEAR_GOLD).add(ModuleCore.GOLD_GEAR.get());
             tag(IndustrialTags.Items.GEAR_IRON).add(ModuleCore.IRON_GEAR.get());
             tag(IndustrialTags.Items.GEARS).add(ModuleCore.DIAMOND_GEAR.get(), ModuleCore.GOLD_GEAR.get(), ModuleCore.IRON_GEAR.get());
 
-            tag(TagUtil.getItemTag(ResourceLocation.parse("c:ingots"))).add(ModuleCore.PINK_SLIME_INGOT.get());
-            tag(TagUtil.getItemTag(ResourceLocation.parse("c:ingots/pink_slime"))).add(ModuleCore.PINK_SLIME_INGOT.get());
+            tag(TagUtil.getItemTag(Identifier.parse("c:ingots"))).add(ModuleCore.PINK_SLIME_INGOT.get());
+            tag(TagUtil.getItemTag(Identifier.parse("c:ingots/pink_slime"))).add(ModuleCore.PINK_SLIME_INGOT.get());
         }
     }
 

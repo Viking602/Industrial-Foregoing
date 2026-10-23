@@ -1,8 +1,8 @@
 {
   "neoforge:conditions": [
     {
-      "type": "neoforge:item_exists",
-      "item": "industrialforegoing:pink_laser_lens"
+      "type": "neoforge:registered",
+      "value": "industrialforegoing:pink_laser_lens"
     }
   ],
   "parent": "minecraft:recipes/root",

@@ -45,7 +45,7 @@ import mezz.jei.api.recipe.RecipeType;
 import mezz.jei.api.recipe.category.IRecipeCategory;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.DyeItem;
@@ -58,10 +58,10 @@ import java.text.NumberFormat;
 import java.util.List;
 import java.util.Locale;
 
-public class DyeMixerCategory implements IRecipeCategory<DyeMixerCategory.Recipe> {
+public class DyeMixerCategory implements com.buuz135.industrial.plugin.jei.MachineRecipeCategory<DyeMixerCategory.Recipe> {
     public record Recipe(int red, int green, int blue, int dye) {
         public Item dyeItem() {
-            return DyeItem.byColor(DyeColor.byId(this.dye));
+            return (DyeItem) net.minecraft.core.registries.BuiltInRegistries.ITEM.getValue(net.minecraft.resources.Identifier.withDefaultNamespace(DyeColor.byId(this.dye).getName() + "_dye"));
         }
     }
     public static final RecipeType<Recipe> RECIPE_TYPE = RecipeType.create(Reference.MOD_ID, "dummy/dye_mixer", Recipe.class);
@@ -99,8 +99,9 @@ public class DyeMixerCategory implements IRecipeCategory<DyeMixerCategory.Recipe
     }
 
     @Override
-    public void draw(Recipe recipe, IRecipeSlotsView recipeSlotsView, GuiGraphics guiGraphics, double mouseX, double mouseY) {
-        IRecipeCategory.super.draw(recipe, recipeSlotsView, guiGraphics, mouseX, mouseY);
+    public void draw(Recipe recipe, IRecipeSlotsView recipeSlotsView, GuiGraphicsExtractor guiGraphics, double mouseX, double mouseY) {
+        getBackground().draw(guiGraphics, 0, 0);
+        
 
         AssetUtil.drawAsset(guiGraphics, Minecraft.getInstance().screen, DefaultAssetProvider.DEFAULT_PROVIDER.getAsset(AssetTypes.ENERGY_BACKGROUND), 0, 3);
         AssetUtil.drawAsset(guiGraphics, Minecraft.getInstance().screen, DefaultAssetProvider.DEFAULT_PROVIDER.getAsset(AssetTypes.PROGRESS_BAR_BACKGROUND_ARROW_HORIZONTAL), 64, 22);

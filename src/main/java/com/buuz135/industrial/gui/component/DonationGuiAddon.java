@@ -7,11 +7,11 @@ import com.hrznstudio.titanium.client.screen.asset.IAssetProvider;
 import com.hrznstudio.titanium.client.screen.container.BasicAddonScreen;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.ConfirmLinkScreen;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,17 +36,17 @@ public class DonationGuiAddon extends BasicScreenAddon {
     }
 
     @Override
-    public void drawBackgroundLayer(GuiGraphics guiGraphics, Screen screen, IAssetProvider iAssetProvider, int guiX, int guiY, int mouseX, int mouseY, float partialTicks) {
-        var rl = ResourceLocation.fromNamespaceAndPath("titanium", "textures/gui/background_alt.png");
-        guiGraphics.blit(rl, getPosX() + guiX, getPosY() + guiY, 0, 0, 22, 22);
-        guiGraphics.blit(rl, getPosX() + guiX, getPosY() + guiY + 22, 0, 81, 22, 3);
+    public void drawBackgroundLayer(GuiGraphicsExtractor guiGraphics, Screen screen, IAssetProvider iAssetProvider, int guiX, int guiY, int mouseX, int mouseY, float partialTicks) {
+        var rl = Identifier.fromNamespaceAndPath("titanium", "textures/gui/background_alt.png");
+        com.buuz135.industrial.compat.MachineGui.blit(guiGraphics, rl, getPosX() + guiX, getPosY() + guiY, 0, 0, 22, 22);
+        com.buuz135.industrial.compat.MachineGui.blit(guiGraphics, rl, getPosX() + guiX, getPosY() + guiY + 22, 0, 81, 22, 3);
 
-        var rlDonate = ResourceLocation.fromNamespaceAndPath(Reference.MOD_ID, "textures/gui/donate.png");
-        guiGraphics.blit(rlDonate, getPosX() + guiX + 5, getPosY() + guiY + 5, 0, 0, 15, 15, 15, 15);
+        var rlDonate = Identifier.fromNamespaceAndPath(Reference.MOD_ID, "textures/gui/donate.png");
+        com.buuz135.industrial.compat.MachineGui.blit(guiGraphics, rlDonate, getPosX() + guiX + 5, getPosY() + guiY + 5, 0, 0, 15, 15, 15, 15);
     }
 
     @Override
-    public void drawForegroundLayer(GuiGraphics guiGraphics, Screen screen, IAssetProvider iAssetProvider, int guiX, int guiY, int mouseX, int mouseY, float partialTicks) {
+    public void drawForegroundLayer(GuiGraphicsExtractor guiGraphics, Screen screen, IAssetProvider iAssetProvider, int guiX, int guiY, int mouseX, int mouseY, float partialTicks) {
 
     }
 

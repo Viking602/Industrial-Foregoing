@@ -49,35 +49,30 @@ public class EfficiencyAddonItem extends AddonItem implements ISpecialCreativeTa
     private int tier;
 
     public EfficiencyAddonItem(int tier, TitaniumTab group) {
-        super("efficiency_addon_tier_" + tier, group, new Properties().stacksTo(16));
+        super("efficiency_addon_tier_" + tier, group, new Properties().stacksTo(16).component(AugmentWrapper.ATTACHMENT.get(), java.util.Map.of(AugmentTypes.EFFICIENCY.getType(), (float) (1 - tier * 0.1f))));
         this.tier = tier;
     }
 
-    @Override
-    public void verifyComponentsAfterLoad(ItemStack stack) {
-        super.verifyComponentsAfterLoad(stack);
-        AugmentWrapper.setType(stack, AugmentTypes.EFFICIENCY, 1 - this.tier * 0.1f);
-    }
 
     @Override
     public void registerRecipe(RecipeOutput consumer) {
         TagKey<Item> tierMaterial = tier == 1 ? IndustrialTags.Items.GEAR_GOLD : IndustrialTags.Items.GEAR_DIAMOND;
         DissolutionChamberRecipe.createRecipe(consumer, "efficiency_addon_tier_" + tier, new DissolutionChamberRecipe(List.of(
-                Ingredient.of(new ItemStack(Items.REDSTONE)),
-                Ingredient.of(new ItemStack(Items.REDSTONE)),
-                Ingredient.of(new ItemStack(Items.GLASS_PANE)),
-                Ingredient.of(new ItemStack(Items.GLASS_PANE)),
-                Ingredient.of(tierMaterial),
-                Ingredient.of(tierMaterial),
-                Ingredient.of(new ItemStack(Items.BLAZE_ROD)),
-                Ingredient.of(new ItemStack(Items.BLAZE_ROD))
+                com.buuz135.industrial.compat.Ingredients.of(new ItemStack(Items.REDSTONE)),
+                com.buuz135.industrial.compat.Ingredients.of(new ItemStack(Items.REDSTONE)),
+                com.buuz135.industrial.compat.Ingredients.of(new ItemStack(Items.GLASS_PANE)),
+                com.buuz135.industrial.compat.Ingredients.of(new ItemStack(Items.GLASS_PANE)),
+                com.buuz135.industrial.compat.Ingredients.of(tierMaterial),
+                com.buuz135.industrial.compat.Ingredients.of(tierMaterial),
+                com.buuz135.industrial.compat.Ingredients.of(new ItemStack(Items.BLAZE_ROD)),
+                com.buuz135.industrial.compat.Ingredients.of(new ItemStack(Items.BLAZE_ROD))
         ), new FluidStack(ModuleCore.LATEX.getSourceFluid().get(), 1000), 200, Optional.of(new ItemStack(this)), Optional.empty()));
 
     }
 
     @Override
-    public String getDescriptionId() {
-        return Component.translatable("item.industrialforegoing.addon").getString() + Component.translatable("item.industrialforegoing.efficiency").getString() + Component.translatable("item.industrialforegoing.tier").getString() + tier + " ";
+    public Component getName(ItemStack stack) {
+        return Component.literal(Component.translatable("item.industrialforegoing.addon").getString() + Component.translatable("item.industrialforegoing.efficiency").getString() + Component.translatable("item.industrialforegoing.tier").getString() + tier + " ");
     }
 
     @Override

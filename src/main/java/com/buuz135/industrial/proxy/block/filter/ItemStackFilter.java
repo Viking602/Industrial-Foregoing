@@ -100,7 +100,7 @@ public class ItemStackFilter extends AbstractFilter<Entity> {
         CompoundTag compound = new CompoundTag();
         for (int i = 0; i < this.getFilter().length; i++) {
             if (!this.getFilter()[i].getStack().isEmpty())
-                compound.put(String.valueOf(i), this.getFilter()[i].getStack().saveOptional(provider));
+                compound.put(String.valueOf(i), com.buuz135.industrial.compat.ItemNbt.saveOptional(this.getFilter()[i].getStack(), provider));
         }
         return compound;
     }
@@ -109,7 +109,7 @@ public class ItemStackFilter extends AbstractFilter<Entity> {
     public void deserializeNBT(HolderLookup.Provider provider, CompoundTag nbt) {
         for (int i = 0; i < this.getFilter().length; i++) {
             if (nbt.contains(String.valueOf(i))) {
-                this.getFilter()[i].setStack(ItemStack.parseOptional(provider, nbt.getCompound(String.valueOf(i))));
+                this.getFilter()[i].setStack(com.buuz135.industrial.compat.ItemNbt.parseOptional(provider, nbt.getCompoundOrEmpty(String.valueOf(i))));
             } else this.getFilter()[i].setStack(ItemStack.EMPTY);
         }
     }

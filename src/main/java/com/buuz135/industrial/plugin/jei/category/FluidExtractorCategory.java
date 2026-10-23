@@ -39,21 +39,21 @@ import mezz.jei.api.recipe.RecipeType;
 import mezz.jei.api.recipe.category.IRecipeCategory;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
 
 import java.util.List;
 
-public class FluidExtractorCategory implements IRecipeCategory<FluidExtractorRecipe> {
+public class FluidExtractorCategory implements com.buuz135.industrial.plugin.jei.MachineRecipeCategory<FluidExtractorRecipe> {
 
     private IGuiHelper guiHelper;
     private IDrawable tankOverlay;
 
     public FluidExtractorCategory(IGuiHelper guiHelper) {
         this.guiHelper = guiHelper;
-        this.tankOverlay = guiHelper.createDrawable(ResourceLocation.fromNamespaceAndPath(Reference.MOD_ID, "textures/gui/jei.png"), 1, 207, 12, 48);
+        this.tankOverlay = guiHelper.createDrawable(Identifier.fromNamespaceAndPath(Reference.MOD_ID, "textures/gui/jei.png"), 1, 207, 12, 48);
     }
 
     @Override
@@ -68,7 +68,7 @@ public class FluidExtractorCategory implements IRecipeCategory<FluidExtractorRec
 
     @Override
     public IDrawable getBackground() {
-        return guiHelper.drawableBuilder(ResourceLocation.fromNamespaceAndPath(Reference.MOD_ID, "textures/gui/jei.png"), 0, 27, 76, 50).addPadding(0, 0, 0, 74).build();
+        return guiHelper.drawableBuilder(Identifier.fromNamespaceAndPath(Reference.MOD_ID, "textures/gui/jei.png"), 0, 27, 76, 50).addPadding(0, 0, 0, 74).build();
     }
 
     @Override
@@ -78,28 +78,29 @@ public class FluidExtractorCategory implements IRecipeCategory<FluidExtractorRec
 
     @Override
     public void setRecipe(IRecipeLayoutBuilder builder, FluidExtractorRecipe recipe, IFocusGroup focuses) {
-        builder.addSlot(RecipeIngredientRole.INPUT, 1, 17).addIngredients(VanillaTypes.ITEM_STACK, List.of(recipe.input.getItems()));
+        builder.addSlot(RecipeIngredientRole.INPUT, 1, 17).addIngredients(VanillaTypes.ITEM_STACK, List.of(recipe.input.items().map(net.minecraft.world.item.ItemStack::new).toArray(net.minecraft.world.item.ItemStack[]::new)));
         ItemStack out = new ItemStack(recipe.result.getBlock());
         if (!out.isEmpty()) {
             builder.addSlot(RecipeIngredientRole.OUTPUT, 27, 34).addIngredient(VanillaTypes.ITEM_STACK, out).setBackground(guiHelper.getSlotDrawable(), -1, -1);
         }
-        builder.addSlot(RecipeIngredientRole.OUTPUT, 57, 1).setFluidRenderer(20, false, 12, 48).setOverlay(tankOverlay, 0, 0).addIngredient(NeoForgeTypes.FLUID_STACK, recipe.output);
+        builder.addSlot(RecipeIngredientRole.OUTPUT, 57, 1).setFluidRenderer(20, false, 12, 48).setOverlay(tankOverlay, 0, 0).addIngredient(NeoForgeTypes.FLUID_STACK, recipe.output());
 
     }
 
     @Override
-    public void draw(FluidExtractorRecipe recipe, IRecipeSlotsView recipeSlotsView, GuiGraphics guiGraphics, double mouseX, double mouseY) {
-        guiGraphics.drawString(Minecraft.getInstance().font, ChatFormatting.DARK_GRAY + Component.translatable("text.industrialforegoing.jei.recipe.production").getString(), 80, 6, 0xFFFFFF, false);
-        guiGraphics.drawString(Minecraft.getInstance().font, ChatFormatting.DARK_GRAY + "" + recipe.output.getAmount() + Component.translatable("text.industrialforegoing.jei.recipe.mb_work").getString(), 80, 6 + (Minecraft.getInstance().font.lineHeight + 2) * 1, 0xFFFFFF, false);
+    public void draw(FluidExtractorRecipe recipe, IRecipeSlotsView recipeSlotsView, GuiGraphicsExtractor guiGraphics, double mouseX, double mouseY) {
+        getBackground().draw(guiGraphics, 0, 0);
+        guiGraphics.text(Minecraft.getInstance().font, ChatFormatting.DARK_GRAY + Component.translatable("text.industrialforegoing.jei.recipe.production").getString(), 80, 6, 0xFFFFFFFF, false);
+        guiGraphics.text(Minecraft.getInstance().font, ChatFormatting.DARK_GRAY + "" + recipe.output().getAmount() + Component.translatable("text.industrialforegoing.jei.recipe.mb_work").getString(), 80, 6 + (Minecraft.getInstance().font.lineHeight + 2) * 1, 0xFFFFFFFF, false);
         if (recipe.outputsLatex()) {
-            guiGraphics.drawString(Minecraft.getInstance().font, ChatFormatting.DARK_AQUA + "" + Component.translatable("text.industrialforegoing.jei.recipe.tripled_when").getString(), 80, 6 + (Minecraft.getInstance().font.lineHeight + 2) * 2, 0xFFFFFF, false);
-            guiGraphics.drawString(Minecraft.getInstance().font, ChatFormatting.DARK_AQUA + "" + Component.translatable("text.industrialforegoing.jei.recipe.powered").getString(), 80, 6 + (Minecraft.getInstance().font.lineHeight + 2) * 3, 0xFFFFFF, false);
+            guiGraphics.text(Minecraft.getInstance().font, ChatFormatting.DARK_AQUA + "" + Component.translatable("text.industrialforegoing.jei.recipe.tripled_when").getString(), 80, 6 + (Minecraft.getInstance().font.lineHeight + 2) * 2, 0xFFFFFFFF, false);
+            guiGraphics.text(Minecraft.getInstance().font, ChatFormatting.DARK_AQUA + "" + Component.translatable("text.industrialforegoing.jei.recipe.powered").getString(), 80, 6 + (Minecraft.getInstance().font.lineHeight + 2) * 3, 0xFFFFFFFF, false);
         }
     }
 
     @Override
     public void getTooltip(ITooltipBuilder tooltip, FluidExtractorRecipe recipe, IRecipeSlotsView recipeSlotsView, double mouseX, double mouseY) {
-        IRecipeCategory.super.getTooltip(tooltip, recipe, recipeSlotsView, mouseX, mouseY);
+        com.buuz135.industrial.plugin.jei.MachineRecipeCategory.super.getTooltip(tooltip, recipe, recipeSlotsView, mouseX, mouseY);
         if (mouseX >= 78 && mouseX <= 140 && mouseY >= 5 && mouseY <= 25)
             tooltip.add(Component.literal(Component.translatable("text.industrialforegoing.jei.recipe.production_rate").getString()));
     }

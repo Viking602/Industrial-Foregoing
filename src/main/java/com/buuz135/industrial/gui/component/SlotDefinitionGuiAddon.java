@@ -35,7 +35,7 @@ import com.hrznstudio.titanium.network.messages.ButtonClickNetworkMessage;
 import com.hrznstudio.titanium.util.AssetUtil;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.nbt.CompoundTag;
@@ -56,32 +56,32 @@ public abstract class SlotDefinitionGuiAddon extends BasicButtonAddon {
     }
 
     @Override
-    public void drawBackgroundLayer(GuiGraphics guiGraphics, Screen screen, IAssetProvider provider, int guiX, int guiY, int mouseX, int mouseY, float partialTicks) {
+    public void drawBackgroundLayer(GuiGraphicsExtractor guiGraphics, Screen screen, IAssetProvider provider, int guiX, int guiY, int mouseX, int mouseY, float partialTicks) {
         if (!getItemStack().isEmpty() && getItemStack().has(IFAttachments.INFINITY_BACKPACK_ID)) {
             BackpackDataManager.BackpackItemHandler handler = BackpackDataManager.CLIENT_SIDE_BACKPACKS.getOrDefault(getItemStack().get(IFAttachments.INFINITY_BACKPACK_ID), null);
             AssetUtil.drawAsset(guiGraphics, screen, provider.getAsset(AssetTypes.SLOT), guiX + getPosX() - 1, guiY + getPosY() - 1);
             if (handler != null) {
                 BackpackDataManager.SlotDefinition display = handler.getSlotDefinition(slotId);
                 if (!display.getStack().isEmpty()) {
-                    guiGraphics.renderItem(display.getStack(), guiX + getPosX(), guiY + getPosY());
-                    guiGraphics.pose().pushPose();
-                    guiGraphics.pose().translate(0, 0, 260);
-                    guiGraphics.pose().scale(0.5f, 0.5f, 0.5f);
+                    guiGraphics.item(display.getStack(), guiX + getPosX(), guiY + getPosY());
+                    guiGraphics.pose().pushMatrix();
+                    guiGraphics.nextStratum();
+                    guiGraphics.pose().scale(0.5f, 0.5f);
                     String amount = NumberUtils.getFormatedBigNumber(display.getAmount());
-                    guiGraphics.drawString(Minecraft.getInstance().font, amount, (int) ((guiX + getPosX() + 17 - Minecraft.getInstance().font.width(amount) / 2f) * 2), (guiY + getPosY() + 13) * 2, 0xFFFFFF, true);
-                    guiGraphics.pose().popPose();
+                    guiGraphics.text(Minecraft.getInstance().font, amount, (int) ((guiX + getPosX() + 17 - Minecraft.getInstance().font.width(amount) / 2f) * 2), (guiY + getPosY() + 13) * 2, 0xFFFFFFFF, true);
+                    guiGraphics.pose().popMatrix();
                 }
             }
         }
     }
 
     @Override
-    public void drawForegroundLayer(GuiGraphics guiGraphics, Screen screen, IAssetProvider provider, int guiX, int guiY, int mouseX, int mouseY, float partialTicks) {
+    public void drawForegroundLayer(GuiGraphicsExtractor guiGraphics, Screen screen, IAssetProvider provider, int guiX, int guiY, int mouseX, int mouseY, float partialTicks) {
         if (isMouseOver(mouseX - guiX, mouseY - guiY)) {
-            guiGraphics.pose().pushPose();
-            guiGraphics.pose().translate(0, 0, 256);
+            guiGraphics.pose().pushMatrix();
+            guiGraphics.nextStratum();
             AssetUtil.drawSelectingOverlay(guiGraphics, getPosX(), getPosY(), getPosX() + getXSize() - 1, getPosY() + getYSize() - 1);
-            guiGraphics.pose().popPose();
+            guiGraphics.pose().popMatrix();
         }
     }
 
@@ -97,8 +97,8 @@ public abstract class SlotDefinitionGuiAddon extends BasicButtonAddon {
             compoundNBT.putString("Id", getItemStack().get(IFAttachments.INFINITY_BACKPACK_ID));
             compoundNBT.putInt("Slot", slotId);
             compoundNBT.putInt("Button", button);
-            compoundNBT.putBoolean("Shift", Screen.hasShiftDown());
-            compoundNBT.putBoolean("Ctrl", Screen.hasControlDown());
+            compoundNBT.putBoolean("Shift", net.minecraft.client.Minecraft.getInstance().hasShiftDown());
+            compoundNBT.putBoolean("Ctrl", net.minecraft.client.Minecraft.getInstance().hasControlDown());
             Titanium.NETWORK.sendToServer(new ButtonClickNetworkMessage(locatable.getLocatorInstance(), 4, compoundNBT));
             return true;
         }

@@ -23,13 +23,14 @@
 package com.buuz135.industrial.proxy.client.render;
 
 import com.buuz135.industrial.block.tile.IndustrialAreaWorkingTile;
-import com.mojang.blaze3d.platform.GlStateManager;
+
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.client.renderer.*;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
@@ -40,25 +41,12 @@ import org.joml.Matrix4f;
 
 import java.awt.*;
 
-public class WorkingAreaTESR implements BlockEntityRenderer<IndustrialAreaWorkingTile> {
+public class WorkingAreaTESR extends com.buuz135.industrial.compat.CapturedBlockRenderer<IndustrialAreaWorkingTile> {
 
 
     private static RenderType AREA_TYPE = createRenderType();
 
-    public static RenderType createRenderType() {
-        RenderType.CompositeState state = RenderType.CompositeState.builder()
-                .setShaderState(new RenderStateShard.ShaderStateShard(GameRenderer::getPositionColorShader))
-                .setTransparencyState(new RenderStateShard.TransparencyStateShard("translucent_transparency", () -> {
-                    RenderSystem.enableBlend();
-                    RenderSystem.depthMask(false);
-                    RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
-                }, () -> {
-                    RenderSystem.disableBlend();
-                    RenderSystem.depthMask(true);
-                    RenderSystem.defaultBlendFunc();
-                })).createCompositeState(true);
-        return RenderType.create("working_area_render", DefaultVertexFormat.POSITION_COLOR, VertexFormat.Mode.QUADS, 256, false, true, state);
-    }
+    public static RenderType createRenderType() { return net.minecraft.client.renderer.rendertype.RenderTypes.debugQuads(); }
 
 
     public WorkingAreaTESR(BlockEntityRendererProvider.Context p_173540_) {
@@ -71,19 +59,18 @@ public class WorkingAreaTESR implements BlockEntityRenderer<IndustrialAreaWorkin
         VoxelShape shape = tileEntityIn.getWorkingArea();
 
 
-        RenderSystem.lineWidth(Math.max(2.5F, (float) Minecraft.getInstance().getWindow().getWidth() / 1920.0F * 2.5F));
 
         BlockPos blockpos = tileEntityIn.getBlockPos();
         Color color = new Color(Math.abs(blockpos.getX() % 255), Math.abs(blockpos.getY() % 255), Math.abs(blockpos.getZ() % 255));
 
-        VertexConsumer builder = renderTypeBuffer.getBuffer(RenderType.lines());
-        LevelRenderer.renderLineBox(stack, builder, shape.bounds().inflate(0.001).move((double) -blockpos.getX(), (double) -blockpos.getY(), (double) -blockpos.getZ()), (float) color.getRed() / 255f, (float) color.getGreen() / 255f, (float) color.getBlue() / 255f, 0.5F);
+        VertexConsumer builder = renderTypeBuffer.getBuffer(net.minecraft.client.renderer.rendertype.RenderTypes.lines());
+        com.buuz135.industrial.compat.RenderCompat.renderLineBox(stack, builder, shape.bounds().inflate(0.001).move((double) -blockpos.getX(), (double) -blockpos.getY(), (double) -blockpos.getZ()), (float) color.getRed() / 255f, (float) color.getGreen() / 255f, (float) color.getBlue() / 255f, 0.5F);
         renderFaces(stack, renderTypeBuffer, shape.bounds().inflate(0.001), (double) -blockpos.getX(), (double) -blockpos.getY(), (double) -blockpos.getZ(), (float) color.getRed() / 255f, (float) color.getGreen() / 255f, (float) color.getBlue() / 255f, 0.3F);
 
     }
 
     @Override
-    public boolean shouldRenderOffScreen(IndustrialAreaWorkingTile te) {
+    public boolean shouldRenderOffScreen() {
         return true;
     }
 

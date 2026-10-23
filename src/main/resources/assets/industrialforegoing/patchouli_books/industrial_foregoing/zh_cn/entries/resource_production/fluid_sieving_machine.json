@@ -1,0 +1,17 @@
+{
+  "name": "流体筛分机",
+  "icon": "industrialforegoing:fluid_sieving_machine",
+  "category": "industrialforegoing:resource_production",
+  "sortnum": 21,
+  "read_by_default": true,
+  "pages": [
+    {
+      "type": "text",
+      "text": "消耗发酵矿物肉汤和沙子，生产最初用于制作该肉汤的矿物对应的粉。"
+    },
+    {
+      "type": "crafting",
+      "recipe": "industrialforegoing:fluid_sieving_machine"
+    }
+  ]
+}

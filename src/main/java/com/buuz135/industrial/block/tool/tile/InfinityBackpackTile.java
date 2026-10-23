@@ -22,7 +22,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.ItemInteractionResult;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.ExperienceOrb;
@@ -91,7 +91,7 @@ public class InfinityBackpackTile extends BasicTile<InfinityBackpackTile> implem
             }
         }
         if (level.getGameTime() % 2 == 0 && (ItemInfinityBackpack.getPickUpMode(getBackpack()) == 2 || ItemInfinityBackpack.getPickUpMode(getBackpack()) == 0)) {
-            var handlerItem = getBackpack().getCapability(Capabilities.FluidHandler.ITEM);
+            var handlerItem = com.buuz135.industrial.compat.MachineCapabilities.fluids(getBackpack());
             if (handlerItem != null) {
                 for (ExperienceOrb entity : level.getEntitiesOfClass(ExperienceOrb.class, new AABB(getBlockPos()).inflate(5))) {
                     if (((ItemInfinityBackpack) ModuleTool.INFINITY_BACKPACK.get()).enoughFuel(getBackpack())) {
@@ -125,15 +125,15 @@ public class InfinityBackpackTile extends BasicTile<InfinityBackpackTile> implem
     }
 
     @Override
-    public ItemInteractionResult onActivated(Player player, InteractionHand hand, Direction facing, double hitX, double hitY, double hitZ) {
+    public InteractionResult onActivated(Player player, InteractionHand hand, Direction facing, double hitX, double hitY, double hitZ) {
         if (!player.isShiftKeyDown() && player instanceof ServerPlayer serverPlayer && !backpack.isEmpty()) {
             ItemInfinityBackpack.sync(getLevel(), this.backpack.get(IFAttachments.INFINITY_BACKPACK_ID), serverPlayer);
             syncObject(this.backpack);
             serverPlayer.openMenu(this, buffer ->
                     LocatorFactory.writePacketBuffer(buffer, new TileEntityLocatorInstance(this.worldPosition)));
-            return ItemInteractionResult.SUCCESS;
+            return InteractionResult.SUCCESS;
         }
-        return ItemInteractionResult.SUCCESS;
+        return InteractionResult.SUCCESS;
     }
 
     public MenuProvider getStackMenuProvider() {
@@ -150,14 +150,14 @@ public class InfinityBackpackTile extends BasicTile<InfinityBackpackTile> implem
         return getStackMenuProvider().getDisplayName();
     }
 
-    public List<IFactory<? extends IScreenAddon>> getScreenAddons() {
+    public List<IFactory<?>> getScreenAddons() {
         var backpackItem = (ItemInfinityBackpack) ModuleTool.INFINITY_BACKPACK.get();
-        List<IFactory<? extends IScreenAddon>> addons = new ArrayList(backpackItem.getScreenAddons(this::getBackpack));
-        var energy = this.backpack.getCapability(Capabilities.EnergyStorage.ITEM);
+        List<IFactory<?>> addons = new ArrayList(backpackItem.getScreenAddons(this::getBackpack));
+        var energy = com.buuz135.industrial.compat.MachineCapabilities.energy(this.backpack);
         if (energy instanceof IScreenAddonProvider addonProvider) {
             addons.addAll(addonProvider.getScreenAddons());
         }
-        var fluidHandlerItem = this.backpack.getCapability(Capabilities.FluidHandler.ITEM);
+        var fluidHandlerItem = com.buuz135.industrial.compat.MachineCapabilities.fluids(this.backpack);
         if (fluidHandlerItem instanceof IScreenAddonProvider addonProvider) {
             addons.addAll(addonProvider.getScreenAddons());
         }

@@ -39,7 +39,7 @@ import mezz.jei.api.recipe.RecipeType;
 import mezz.jei.api.recipe.category.IRecipeCategory;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import org.apache.commons.lang3.tuple.Pair;
@@ -50,7 +50,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.stream.Collectors;
 
-public class MycelialGeneratorCategory implements IRecipeCategory<MycelialGeneratorRecipe> {
+public class MycelialGeneratorCategory implements com.buuz135.industrial.plugin.jei.MachineRecipeCategory<MycelialGeneratorRecipe> {
 
     private final IGuiHelper guiHelper;
     private final IMycelialGeneratorType type;
@@ -94,7 +94,7 @@ public class MycelialGeneratorCategory implements IRecipeCategory<MycelialGenera
             IMycelialGeneratorType.Input input = type.getInputs()[i];
             if (input == IMycelialGeneratorType.Input.SLOT) {
                 builder.addSlot(RecipeIngredientRole.INPUT, 20 * i + 1, Minecraft.getInstance().font.lineHeight / 2 + 1)
-                        .addItemStacks(recipe.getInputItems().get(i).stream().map(ingredient -> Arrays.asList(ingredient.getItems())).flatMap(Collection::stream).collect(Collectors.toList()));
+                        .addItemStacks(recipe.getInputItems().get(i).stream().map(ingredient -> ingredient.display().resolveForStacks(net.minecraft.world.item.crafting.display.SlotDisplayContext.fromLevel(Minecraft.getInstance().level))).flatMap(Collection::stream).collect(Collectors.toList()));
             } else if (input == IMycelialGeneratorType.Input.TANK) {
                 builder.addSlot(RecipeIngredientRole.INPUT, 20 * i + 3, 3 + Minecraft.getInstance().font.lineHeight / 2)
                         .setFluidRenderer(1000, false, 12, 13)
@@ -105,7 +105,8 @@ public class MycelialGeneratorCategory implements IRecipeCategory<MycelialGenera
     }
 
     @Override
-    public void draw(MycelialGeneratorRecipe recipe, IRecipeSlotsView recipeSlotsView, GuiGraphics guiGraphics, double mouseX, double mouseY) {
+    public void draw(MycelialGeneratorRecipe recipe, IRecipeSlotsView recipeSlotsView, GuiGraphicsExtractor guiGraphics, double mouseX, double mouseY) {
+        getBackground().draw(guiGraphics, 0, 0);
         for (int i = 0; i < type.getInputs().length; i++) {
             if (type.getInputs()[i] == IMycelialGeneratorType.Input.SLOT) {
                 int finalI = i;
@@ -115,8 +116,8 @@ public class MycelialGeneratorCategory implements IRecipeCategory<MycelialGenera
             }
         }
         int x = 20 * type.getInputs().length + 3;
-        guiGraphics.drawString(Minecraft.getInstance().font, ChatFormatting.DARK_GRAY + Component.translatable("text.industrialforegoing.jei.recipe.time").getString() + ChatFormatting.DARK_AQUA + new DecimalFormat().format(recipe.getTicks() / 20D) + ChatFormatting.DARK_GRAY + Component.translatable("tooltip.industrialforegoing.sec_short").getString(), x, Minecraft.getInstance().font.lineHeight * 0, 0xFFFFFFFF, false);
-        guiGraphics.drawString(Minecraft.getInstance().font, ChatFormatting.DARK_GRAY + Component.translatable("text.industrialforegoing.jei.recipe.production").getString() + ChatFormatting.DARK_AQUA + recipe.getPowerTick() + ChatFormatting.DARK_GRAY + Component.translatable("tooltip.industrialforegoing.fe_t").getString(), x, Minecraft.getInstance().font.lineHeight * 1, 0xFFFFFFFF, false);
-        guiGraphics.drawString(Minecraft.getInstance().font, ChatFormatting.DARK_GRAY + Component.translatable("text.industrialforegoing.jei.recipe.total").getString() + ChatFormatting.DARK_AQUA + new DecimalFormat().format(recipe.getTicks() * recipe.getPowerTick()) + ChatFormatting.DARK_GRAY + Component.translatable("text.industrialforegoing.display._fe").getString(), x, Minecraft.getInstance().font.lineHeight * 2, 0xFFFFFFFF, false);
+        guiGraphics.text(Minecraft.getInstance().font, ChatFormatting.DARK_GRAY + Component.translatable("text.industrialforegoing.jei.recipe.time").getString() + ChatFormatting.DARK_AQUA + new DecimalFormat().format(recipe.getTicks() / 20D) + ChatFormatting.DARK_GRAY + Component.translatable("tooltip.industrialforegoing.sec_short").getString(), x, Minecraft.getInstance().font.lineHeight * 0, 0xFFFFFFFF, false);
+        guiGraphics.text(Minecraft.getInstance().font, ChatFormatting.DARK_GRAY + Component.translatable("text.industrialforegoing.jei.recipe.production").getString() + ChatFormatting.DARK_AQUA + recipe.getPowerTick() + ChatFormatting.DARK_GRAY + Component.translatable("tooltip.industrialforegoing.fe_t").getString(), x, Minecraft.getInstance().font.lineHeight * 1, 0xFFFFFFFF, false);
+        guiGraphics.text(Minecraft.getInstance().font, ChatFormatting.DARK_GRAY + Component.translatable("text.industrialforegoing.jei.recipe.total").getString() + ChatFormatting.DARK_AQUA + new DecimalFormat().format(recipe.getTicks() * recipe.getPowerTick()) + ChatFormatting.DARK_GRAY + Component.translatable("text.industrialforegoing.display._fe").getString(), x, Minecraft.getInstance().font.lineHeight * 2, 0xFFFFFFFF, false);
     }
 }

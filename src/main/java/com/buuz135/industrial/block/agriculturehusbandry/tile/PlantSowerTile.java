@@ -80,7 +80,7 @@ public class PlantSowerTile extends IndustrialAreaWorkingTile<PlantSowerTile> {
         }
         addBundle(this.input = new LockableInventoryBundle<>(this, new SidedInventoryComponent<PlantSowerTile>("input", 54 + 18 * 3, 22, 9, 0).
                 setColor(DyeColor.CYAN).
-                setInputFilter((itemStack, integer) -> itemStack.getItem() instanceof SpecialPlantable || (itemStack.getItem() instanceof BlockItem blockItem && blockItem.getBlock() instanceof BushBlock)).
+                setInputFilter((itemStack, integer) -> itemStack.getItem() instanceof SpecialPlantable || (itemStack.getItem() instanceof BlockItem blockItem && blockItem.getBlock() instanceof VegetationBlock)).
                 setRange(3, 3).
                 setComponentHarness(this), 100, 84, false));
         this.maxProgress = PlantSowerConfig.maxProgress;
@@ -93,10 +93,12 @@ public class PlantSowerTile extends IndustrialAreaWorkingTile<PlantSowerTile> {
         if (isLoaded(pos) && (this.level.isEmptyBlock(pos) || this.level.getBlockState(pos).is(Blocks.WATER)) && hasEnergy(powerPerOperation)) {
             int slot = getFilteredSlot(pos);
             ItemStack stack = ItemStack.EMPTY;
+            int selectedInputSlot = -1;
             for (int i = 0; i < input.getInventory().getSlots(); i++) {
                 if (input.getInventory().getStackInSlot(i).isEmpty()) continue;
                 if (filter.getFilterSlots()[slot].getFilter().isEmpty() || ItemStack.isSameItem(filter.getFilterSlots()[slot].getFilter(), input.getInventory().getStackInSlot(i))) {
                     stack = input.getInventory().getStackInSlot(i);
+                    selectedInputSlot = i;
                     break;
                 }
             }
@@ -104,19 +106,19 @@ public class PlantSowerTile extends IndustrialAreaWorkingTile<PlantSowerTile> {
             if (
                 !stack.isEmpty() &&
                 stack.getItem() instanceof BlockItem blockItem &&
-                blockItem.getBlock() instanceof BushBlock bushBlock &&
+                blockItem.getBlock() instanceof VegetationBlock bushBlock &&
                 ((IBushBlockMixin) bushBlock).invokeMayPlaceOn(this.level.getBlockState(pos.below()), level, pos.below())
             ) {
                 BlockState blockstate1 = blockItem.getBlock().defaultBlockState();
                 level.setBlockAndUpdate(pos, blockstate1);
-                stack.shrink(1);
+                com.buuz135.industrial.compat.MachineItems.shrink(input.getInventory(), selectedInputSlot, 1);
                 increasePointer();
                 return new WorkAction(0.2f, powerPerOperation);
             }
             
             if (!stack.isEmpty() && stack.getItem() instanceof SpecialPlantable specialPlantable && specialPlantable.canPlacePlantAtPosition(stack, level, pos.below(), Direction.UP)) {
                 specialPlantable.spawnPlantAtPosition(stack, level, pos.below(), Direction.UP);
-                stack.shrink(1);
+                com.buuz135.industrial.compat.MachineItems.shrink(input.getInventory(), selectedInputSlot, 1);
                 increasePointer();
                 return new WorkAction(0.2f, powerPerOperation);
             }
@@ -159,11 +161,11 @@ public class PlantSowerTile extends IndustrialAreaWorkingTile<PlantSowerTile> {
     @Override
     public void loadSettings(Player player, CompoundTag tag) {
         if (tag.contains("PS_locked")) {
-            input.setLocked(tag.getBoolean("PS_locked"));
+            input.setLocked(tag.getBooleanOr("PS_locked", false));
         }
         if (tag.contains("PS_filter")) {
-            for (String psFilter : tag.getCompound("PS_filter").getAllKeys()) {
-                input.getFilter()[Integer.parseInt(psFilter)] = ItemStack.parseOptional(this.level.registryAccess(), tag.getCompound("PS_filter").getCompound(psFilter));
+            for (String psFilter : tag.getCompoundOrEmpty("PS_filter").keySet()) {
+                input.getFilter()[Integer.parseInt(psFilter)] = com.buuz135.industrial.compat.ItemNbt.parseOptional(this.level.registryAccess(), tag.getCompoundOrEmpty("PS_filter").getCompoundOrEmpty(psFilter));
             }
         }
         super.loadSettings(player, tag);
@@ -174,7 +176,7 @@ public class PlantSowerTile extends IndustrialAreaWorkingTile<PlantSowerTile> {
         tag.putBoolean("PS_locked", input.isLocked());
         CompoundTag filterTag = new CompoundTag();
         for (int i = 0; i < input.getFilter().length; i++) {
-            filterTag.put(i + "", input.getFilter()[i].saveOptional(this.level.registryAccess()));
+            filterTag.put(i + "", com.buuz135.industrial.compat.ItemNbt.saveOptional(input.getFilter()[i], this.level.registryAccess()));
         }
         tag.put("PS_filter", filterTag);
         super.saveSettings(player, tag);

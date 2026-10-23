@@ -10,7 +10,7 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.fml.LogicalSide;
-import net.neoforged.neoforge.common.util.LogicalSidedProvider;
+
 import net.neoforged.neoforge.registries.DeferredRegister;
 import net.neoforged.neoforge.server.ServerLifecycleHooks;
 
@@ -56,7 +56,18 @@ public class IFAttachments {
         if (ServerLifecycleHooks.getCurrentServer() != null) {
             return ServerLifecycleHooks.getCurrentServer().registryAccess();
         }
-        return LogicalSidedProvider.CLIENTWORLD.get(LogicalSide.CLIENT).orElseThrow().registryAccess();
+        return ClientLevelAccess.level().registryAccess();
+    }
+
+    public static net.minecraft.world.level.block.entity.FuelValues fuelValues() {
+        var server = ServerLifecycleHooks.getCurrentServer();
+        return server != null ? server.fuelValues() : ClientLevelAccess.level().fuelValues();
+    }
+
+    private static class ClientLevelAccess {
+        static net.minecraft.client.multiplayer.ClientLevel level() {
+            return java.util.Objects.requireNonNull(net.minecraft.client.Minecraft.getInstance().level, "No active client world");
+        }
     }
 
     public static class ComponentSupplier<T> implements Supplier<DataComponentType<T>> {

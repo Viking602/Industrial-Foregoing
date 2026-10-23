@@ -1,0 +1,44 @@
+{
+  "model": {
+    "type": "minecraft:range_dispatch",
+    "property": "industrialforegoing:cooldown",
+    "fallback": {
+      "type": "minecraft:model",
+      "model": "industrialforegoing:item/infinity_launcher",
+      "tints": [
+        {
+          "type": "industrialforegoing:machine",
+          "index": 0
+        },
+        {
+          "type": "industrialforegoing:machine",
+          "index": 1
+        },
+        {
+          "type": "industrialforegoing:machine",
+          "index": 2
+        },
+        {
+          "type": "industrialforegoing:machine",
+          "index": 3
+        }
+      ]
+    },
+    "entries": [
+      {
+        "threshold": 1,
+        "model": {
+          "type": "minecraft:model",
+          "model": "industrialforegoing:item/infinity_launcher_empty"
+        }
+      },
+      {
+        "threshold": 2,
+        "model": {
+          "type": "minecraft:model",
+          "model": "industrialforegoing:item/infinity_launcher_full"
+        }
+      }
+    ]
+  }
+}

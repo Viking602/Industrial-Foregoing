@@ -28,15 +28,14 @@ import com.buuz135.industrial.recipe.data.EntityIngredient;
 import com.buuz135.industrial.utils.Reference;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import me.desht.pneumaticcraft.common.registry.ModFluids;
 import net.minecraft.advancements.AdvancementRequirements;
 import net.minecraft.advancements.AdvancementRewards;
-import net.minecraft.advancements.critereon.RecipeUnlockedTrigger;
+import net.minecraft.advancements.criterion.RecipeUnlockedTrigger;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.data.recipes.RecipeOutput;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.tags.EntityTypeTags;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.item.ItemStack;
@@ -56,7 +55,7 @@ import java.util.Optional;
 public class LaserDrillFluidRecipe extends DrillRecipe<SizedFluidIngredient> {
 
     public static final MapCodec<LaserDrillFluidRecipe> CODEC = RecordCodecBuilder.mapCodec(in -> in.group(
-            SizedFluidIngredient.FLAT_CODEC.fieldOf("output").forGetter(o -> o.output),
+            SizedFluidIngredient.CODEC.fieldOf("output").forGetter(o -> o.output),
             Ingredient.CODEC.fieldOf("catalyst").forGetter(o -> o.catalyst),
             EntityData.CODEC.optionalFieldOf("entity_data").forGetter(o -> o.entityData),
             LaserDrillRarity.CODEC.listOf().fieldOf("rarity").forGetter(o -> o.rarity)
@@ -89,7 +88,7 @@ public class LaserDrillFluidRecipe extends DrillRecipe<SizedFluidIngredient> {
                         -64, 256, 8)));
         if (ModList.get().isLoaded("pneumaticcraft")) {
             createRecipe(output, "oil", "pneumaticcraft",
-                    new LaserDrillFluidRecipe(new SizedFluidIngredient(FluidIngredient.of(ModFluids.OIL.get()), 50), 15,
+                    new LaserDrillFluidRecipe(new SizedFluidIngredient(FluidIngredient.of(net.minecraft.core.registries.BuiltInRegistries.FLUID.getValue(Identifier.fromNamespaceAndPath("pneumaticcraft", "oil"))), 50), 15,
                             new LaserDrillRarity(
                                     new LaserDrillRarity.BiomeRarity(LaserDrillRarity.BiomeRarity.OIL, new ArrayList<>()),
                                     new LaserDrillRarity.DimensionRarity(new ArrayList<>(), new ArrayList<>()),
@@ -100,14 +99,14 @@ public class LaserDrillFluidRecipe extends DrillRecipe<SizedFluidIngredient> {
     public static void createRecipe(RecipeOutput recipeOutput, String name, String modIdCondition, LaserDrillFluidRecipe recipe) {
         var rl = generateRL(name);
         var advancementHolder = recipeOutput.advancement()
-                .addCriterion("has_the_recipe", RecipeUnlockedTrigger.unlocked(rl))
-                .rewards(AdvancementRewards.Builder.recipe(rl))
+                .addCriterion("has_the_recipe", RecipeUnlockedTrigger.unlocked(net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.RECIPE, rl)))
+                .rewards(AdvancementRewards.Builder.recipe(net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.RECIPE, rl)))
                 .requirements(AdvancementRequirements.Strategy.OR).build(rl);
-        recipeOutput.accept(rl, recipe, advancementHolder, new ModLoadedCondition(modIdCondition));
+        recipeOutput.accept(net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.RECIPE, rl), recipe, advancementHolder, new ModLoadedCondition(modIdCondition));
     }
 
-    public static ResourceLocation generateRL(String key) {
-        return ResourceLocation.fromNamespaceAndPath(Reference.MOD_ID, "laser_drill_fluid/" + key);
+    public static Identifier generateRL(String key) {
+        return Identifier.fromNamespaceAndPath(Reference.MOD_ID, "laser_drill_fluid/" + key);
     }
 
     @Override
@@ -116,7 +115,7 @@ public class LaserDrillFluidRecipe extends DrillRecipe<SizedFluidIngredient> {
     }
 
     @Override
-    public ItemStack assemble(CraftingInput craftingInput, HolderLookup.Provider provider) {
+    public ItemStack assemble(CraftingInput craftingInput) {
         return ItemStack.EMPTY;
     }
 
@@ -131,12 +130,12 @@ public class LaserDrillFluidRecipe extends DrillRecipe<SizedFluidIngredient> {
     }
 
     @Override
-    public RecipeSerializer<?> getSerializer() {
+    public RecipeSerializer getSerializer() {
         return ModuleCore.LASER_DRILL_FLUID_SERIALIZER.get();
     }
 
     @Override
-    public RecipeType<?> getType() {
+    public RecipeType getType() {
         return ModuleCore.LASER_DRILL_FLUID_TYPE.get();
     }
 

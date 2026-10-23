@@ -28,12 +28,12 @@ import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.saveddata.SavedData;
-import net.neoforged.neoforge.common.util.INBTSerializable;
+import com.hrznstudio.titanium.nbthandler.INBTSerializable;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -98,14 +98,14 @@ public class MycelialDataManager extends SavedData {
 
     public static MycelialDataManager load(HolderLookup.Provider provider, CompoundTag nbt) {
         MycelialDataManager mycelialDataManager = new MycelialDataManager();
-        for (String uuid : nbt.getCompound("values").getAllKeys()) {
-            CompoundTag uuidNbt = nbt.getCompound("values").getCompound(uuid);
+        for (String uuid : nbt.getCompoundOrEmpty("values").keySet()) {
+            CompoundTag uuidNbt = nbt.getCompoundOrEmpty("values").getCompoundOrEmpty(uuid);
             HashMap<String, List<GeneratorInfo>> generators = new HashMap<>();
-            for (String genName : uuidNbt.getAllKeys()) {
-                CompoundTag genNbt = uuidNbt.getCompound(genName);
-                for (String s : genNbt.getAllKeys()) {
+            for (String genName : uuidNbt.keySet()) {
+                CompoundTag genNbt = uuidNbt.getCompoundOrEmpty(genName);
+                for (String s : genNbt.keySet()) {
                     GeneratorInfo generatorInfo = new GeneratorInfo();
-                    generatorInfo.deserializeNBT(provider, genNbt.getCompound(s));
+                    generatorInfo.deserializeNBT(provider, genNbt.getCompoundOrEmpty(s));
                     generators.computeIfAbsent(genName, s1 -> new ArrayList<>()).add(generatorInfo);
                 }
             }
@@ -118,13 +118,12 @@ public class MycelialDataManager extends SavedData {
     public static MycelialDataManager getData(LevelAccessor world) {
         if (world instanceof ServerLevel) {
             ServerLevel serverWorld = ((ServerLevel) world).getServer().getLevel(Level.OVERWORLD);
-            MycelialDataManager data = serverWorld.getDataStorage().computeIfAbsent(new Factory<MycelialDataManager>(MycelialDataManager::new, (compoundTag, provider) -> MycelialDataManager.load(provider, compoundTag)), NAME);
+            MycelialDataManager data = serverWorld.getDataStorage().computeIfAbsent(new net.minecraft.world.level.saveddata.SavedDataType<>(net.minecraft.resources.Identifier.fromNamespaceAndPath("industrialforegoing", "mycelial"), level -> com.buuz135.industrial.compat.LegacySavedData.read(level, NAME).map(tag -> load(level.registryAccess(), tag)).orElseGet(MycelialDataManager::new), level -> CompoundTag.CODEC.xmap(tag -> load(level.registryAccess(), tag), data2 -> data2.save(new CompoundTag(), level.registryAccess()))));
             return data;
         }
         return null;
     }
 
-    @Override
     public CompoundTag save(CompoundTag compound, HolderLookup.Provider provider) {
         CompoundTag values = new CompoundTag();
         for (String uuid : infos.keySet()) {
@@ -167,16 +166,16 @@ public class MycelialDataManager extends SavedData {
             compoundNBT.putLong("Run", lastRun);
             compoundNBT.putLong("Track", lastTracked);
             compoundNBT.putLong("Pos", pos.asLong());
-            compoundNBT.putString("RKValue", world.location().toString());
+            compoundNBT.putString("RKValue", world.identifier().toString());
             return compoundNBT;
         }
 
         @Override
         public void deserializeNBT(HolderLookup.Provider provider, CompoundTag nbt) {
-            lastRun = nbt.getLong("Run");
-            lastTracked = nbt.getLong("Track");
-            pos = BlockPos.of(nbt.getLong("Pos"));
-            this.world = ResourceKey.create(Registries.DIMENSION, ResourceLocation.parse(nbt.getString("RKValue")));
+            lastRun = nbt.getLongOr("Run", 0L);
+            lastTracked = nbt.getLongOr("Track", 0L);
+            pos = BlockPos.of(nbt.getLongOr("Pos", 0L));
+            this.world = ResourceKey.create(Registries.DIMENSION, Identifier.parse(nbt.getStringOr("RKValue", "")));
         }
     }
 }

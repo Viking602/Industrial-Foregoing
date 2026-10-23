@@ -1,8 +1,8 @@
 {
   "neoforge:conditions": [
     {
-      "type": "neoforge:item_exists",
-      "item": "industrialforegoing:pink_slime"
+      "type": "neoforge:registered",
+      "value": "industrialforegoing:pink_slime"
     }
   ],
   "parent": "minecraft:recipes/root",

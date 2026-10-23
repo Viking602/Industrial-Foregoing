@@ -29,7 +29,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.saveddata.SavedData;
-import net.neoforged.neoforge.common.util.INBTSerializable;
+import com.hrznstudio.titanium.nbthandler.INBTSerializable;
 import net.neoforged.neoforge.items.IItemHandler;
 
 import javax.annotation.Nonnull;
@@ -43,6 +43,10 @@ public class BackpackDataManager extends SavedData {
     public static HashMap<String, BackpackItemHandler> CLIENT_SIDE_BACKPACKS = new HashMap<>();
 
     public static final String NAME = "IFBackpack";
+    public static final net.minecraft.world.level.saveddata.SavedDataType<BackpackDataManager> TYPE = new net.minecraft.world.level.saveddata.SavedDataType<>(
+            net.minecraft.resources.Identifier.fromNamespaceAndPath("industrialforegoing", "backpacks"),
+            level -> com.buuz135.industrial.compat.LegacySavedData.read(level, NAME).map(tag -> load(level.registryAccess(), tag)).orElseGet(BackpackDataManager::new),
+            level -> CompoundTag.CODEC.xmap(tag -> load(level.registryAccess(), tag), data -> data.save(new CompoundTag(), level.registryAccess())));
     public static final int SLOT_AMOUNT = 4 * 8;
     public HashMap<String, BackpackItemHandler> itemHandlers;
 
@@ -66,10 +70,10 @@ public class BackpackDataManager extends SavedData {
     public static BackpackDataManager load(HolderLookup.Provider provider, CompoundTag nbt) {
         BackpackDataManager manager = new BackpackDataManager();
         manager.itemHandlers = new HashMap<>();
-        CompoundTag backpacks = nbt.getCompound("Backpacks");
-        for (String s : backpacks.getAllKeys()) {
+        CompoundTag backpacks = nbt.getCompoundOrEmpty("Backpacks");
+        for (String s : backpacks.keySet()) {
             BackpackItemHandler hander = new BackpackItemHandler(manager);
-            hander.deserializeNBT(provider, backpacks.getCompound(s));
+            hander.deserializeNBT(provider, backpacks.getCompoundOrEmpty(s));
             manager.itemHandlers.put(s, hander);
         }
 
@@ -81,13 +85,12 @@ public class BackpackDataManager extends SavedData {
         if (world instanceof ServerLevel) {
             ServerLevel serverWorld = ((ServerLevel) world).getServer().getLevel(Level.OVERWORLD);
             BackpackDataManager data = serverWorld.getDataStorage().computeIfAbsent(
-                    new Factory<>(BackpackDataManager::new, (compoundTag, provider) -> BackpackDataManager.load(provider, compoundTag)), NAME);
+                    TYPE);
             return data;
         }
         return null;
     }
 
-    @Override
     public CompoundTag save(CompoundTag compound, HolderLookup.Provider provider) {
         CompoundTag nbt = new CompoundTag();
         itemHandlers.forEach((s, iItemHandler) -> nbt.put(s, iItemHandler.serializeNBT(provider)));
@@ -95,11 +98,58 @@ public class BackpackDataManager extends SavedData {
         return compound;
     }
 
-    public static class BackpackItemHandler implements IItemHandler, INBTSerializable<CompoundTag> {
+    public static class BackpackItemHandler implements IItemHandler, INBTSerializable<CompoundTag>, net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.item.ItemResource> {
 
         private List<SlotDefinition> definitionList;
         private int maxAmount;
         private BackpackDataManager dataManager;
+
+        private record SlotSnapshot(ItemStack stack, int amount, boolean voidItems, boolean refillItems) {}
+        private final net.neoforged.neoforge.transfer.transaction.SnapshotJournal<List<SlotSnapshot>> journal = new net.neoforged.neoforge.transfer.transaction.SnapshotJournal<>() {
+            @Override protected List<SlotSnapshot> createSnapshot() {
+                return definitionList.stream().map(d -> new SlotSnapshot(d.stack.copy(), d.amount, d.voidItems, d.refillItems)).toList();
+            }
+            @Override protected void revertToSnapshot(List<SlotSnapshot> snapshot) {
+                for (int i = 0; i < snapshot.size(); i++) {
+                    var before = snapshot.get(i);
+                    var current = definitionList.get(i);
+                    current.stack = before.stack();
+                    current.amount = before.amount();
+                    current.voidItems = before.voidItems();
+                    current.refillItems = before.refillItems();
+                }
+            }
+            @Override protected void onRootCommit(List<SlotSnapshot> snapshot) { markDirty(); }
+        };
+        @Override public int size() { return getSlots(); }
+        @Override public net.neoforged.neoforge.transfer.item.ItemResource getResource(int index) {
+            return definitionList.get(index).amount == 0 ? net.neoforged.neoforge.transfer.item.ItemResource.EMPTY : net.neoforged.neoforge.transfer.item.ItemResource.of(definitionList.get(index).stack);
+        }
+        @Override public long getAmountAsLong(int index) { return definitionList.get(index).amount; }
+        @Override public long getCapacityAsLong(int index, net.neoforged.neoforge.transfer.item.ItemResource resource) {
+            return resource.isEmpty() || isValid(index, resource) ? maxAmount : 0;
+        }
+        @Override public boolean isValid(int index, net.neoforged.neoforge.transfer.item.ItemResource resource) { return isItemValid(index, resource.toStack()); }
+        @Override public int insert(int index, net.neoforged.neoforge.transfer.item.ItemResource resource, int amount, net.neoforged.neoforge.transfer.transaction.TransactionContext transaction) {
+            net.neoforged.neoforge.transfer.TransferPreconditions.checkNonEmptyNonNegative(resource, amount);
+            if (!isValid(index, resource) || amount == 0) return 0;
+            var slot = definitionList.get(index);
+            int accepted = slot.voidItems ? amount : (int) Math.min(amount, Math.max(0L, (long) maxAmount - slot.amount));
+            if (accepted > 0) {
+                journal.updateSnapshots(transaction);
+                slot.stack = resource.toStack();
+                slot.amount = (int) Math.min(maxAmount, (long) slot.amount + accepted);
+            }
+            return accepted;
+        }
+        @Override public int extract(int index, net.neoforged.neoforge.transfer.item.ItemResource resource, int amount, net.neoforged.neoforge.transfer.transaction.TransactionContext transaction) {
+            net.neoforged.neoforge.transfer.TransferPreconditions.checkNonEmptyNonNegative(resource, amount);
+            if (!resource.equals(getResource(index))) return 0;
+            var slot = definitionList.get(index);
+            int extracted = Math.min(amount, slot.amount);
+            if (extracted > 0) { journal.updateSnapshots(transaction); slot.amount -= extracted; }
+            return extracted;
+        }
 
         public BackpackItemHandler(BackpackDataManager manager) {
             definitionList = new ArrayList<>();
@@ -124,11 +174,11 @@ public class BackpackDataManager extends SavedData {
 
         @Override
         public void deserializeNBT(HolderLookup.Provider provider, CompoundTag nbt) {
-            CompoundTag slots = nbt.getCompound("Slots");
-            for (String s : slots.getAllKeys()) {
-                definitionList.get(Integer.parseInt(s)).deserializeNBT(provider, slots.getCompound(s));
+            CompoundTag slots = nbt.getCompoundOrEmpty("Slots");
+            for (String s : slots.keySet()) {
+                definitionList.get(Integer.parseInt(s)).deserializeNBT(provider, slots.getCompoundOrEmpty(s));
             }
-            this.maxAmount = nbt.getInt("MaxAmount");
+            this.maxAmount = nbt.getIntOr("MaxAmount", 0);
         }
 
         @Override
@@ -147,11 +197,11 @@ public class BackpackDataManager extends SavedData {
         public ItemStack insertItem(int slot, @Nonnull ItemStack stack, boolean simulate) {
             if (isItemValid(slot, stack)) {
                 SlotDefinition definition = definitionList.get(slot);
-                int inserted = Math.min(maxAmount - definition.getAmount(), stack.getCount());
+                int inserted = (int) Math.min(Math.max(0L, (long) maxAmount - definition.getAmount()), stack.getCount());
                 if (definition.isVoidItems()) inserted = stack.getCount(); //Void
                 if (!simulate) {
                     definition.setStack(stack);
-                    definition.setAmount(Math.min(definition.getAmount() + inserted, maxAmount));
+                    definition.setAmount((int) Math.min((long) definition.getAmount() + inserted, maxAmount));
                     markDirty();
                 }
                 if (inserted == stack.getCount()) return ItemStack.EMPTY;
@@ -201,7 +251,7 @@ public class BackpackDataManager extends SavedData {
         }
 
         public void markDirty() {
-            if (dataManager != null) dataManager.setDirty();
+            if (dataManager != null && !journal.isInTransaction()) dataManager.setDirty();
         }
 
         public SlotDefinition getSlotDefinition(int slot) {
@@ -246,7 +296,7 @@ public class BackpackDataManager extends SavedData {
         @Override
         public CompoundTag serializeNBT(HolderLookup.Provider provider) {
             CompoundTag compoundNBT = new CompoundTag();
-            compoundNBT.put("Stack", stack.saveOptional(provider));
+            compoundNBT.put("Stack", com.buuz135.industrial.compat.ItemNbt.saveOptional(stack, provider));
             compoundNBT.putInt("Amount", amount);
             compoundNBT.putBoolean("Void", voidItems);
             compoundNBT.putBoolean("Refill", refillItems);
@@ -255,10 +305,10 @@ public class BackpackDataManager extends SavedData {
 
         @Override
         public void deserializeNBT(HolderLookup.Provider provider, CompoundTag nbt) {
-            this.stack = ItemStack.parseOptional(provider, nbt.getCompound("Stack"));
-            this.amount = nbt.getInt("Amount");
-            this.voidItems = nbt.getBoolean("Void");
-            this.refillItems = nbt.getBoolean("Refill");
+            this.stack = com.buuz135.industrial.compat.ItemNbt.parseOptional(provider, nbt.getCompoundOrEmpty("Stack"));
+            this.amount = nbt.getIntOr("Amount", 0);
+            this.voidItems = nbt.getBooleanOr("Void", false);
+            this.refillItems = nbt.getBooleanOr("Refill", false);
         }
 
         public boolean isVoidItems() {

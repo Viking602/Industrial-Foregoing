@@ -54,7 +54,8 @@ public class OneThreeFiveHandler {
 
     public static HashMap<UUID, Long> SPECIAL_ENTITIES = new HashMap<>();
 
-    @OnlyIn(Dist.CLIENT)
+    @EventBusSubscriber(modid = Reference.MOD_ID, value = Dist.CLIENT)
+    public static final class Client {
     @SubscribeEvent
     public static void onClientTick(ClientTickEvent.Post event) {
         if (Minecraft.getInstance().player != null && Minecraft.getInstance().player.level() != null && !Minecraft.getInstance().isPaused() && Minecraft.getInstance().player.level().getGameTime() % 5 == 0) {
@@ -75,10 +76,12 @@ public class OneThreeFiveHandler {
         toRemove.forEach(uuid -> SPECIAL_ENTITIES.remove(uuid));
     }
 
+    }
+
     @SubscribeEvent
     public static void onPlayerTick(PlayerTickEvent.Post event) {
-        if (event.getEntity().level().getGameTime() % 20 == 0) {
-            for (ItemStack stack : event.getEntity().getInventory().items) {
+        if (!event.getEntity().level().isClientSide() && event.getEntity().level().getGameTime() % 20 == 0) {
+            for (ItemStack stack : event.getEntity().getInventory().getNonEquipmentItems()) {
                 if (stack.getItem() instanceof ItemInfinity && ((ItemInfinity) stack.getItem()).isSpecial(stack) && ((ItemInfinity) stack.getItem()).isSpecialEnabled(stack)) {
                     IndustrialForegoing.NETWORK.sendToNearby(event.getEntity().level(), new BlockPos(event.getEntity().blockPosition().getX(), event.getEntity().blockPosition().getY(), event.getEntity().blockPosition().getZ()), 64, new SpecialParticleMessage(event.getEntity().getUUID()));
                     return;

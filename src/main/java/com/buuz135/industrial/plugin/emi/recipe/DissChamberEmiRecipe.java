@@ -64,7 +64,7 @@ public class DissChamberEmiRecipe extends CustomEmiRecipe {
         for (int i = 0; i < this.getInputs().size() - 1; i++) {
             widgets.addSlot(this.getInputs().get(i), 23 + DissolutionChamberTile.getSlotPos(i).getLeft(), 10 + DissolutionChamberTile.getSlotPos(i).getRight());
         }
-        widgets.addSlot(EmiIngredient.of(List.of(this.getOutputs().get(0))), 118, 15).recipeContext(this);
+        widgets.addSlot(Emicom.buuz135.industrial.compat.Ingredients.of(List.of(this.getOutputs().get(0))), 118, 15).recipeContext(this);
         widgets.add(new SmallTankEmiWidget(this.getInputs().get(this.getInputs().size() - 1), 1000, 33 + 12, 32));
 
         widgets.add(new NormalTankEmiWidget(this.getOutputs().get(1), 1000, 139, 2)).recipeContext(this);

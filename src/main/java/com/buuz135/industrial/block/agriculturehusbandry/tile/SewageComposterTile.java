@@ -36,7 +36,7 @@ import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
-import net.neoforged.neoforge.items.ItemHandlerHelper;
+import com.buuz135.industrial.compat.MachineItems;
 
 import javax.annotation.Nonnull;
 
@@ -52,7 +52,7 @@ public class SewageComposterTile extends IndustrialProcessingTile<SewageComposte
 
     public SewageComposterTile(BlockPos blockPos, BlockState blockState) {
         super(ModuleAgricultureHusbandry.SEWAGE_COMPOSTER, 57, 40, blockPos, blockState);
-        this.addTank(sewage = (SidedFluidTankComponent<SewageComposterTile>) new SidedFluidTankComponent<SewageComposterTile>("sewage", SewageComposterConfig.maxTankSize, 30, 20, 0).
+        this.addTank(sewage = (SidedFluidTankComponent<SewageComposterTile>) new com.buuz135.industrial.compat.MachineFluidTank<SewageComposterTile>("sewage", SewageComposterConfig.maxTankSize, 30, 20, 0).
                 setColor(DyeColor.BROWN).
                 setTankAction(FluidTankComponent.Action.FILL).
                 setComponentHarness(this).
@@ -68,14 +68,14 @@ public class SewageComposterTile extends IndustrialProcessingTile<SewageComposte
 
     @Override
     public boolean canIncrease() {
-        return sewage.getFluidAmount() >= 1000 && ItemHandlerHelper.insertItem(fertilizerOutput, new ItemStack(ModuleCore.FERTILIZER.get()), true).isEmpty();
+        return sewage.getFluidAmount() >= 1000 && MachineItems.insertItem(fertilizerOutput, new ItemStack(ModuleCore.FERTILIZER.get()), true).isEmpty();
     }
 
     @Override
     public Runnable onFinish() {
         return () -> {
-            sewage.drainForced(1000, IFluidHandler.FluidAction.EXECUTE);
-            ItemHandlerHelper.insertItem(fertilizerOutput, new ItemStack(ModuleCore.FERTILIZER.get()), false);
+            com.buuz135.industrial.compat.MachineFluids.drainForced(sewage, 1000, IFluidHandler.FluidAction.EXECUTE);
+            MachineItems.insertItem(fertilizerOutput, new ItemStack(ModuleCore.FERTILIZER.get()), false);
         };
     }
 

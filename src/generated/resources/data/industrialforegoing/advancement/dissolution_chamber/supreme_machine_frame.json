@@ -1,8 +1,8 @@
 {
   "neoforge:conditions": [
     {
-      "type": "neoforge:item_exists",
-      "item": "industrialforegoing:machine_frame_supreme"
+      "type": "neoforge:registered",
+      "value": "industrialforegoing:machine_frame_supreme"
     }
   ],
   "parent": "minecraft:recipes/root",

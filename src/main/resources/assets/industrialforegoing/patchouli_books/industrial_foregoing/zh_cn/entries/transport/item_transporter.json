@@ -1,0 +1,25 @@
+{
+  "name": "物品运输器",
+  "icon": "industrialforegoing:item_transporter_type",
+  "category": "industrialforegoing:transport",
+  "sortnum": 0,
+  "read_by_default": true,
+  "pages": [
+    {
+      "type": "text",
+      "text": "在间隔一格的容器之间传输物品，抽取端和插入端都需要安装运输器。$(br2)同一方块上可以安装多种运输器。右键中间区域，可切换插入和抽取模式。"
+    },
+    {
+      "type": "text",
+      "text": "可以在界面中使用黑名单或白名单筛选物品与流体。$(br2)按住潜行键并右键运输器，可拆下插件或运输器。$(br2)插入模式下启用调节模式，可以指定目标容器中应保留的物品或流体数量。"
+    },
+    {
+      "type": "text",
+      "text": "手持速度升级插件右键运输器外圈，可提高工作速度；使用效率升级插件，可增加每次传输量。"
+    },
+    {
+      "type": "crafting",
+      "recipe": "industrialforegoing:item_transporter_type"
+    }
+  ]
+}

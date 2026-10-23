@@ -20,46 +20,46 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 package com.buuz135.industrial.entity.client;
-
-import com.buuz135.industrial.entity.InfinityLauncherProjectileEntity;
 import com.mojang.blaze3d.vertex.PoseStack;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.model.PlayerModel;
-import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
-import net.minecraft.client.renderer.entity.LivingEntityRenderer;
-import net.minecraft.client.renderer.entity.layers.StuckInBodyLayer;
+import com.mojang.math.Axis;
+import net.minecraft.client.model.player.PlayerModel;
+import net.minecraft.client.renderer.SubmitNodeCollector;
+import net.minecraft.client.renderer.entity.EntityRendererProvider;
+import net.minecraft.client.renderer.entity.RenderLayerParent;
+import net.minecraft.client.renderer.entity.layers.RenderLayer;
+import net.minecraft.client.renderer.entity.state.AvatarRenderState;
+import net.minecraft.client.renderer.entity.state.EntityRenderState;
+import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.LivingEntity;
-
+import net.minecraft.util.RandomSource;
+import net.minecraft.util.context.ContextKey;
 import java.util.HashMap;
-
-public class InfinityLauncherProjectileArmorLayer<T extends LivingEntity, M extends PlayerModel<T>> extends StuckInBodyLayer<T, M> {
-
-    public static HashMap<String, Integer> PROJECTILE_AMOUNT = new HashMap<>();
-
-    private final EntityRenderDispatcher dispatcher;
-    private InfinityLauncherProjectileEntity projectile;
-
-    public InfinityLauncherProjectileArmorLayer(LivingEntityRenderer<T, M> p_174466_) {
-        super(p_174466_);
-        this.dispatcher = Minecraft.getInstance().getEntityRenderDispatcher();
+public class InfinityLauncherProjectileArmorLayer extends RenderLayer<AvatarRenderState, PlayerModel> {
+    public static final HashMap<String,Integer> PROJECTILE_AMOUNT = new HashMap<>();
+    public static final ContextKey<Integer> COUNT = new ContextKey<>(Identifier.fromNamespaceAndPath("industrialforegoing", "stuck_plungers"));
+    private final InfinityLauncherProjectileModel model;
+    public InfinityLauncherProjectileArmorLayer(RenderLayerParent<AvatarRenderState, PlayerModel> parent, EntityRendererProvider.Context context) {
+        super(parent);
+        model = new InfinityLauncherProjectileModel(context.bakeLayer(InfinityLauncherProjectileRenderer.PROJECTILE_LAYER));
     }
-
-    @Override
-    protected int numStuck(T entity) {
-        return PROJECTILE_AMOUNT.getOrDefault(entity.getUUID().toString(), 0);
-    }
-
-    @Override
-    protected void renderStuckItem(PoseStack p_225632_1_, MultiBufferSource p_225632_2_, int p_225632_3_, Entity p_225632_4_, float p_225632_5_, float p_225632_6_, float p_225632_7_, float p_225632_8_) {
-        float f = Mth.sqrt(p_225632_5_ * p_225632_5_ + p_225632_7_ * p_225632_7_);
-        this.projectile = new InfinityLauncherProjectileEntity(p_225632_4_.level(), p_225632_4_.getX(), p_225632_4_.getY(), p_225632_4_.getZ());
-        this.projectile.setYRot((float) (Math.atan2((double) p_225632_5_, (double) p_225632_7_) * (double) (180F / (float) Math.PI)));
-        this.projectile.setXRot((float) (Math.atan2((double) p_225632_6_, (double) f) * (double) (180F / (float) Math.PI)));
-        this.projectile.yRotO = this.projectile.getYRot();
-        this.projectile.xRotO = this.projectile.getXRot();
-        this.dispatcher.render(this.projectile, 0.0D, 0.0D, 0.0D, 0.0F, p_225632_8_, p_225632_1_, p_225632_2_, p_225632_3_);
+    @Override public void submit(PoseStack pose, SubmitNodeCollector collector, int light, AvatarRenderState state, float yaw, float pitch) {
+        Integer count = state.getRenderData(COUNT);
+        if (count == null || count <= 0) return;
+        var random = RandomSource.create(state.id);
+        for (int i=0; i<count; i++) {
+            pose.pushPose();
+            var part = getParentModel().getRandomBodyPart(random);
+            var cube = part.getRandomCube(random);
+            part.translateAndRotate(pose);
+            float x=random.nextFloat(), y=random.nextFloat(), z=random.nextFloat();
+            pose.translate(Mth.lerp(x,cube.minX,cube.maxX)/16f, Mth.lerp(y,cube.minY,cube.maxY)/16f, Mth.lerp(z,cube.minZ,cube.maxZ)/16f);
+            x=1-2*x; y=1-2*y; z=1-2*z;
+            pose.mulPose(Axis.YP.rotationDegrees((float)Math.toDegrees(Math.atan2(x,z))-90));
+            pose.mulPose(Axis.ZP.rotationDegrees((float)Math.toDegrees(Math.atan2(y,Math.sqrt(x*x+z*z)))+90));
+            pose.translate(0,-0.8,0);
+            collector.submitModel(model, new EntityRenderState(), pose, InfinityLauncherProjectileRenderer.PROJECTILE, light, OverlayTexture.NO_OVERLAY, state.outlineColor, null);
+            pose.popPose();
+        }
     }
 }

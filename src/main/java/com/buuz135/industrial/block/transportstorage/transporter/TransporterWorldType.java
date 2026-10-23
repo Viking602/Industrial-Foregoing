@@ -37,7 +37,7 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.data.recipes.RecipeOutput;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.EntitySelector;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.ItemStack;
@@ -49,7 +49,7 @@ import net.neoforged.api.distmarker.OnlyIn;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.common.Tags;
 import net.neoforged.neoforge.items.IItemHandler;
-import net.neoforged.neoforge.items.ItemHandlerHelper;
+import com.buuz135.industrial.compat.MachineItems;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Vector3f;
 
@@ -75,12 +75,12 @@ public class TransporterWorldType extends FilteredTransporterType<ItemStack, IIt
     public void update() {
         super.update();
         float speed = getSpeed();
-        if (getLevel().isClientSide || getLevel().getGameTime() % (Math.max(1, 4 - speed)) != 0) return;
+        if (getLevel().isClientSide() || getLevel().getGameTime() % (Math.max(1, 4 - speed)) != 0) return;
         IBlockContainer<?> container = getContainer();
 
         if (!(container instanceof TransporterTile)) return;
 
-        var origin = getLevel().getCapability(Capabilities.ItemHandler.BLOCK, getPos().relative(this.getSide()), getSide().getOpposite());
+        var origin = com.buuz135.industrial.compat.MachineCapabilities.items(getLevel(), getPos().relative(this.getSide()), getSide().getOpposite());
         if (origin == null) return;
 
         if (getAction() == TransporterTypeFactory.TransporterAction.EXTRACT) {
@@ -123,7 +123,7 @@ public class TransporterWorldType extends FilteredTransporterType<ItemStack, IIt
             stack.setCount(Math.min(stack.getCount(), possibleAmount));
 
             int preInsertionCount = stack.getCount();
-            ItemStack insertItem = ItemHandlerHelper.insertItem(origin, stack, false);
+            ItemStack insertItem = MachineItems.insertItem(origin, stack, false);
             originStack.shrink(preInsertionCount - insertItem.getCount());
             if (originStack.isEmpty()) {
                 item.setItem(ItemStack.EMPTY);
@@ -149,7 +149,6 @@ public class TransporterWorldType extends FilteredTransporterType<ItemStack, IIt
         super.updateClient();
     }
 
-    @OnlyIn(Dist.CLIENT)
     @Override
     public void renderTransfer(Vector3f pos, Direction direction, int step, PoseStack stack, int combinedOverlayIn, MultiBufferSource buffer, float frame, Level level) {
         super.renderTransfer(pos, direction, step, stack, combinedOverlayIn, buffer, frame, level);
@@ -168,24 +167,24 @@ public class TransporterWorldType extends FilteredTransporterType<ItemStack, IIt
 
         @Override
         @Nonnull
-        public ResourceLocation getModel(Direction upgradeSide, TransporterAction action) {
-            return ResourceLocation.fromNamespaceAndPath(Reference.MOD_ID, "block/transporters/world_transporter_" + action.name().toLowerCase(Locale.ROOT) + "_" + upgradeSide.getSerializedName().toLowerCase(Locale.ROOT));
+        public Identifier getModel(Direction upgradeSide, TransporterAction action) {
+            return Identifier.fromNamespaceAndPath(Reference.MOD_ID, "block/transporters/world_transporter_" + action.name().toLowerCase(Locale.ROOT) + "_" + upgradeSide.getSerializedName().toLowerCase(Locale.ROOT));
         }
 
         @Override
-        public Set<ResourceLocation> getTextures() {
-            return Sets.newHashSet(ResourceLocation.parse("industrialforegoing:block/transporters/world"), ResourceLocation.parse("industrialforegoing:block/base/bottom"));
+        public Set<Identifier> getTextures() {
+            return Sets.newHashSet(Identifier.parse("industrialforegoing:block/transporters/world"), Identifier.parse("industrialforegoing:block/base/bottom"));
         }
 
         @Override
         public boolean canBeAttachedAgainst(Level world, BlockPos pos, Direction face) {
-            return world.getCapability(Capabilities.ItemHandler.BLOCK, pos, face) != null;
+            return com.buuz135.industrial.compat.MachineCapabilities.items(world, pos, face) != null;
         }
 
         @Nonnull
         @Override
-        public ResourceLocation getItemModel() {
-            return ResourceLocation.fromNamespaceAndPath(Reference.MOD_ID, "block/transporters/world_transporter_" + TransporterAction.EXTRACT.name().toLowerCase(Locale.ROOT) + "_" + Direction.NORTH.getSerializedName().toLowerCase(Locale.ROOT));
+        public Identifier getItemModel() {
+            return Identifier.fromNamespaceAndPath(Reference.MOD_ID, "block/transporters/world_transporter_" + TransporterAction.EXTRACT.name().toLowerCase(Locale.ROOT) + "_" + Direction.NORTH.getSerializedName().toLowerCase(Locale.ROOT));
         }
 
         @Override

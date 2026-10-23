@@ -45,10 +45,10 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.DyeColor;
-import net.minecraft.world.item.EnchantedBookItem;
+
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
@@ -79,7 +79,7 @@ public class EnchantmentFactoryTile extends IndustrialProcessingTile<Enchantment
     public EnchantmentFactoryTile(BlockPos blockPos, BlockState blockState) {
         super(ModuleMisc.ENCHANTMENT_FACTORY, 100, 54, blockPos, blockState);
         this.selectedLevel = 30;
-        this.addTank(tank = (SidedFluidTankComponent<EnchantmentFactoryTile>) new SidedFluidTankComponent<EnchantmentFactoryTile>("essence", EnchantmentFactoryConfig.tankSize, 34, 20, 0).
+        this.addTank(tank = (SidedFluidTankComponent<EnchantmentFactoryTile>) new com.buuz135.industrial.compat.MachineFluidTank<EnchantmentFactoryTile>("essence", EnchantmentFactoryConfig.tankSize, 34, 20, 0).
                 setColor(DyeColor.LIME).
                 setTankAction(FluidTankComponent.Action.FILL).
                 setOnContentChange(() -> syncObject(this.tank)).
@@ -100,60 +100,65 @@ public class EnchantmentFactoryTile extends IndustrialProcessingTile<Enchantment
         );
     }
 
-    @OnlyIn(Dist.CLIENT)
     @Override
     public void initClient() {
         super.initClient();
-        this.addGuiAddonFactory(() -> new TextScreenAddon(Component.translatable("text.industrialforegoing.display.enchantment_level").getString(), 60, 24, false));
-        this.addGuiAddonFactory(() -> new TextScreenAddon(Component.translatable("text.industrialforegoing.display.cost").getString(), 60, 38, false) {
-            @Override
-            public String getText() {
-                return super.getText() + ChatFormatting.DARK_GREEN + new DecimalFormat().format(EnchantmentApplicatorTile.getEssenceConsumed(selectedLevel)) + ChatFormatting.DARK_GRAY + "mb";
-            }
-        });
-        this.addGuiAddonFactory(() -> {
-            var edit = new EditBox(Minecraft.getInstance().font, 80, 26, 40, 12, Component.literal(this.selectedLevel + "")) {
-                @Override
-                public String getValue() {
-                    return selectedLevel + "";
-                }
-            };
-            edit.setValue(selectedLevel + "");
-            edit.setFilter(string -> {
-                if (string.isEmpty()) return true;
-                try {
-                    Integer.decode(string);
-                    return true;
-                } catch (NumberFormatException e) {
-                    return false;
-                }
-            });
-            edit.setResponder(string -> {
-                if (!string.isEmpty()) {
-                    CompoundTag compoundTag = new CompoundTag();
-                    compoundTag.putInt("EnchantmentLevel", Integer.decode(string));
-                    Titanium.NETWORK.sendToServer(new ButtonClickNetworkMessage(new TileEntityLocatorInstance(this.getBlockPos()), 5487, compoundTag));
-                }
-            });
-            return new WidgetScreenAddon(120, 22, edit);
-        });
-        ResourceLocation res = ResourceLocation.fromNamespaceAndPath(Reference.MOD_ID, "textures/gui/machines.png");
-        this.addGuiAddonFactory(() -> new TextureScreenAddon(158, 4, 14, 14, res, 96, 233) {
+        new ClientUi().setup();
+    }
 
-            @Override
-            public List<Component> getTooltipLines() {
-                List<Component> components = new ArrayList<>();
-                components.add(Component.translatable("text.industrialforegoing.tooltip.accepts_fluid_on_top"));
-                return components;
-            }
-        });
+    private final class ClientUi {
+        private void setup() {
+            EnchantmentFactoryTile.this.addGuiAddonFactory(() -> new TextScreenAddon(Component.translatable("text.industrialforegoing.display.enchantment_level").getString(), 60, 24, false));
+            EnchantmentFactoryTile.this.addGuiAddonFactory(() -> new TextScreenAddon(Component.translatable("text.industrialforegoing.display.cost").getString(), 60, 38, false) {
+                @Override
+                public String getText() {
+                    return super.getText() + ChatFormatting.DARK_GREEN + new DecimalFormat().format(EnchantmentApplicatorTile.getEssenceConsumed(selectedLevel)) + ChatFormatting.DARK_GRAY + "mb";
+                }
+            });
+            EnchantmentFactoryTile.this.addGuiAddonFactory(() -> {
+                var edit = new EditBox(Minecraft.getInstance().font, 80, 26, 40, 12, Component.literal(EnchantmentFactoryTile.this.selectedLevel + "")) {
+                    @Override
+                    public String getValue() {
+                        return selectedLevel + "";
+                    }
+                };
+                edit.setValue(selectedLevel + "");
+                edit.setFilter(string -> {
+                    if (string.isEmpty()) return true;
+                    try {
+                        Integer.decode(string);
+                        return true;
+                    } catch (NumberFormatException e) {
+                        return false;
+                    }
+                });
+                edit.setResponder(string -> {
+                    if (!string.isEmpty()) {
+                        CompoundTag compoundTag = new CompoundTag();
+                        compoundTag.putInt("EnchantmentLevel", Integer.decode(string));
+                        Titanium.NETWORK.sendToServer(new ButtonClickNetworkMessage(new TileEntityLocatorInstance(EnchantmentFactoryTile.this.getBlockPos()), 5487, compoundTag));
+                    }
+                });
+                return new WidgetScreenAddon(120, 22, edit);
+            });
+            Identifier res = Identifier.fromNamespaceAndPath(Reference.MOD_ID, "textures/gui/machines.png");
+            EnchantmentFactoryTile.this.addGuiAddonFactory(() -> new TextureScreenAddon(158, 4, 14, 14, res, 96, 233) {
+    
+                @Override
+                public List<Component> getTooltipLines() {
+                    List<Component> components = new ArrayList<>();
+                    components.add(Component.translatable("text.industrialforegoing.tooltip.accepts_fluid_on_top"));
+                    return components;
+                }
+            });
+        }
     }
 
     @Override
     public void handleButtonMessage(int id, Player playerEntity, CompoundTag compound) {
         super.handleButtonMessage(id, playerEntity, compound);
         if (id == 5487) {
-            this.selectedLevel = compound.getInt("EnchantmentLevel");
+            this.selectedLevel = compound.getIntOr("EnchantmentLevel", 0);
             syncObject(this.selectedLevel);
         }
     }
@@ -161,7 +166,7 @@ public class EnchantmentFactoryTile extends IndustrialProcessingTile<Enchantment
     @Override
     public boolean canIncrease() {
         long amount = this.tank.getFluidAmount();
-        var capability = this.level.getCapability(Capabilities.FluidHandler.BLOCK, this.worldPosition.above(), Direction.DOWN);
+        var capability = com.buuz135.industrial.compat.MachineCapabilities.fluids(this.level, this.worldPosition.above(), Direction.DOWN);
         if (capability != null) {
             amount += EnchantmentApplicatorTile.getMatchingAmount(capability);
         }
@@ -171,15 +176,15 @@ public class EnchantmentFactoryTile extends IndustrialProcessingTile<Enchantment
     @Override
     public Runnable onFinish() {
         return () -> {
-            ItemStack output = EnchantmentHelper.enchantItem(this.level.random, this.inputFirst.getStackInSlot(0).copy(), this.selectedLevel, this.level.registryAccess(), Optional.empty());
+            ItemStack output = EnchantmentHelper.enchantItem(this.level.getRandom(), this.inputFirst.getStackInSlot(0).copy(), this.selectedLevel, this.level.registryAccess(), Optional.empty());
             this.inputFirst.setStackInSlot(0, ItemStack.EMPTY);
             this.output.setStackInSlot(0, output);
             var amount = EnchantmentApplicatorTile.getEssenceConsumed(this.selectedLevel);
-            var capability = this.level.getCapability(Capabilities.FluidHandler.BLOCK, this.worldPosition.above(), Direction.DOWN);
+            var capability = com.buuz135.industrial.compat.MachineCapabilities.fluids(this.level, this.worldPosition.above(), Direction.DOWN);
             if (capability != null) {
                 amount = EnchantmentApplicatorTile.drainAmount(amount, capability);
             }
-            if (amount > 0) this.tank.drainForced(amount, IFluidHandler.FluidAction.EXECUTE);
+            if (amount > 0) com.buuz135.industrial.compat.MachineFluids.drainForced(this.tank, amount, IFluidHandler.FluidAction.EXECUTE);
         };
     }
 
@@ -194,7 +199,7 @@ public class EnchantmentFactoryTile extends IndustrialProcessingTile<Enchantment
     }
 
     private boolean isEnchanted(ItemStack stack) {
-        return stack.isEnchanted() || stack.getItem() instanceof EnchantedBookItem;
+        return stack.isEnchanted() || stack.is(net.minecraft.world.item.Items.ENCHANTED_BOOK);
     }
 
     @Override
@@ -210,7 +215,7 @@ public class EnchantmentFactoryTile extends IndustrialProcessingTile<Enchantment
     @Override
     public void loadSettings(Player player, CompoundTag tag) {
         super.loadSettings(player, tag);
-        this.selectedLevel = tag.getInt("SelectedLevel");
+        this.selectedLevel = tag.getIntOr("SelectedLevel", 0);
     }
 
     @Override

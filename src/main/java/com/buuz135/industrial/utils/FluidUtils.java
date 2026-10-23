@@ -22,8 +22,8 @@
 
 package com.buuz135.industrial.utils;
 
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.FastColor;
+import net.minecraft.resources.Identifier;
+import net.minecraft.util.ARGB;
 import net.minecraft.world.level.material.Fluid;
 import net.neoforged.neoforge.client.extensions.common.IClientFluidTypeExtensions;
 import net.neoforged.neoforge.fluids.FluidStack;
@@ -34,21 +34,13 @@ public class FluidUtils {
     // TODO
     // should item colors from ItemStackUtils also be cached?
     // invalidate cache on resource reload
-    public static ConcurrentHashMap<ResourceLocation, Integer> colorCache = new ConcurrentHashMap<>();
+    public static ConcurrentHashMap<Identifier, Integer> colorCache = new ConcurrentHashMap<>();
 
     public static int getFluidColor(FluidStack stack) {
-        IClientFluidTypeExtensions renderProperties = IClientFluidTypeExtensions.of(stack.getFluid());
-        ResourceLocation location = renderProperties.getStillTexture(stack);
-        int tint = renderProperties.getTintColor(stack);
-        int textureColor = colorCache.computeIfAbsent(location, ColorUtils::getColorFrom);
-        return FastColor.ARGB32.multiply(textureColor, tint);
+        if (stack.isEmpty()) return -1;
+        var model = net.minecraft.client.Minecraft.getInstance().getModelManager().getFluidStateModelSet().get(stack.getFluid().defaultFluidState());
+        int tint = model.fluidTintSource() == null ? -1 : model.fluidTintSource().colorAsStack(stack);
+        return ARGB.multiply(ColorUtils.getColorFrom(model.stillMaterial().sprite()), tint);
     }
-
-    public static int getFluidColor(Fluid fluid) {
-        IClientFluidTypeExtensions renderProperties = IClientFluidTypeExtensions.of(fluid);
-        ResourceLocation location = renderProperties.getStillTexture();
-        int tint = renderProperties.getTintColor();
-        int textureColor = colorCache.computeIfAbsent(location, ColorUtils::getColorFrom);
-        return FastColor.ARGB32.multiply(textureColor, tint);
-    }
+    public static int getFluidColor(Fluid fluid) { return getFluidColor(new FluidStack(fluid, 1000)); }
 }

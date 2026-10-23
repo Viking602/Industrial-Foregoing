@@ -46,7 +46,7 @@ public class PitifulGeneratorTile extends IndustrialGeneratorTile<PitifulGenerat
         super(ModuleGenerator.PITIFUL_GENERATOR, blockPos, blockState);
         this.addInventory(fuel = (SidedInventoryComponent<PitifulGeneratorTile>) new SidedInventoryComponent<PitifulGeneratorTile>("fuel_input", 46, 22, 1, 0)
                 .setColor(DyeColor.ORANGE)
-                .setInputFilter((itemStack, integer) -> itemStack.getBurnTime(RecipeType.SMELTING) != 0)
+                .setInputFilter((itemStack, integer) -> itemStack.getBurnTime(RecipeType.SMELTING, com.buuz135.industrial.utils.IFAttachments.fuelValues()) != 0)
                 .setComponentHarness(this)
         );
         this.getPowerPerTick = PitifulGeneratorConfig.powerPerTick;
@@ -54,11 +54,11 @@ public class PitifulGeneratorTile extends IndustrialGeneratorTile<PitifulGenerat
 
     @Override
     public int consumeFuel() {
-        int time = fuel.getStackInSlot(0).getBurnTime(RecipeType.SMELTING);
-        if (fuel.getStackInSlot(0).hasCraftingRemainingItem()) {
-            fuel.setStackInSlot(0, fuel.getStackInSlot(0).getCraftingRemainingItem());
+        int time = fuel.getStackInSlot(0).getBurnTime(RecipeType.SMELTING, com.buuz135.industrial.utils.IFAttachments.fuelValues());
+        if (!com.buuz135.industrial.compat.MachineItems.getCraftingRemainder(fuel.getStackInSlot(0)).isEmpty()) {
+            fuel.setStackInSlot(0, com.buuz135.industrial.compat.MachineItems.getCraftingRemainder(fuel.getStackInSlot(0)));
         } else {
-            fuel.getStackInSlot(0).shrink(1);
+            com.buuz135.industrial.compat.MachineItems.shrink(fuel, 0, 1);
         }
 
         return time;
@@ -66,7 +66,7 @@ public class PitifulGeneratorTile extends IndustrialGeneratorTile<PitifulGenerat
 
     @Override
     public boolean canStart() {
-        return !fuel.getStackInSlot(0).isEmpty() && fuel.getStackInSlot(0).getBurnTime(RecipeType.SMELTING) != 0;
+        return !fuel.getStackInSlot(0).isEmpty() && fuel.getStackInSlot(0).getBurnTime(RecipeType.SMELTING, com.buuz135.industrial.utils.IFAttachments.fuelValues()) != 0;
     }
 
     @Override

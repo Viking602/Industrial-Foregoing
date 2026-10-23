@@ -28,7 +28,7 @@ import com.hrznstudio.titanium.component.inventory.SidedInventoryComponent;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.component.DataComponents;
-import net.minecraft.data.recipes.ShapedRecipeBuilder;
+import com.hrznstudio.titanium.recipe.generator.TitaniumShapedRecipeBuilder;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
@@ -39,7 +39,7 @@ import net.minecraft.world.item.component.Fireworks;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
-import net.neoforged.neoforge.common.util.INBTSerializable;
+import com.hrznstudio.titanium.nbthandler.INBTSerializable;
 import net.neoforged.neoforge.fluids.FluidStack;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -73,16 +73,16 @@ public class FireworkGeneratorType implements IMycelialGeneratorType {
     }
 
     @Override
-    public boolean canStart(INBTSerializable<CompoundTag>[] inputs) {
+    public boolean canStart(net.neoforged.neoforge.common.util.ValueIOSerializable[] inputs) {
         return inputs.length > 0 && inputs[0] instanceof SidedInventoryComponent && ((SidedInventoryComponent<?>) inputs[0]).getStackInSlot(0).getCount() > 0;
     }
 
     @Override
-    public Pair<Integer, Integer> getTimeAndPowerGeneration(INBTSerializable<CompoundTag>[] inputs) {
+    public Pair<Integer, Integer> getTimeAndPowerGeneration(net.neoforged.neoforge.common.util.ValueIOSerializable[] inputs) {
         if (inputs.length > 0 && inputs[0] instanceof SidedInventoryComponent && ((SidedInventoryComponent<?>) inputs[0]).getStackInSlot(0).getCount() > 0) {
             ItemStack stack = ((SidedInventoryComponent<?>) inputs[0]).getStackInSlot(0);
             Pair<Integer, Integer> power = calculate(stack);
-            stack.shrink(1);
+            com.buuz135.industrial.compat.MachineItems.shrink((SidedInventoryComponent<?>) inputs[0], 0, 1);
             return power;
         }
         return Pair.of(0, 80);
@@ -117,7 +117,7 @@ public class FireworkGeneratorType implements IMycelialGeneratorType {
                 Fireworks fireworks = new Fireworks(flight, new ArrayList<>());
                 stack.set(DataComponents.FIREWORKS, fireworks);
                 Pair<Integer, Integer> power = calculate(stack);
-                recipes.add(new MycelialGeneratorRecipe(Collections.singletonList(Collections.singletonList(Ingredient.of(stack))), new ArrayList<>(), power.getLeft(), power.getRight()));
+                recipes.add(new MycelialGeneratorRecipe(Collections.singletonList(Collections.singletonList(com.buuz135.industrial.compat.Ingredients.of(stack))), new ArrayList<>(), power.getLeft(), power.getRight()));
             }
         }
         return recipes;
@@ -168,7 +168,7 @@ public class FireworkGeneratorType implements IMycelialGeneratorType {
     }
 
     @Override
-    public ShapedRecipeBuilder addIngredients(ShapedRecipeBuilder recipeBuilder) {
+    public TitaniumShapedRecipeBuilder addIngredients(TitaniumShapedRecipeBuilder recipeBuilder) {
         recipeBuilder = recipeBuilder.define('B', Items.GUNPOWDER)
                 .define('C', Items.PAPER)
                 .define('M', IndustrialTags.Items.MACHINE_FRAME_ADVANCED);

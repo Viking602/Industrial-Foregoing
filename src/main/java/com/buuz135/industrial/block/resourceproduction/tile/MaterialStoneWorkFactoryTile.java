@@ -42,14 +42,14 @@ import com.hrznstudio.titanium.component.fluid.SidedFluidTankComponent;
 import com.hrznstudio.titanium.component.inventory.SidedInventoryComponent;
 import com.hrznstudio.titanium.util.AssetUtil;
 import com.hrznstudio.titanium.util.LangUtil;
-import com.hrznstudio.titanium.util.RecipeUtil;
+import com.buuz135.industrial.compat.MachineRecipes;
 import net.minecraft.ChatFormatting;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.ItemStack;
@@ -63,7 +63,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Fluids;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
-import net.neoforged.neoforge.items.ItemHandlerHelper;
+import com.buuz135.industrial.compat.MachineItems;
 import org.apache.commons.lang3.tuple.Pair;
 
 import javax.annotation.Nonnull;
@@ -72,16 +72,16 @@ import java.util.function.BiFunction;
 
 public class MaterialStoneWorkFactoryTile extends IndustrialProcessingTile<MaterialStoneWorkFactoryTile> {
 
-    public static ResourceLocation DEFAULT = ResourceLocation.fromNamespaceAndPath(Reference.MOD_ID, "stonework_generate/cobblestone");
+    public static Identifier DEFAULT = Identifier.fromNamespaceAndPath(Reference.MOD_ID, "stonework_generate/cobblestone");
 
     private int maxProgress;
     private int powerPerOperation;
 
     public static StoneWorkAction[] ACTION_RECIPES = new StoneWorkAction[]{
             new StoneWorkAction(new ItemStack(Blocks.FURNACE), (world1, itemStack) -> {
-                SmeltingRecipe recipe = RecipeUtil.getSmelingRecipeFor(world1, itemStack);
+                SmeltingRecipe recipe = MachineRecipes.getSmelingRecipeFor(world1, itemStack);
                 if (recipe != null) {
-                    return recipe.getResultItem(world1.registryAccess());
+                    return recipe.assemble(new net.minecraft.world.item.crafting.SingleRecipeInput(itemStack));
                 }
                 return ItemStack.EMPTY;
             }, 1, "smelt"),
@@ -100,7 +100,7 @@ public class MaterialStoneWorkFactoryTile extends IndustrialProcessingTile<Mater
     @Save
     private String generatorRecipe;
     private String previousGeneratorRecipeString;
-    private ResourceLocation cachedGeneratorRecipeResourceLocation;
+    private Identifier cachedGeneratorRecipeResourceLocation;
     @Save
     private SidedInventoryComponent<MaterialStoneWorkFactoryTile> inventoryFirst;
     @Save
@@ -120,13 +120,13 @@ public class MaterialStoneWorkFactoryTile extends IndustrialProcessingTile<Mater
 
     public MaterialStoneWorkFactoryTile(BlockPos blockPos, BlockState blockState) {
         super(ModuleResourceProduction.MATERIAL_STONEWORK_FACTORY, 48, 40, blockPos, blockState);
-        addTank(water = (SidedFluidTankComponent<MaterialStoneWorkFactoryTile>) new SidedFluidTankComponent<MaterialStoneWorkFactoryTile>("water", MaterialStoneWorkFactoryConfig.maxWaterTankSize, 30, 23, 0)
+        addTank(water = (SidedFluidTankComponent<MaterialStoneWorkFactoryTile>) new com.buuz135.industrial.compat.MachineFluidTank<MaterialStoneWorkFactoryTile>("water", MaterialStoneWorkFactoryConfig.maxWaterTankSize, 30, 23, 0)
                 .setColor(DyeColor.BLUE)
                 .setTankType(FluidTankComponent.Type.SMALL)
                 .setTankAction(FluidTankComponent.Action.FILL)
                 .setComponentHarness(this)
                 .setValidator(fluidStack -> fluidStack.getFluid().isSame(Fluids.WATER)));
-        addTank(lava = (SidedFluidTankComponent<MaterialStoneWorkFactoryTile>) new SidedFluidTankComponent<MaterialStoneWorkFactoryTile>("lava", MaterialStoneWorkFactoryConfig.maxLavaTankSize, 30, 55, 1)
+        addTank(lava = (SidedFluidTankComponent<MaterialStoneWorkFactoryTile>) new com.buuz135.industrial.compat.MachineFluidTank<MaterialStoneWorkFactoryTile>("lava", MaterialStoneWorkFactoryConfig.maxLavaTankSize, 30, 55, 1)
                 .setColor(DyeColor.ORANGE)
                 .setTankType(FluidTankComponent.Type.SMALL)
                 .setTankAction(FluidTankComponent.Action.FILL)
@@ -137,15 +137,14 @@ public class MaterialStoneWorkFactoryTile extends IndustrialProcessingTile<Mater
         this.cachedGeneratorRecipeResourceLocation = DEFAULT;
         addButton(new ButtonComponent(54, 64, 18, 18) {
             @Override
-            @OnlyIn(Dist.CLIENT)
-            public List<IFactory<? extends IScreenAddon>> getScreenAddons() {
+            public List<IFactory<?>> getScreenAddons() {
                 return Collections.singletonList(() -> new BasicButtonAddon(this) {
                     @Override
-                    public void drawBackgroundLayer(GuiGraphics guiGraphics, Screen screen, IAssetProvider provider, int guiX, int guiY, int mouseX, int mouseY, float partialTicks) {
+                    public void drawBackgroundLayer(GuiGraphicsExtractor guiGraphics, Screen screen, IAssetProvider provider, int guiX, int guiY, int mouseX, int mouseY, float partialTicks) {
                         getRecipe().ifPresent(recipe -> {
                             AssetUtil.drawAsset(guiGraphics, screen, provider.getAsset(AssetTypes.ITEM_BACKGROUND), guiX + getPosX(), guiY + getPosY());
                             //RenderSystem.setupGui3DDiffuseLighting();
-                            guiGraphics.renderItem(recipe.output, guiX + getPosX() + 1, guiY + getPosY() + 1);
+                            guiGraphics.item(recipe.output(), guiX + getPosX() + 1, guiY + getPosY() + 1);
 //                            Lighting.turnOff();
 //                            RenderSystem.enableAlphaTest();
                         });
@@ -155,7 +154,7 @@ public class MaterialStoneWorkFactoryTile extends IndustrialProcessingTile<Mater
                     public List<Component> getTooltipLines() {
                         List<Component> lines = new ArrayList<>();
                         getRecipe().ifPresent(recipe -> {
-                            lines.add(Component.literal(ChatFormatting.GOLD + LangUtil.getString("tooltip.industrialforegoing.generating") + ChatFormatting.WHITE + recipe.output.getHoverName().getString()));
+                            lines.add(Component.literal(ChatFormatting.GOLD + LangUtil.getString("tooltip.industrialforegoing.generating") + ChatFormatting.WHITE + recipe.output().getHoverName().getString()));
                             lines.add(Component.literal(ChatFormatting.GOLD + LangUtil.getString("tooltip.industrialforegoing.needs")));
                             lines.add(Component.literal(ChatFormatting.YELLOW + " - " + ChatFormatting.WHITE + recipe.waterNeed + ChatFormatting.DARK_AQUA + LangUtil.getString("tooltip.industrialforegoing.mb_of", LangUtil.getString("block.minecraft.water"))));
                             lines.add(Component.literal(ChatFormatting.YELLOW + " - " + ChatFormatting.WHITE + recipe.lavaNeed + ChatFormatting.DARK_AQUA + LangUtil.getString("tooltip.industrialforegoing.mb_of", LangUtil.getString("block.minecraft.lava"))));
@@ -170,7 +169,7 @@ public class MaterialStoneWorkFactoryTile extends IndustrialProcessingTile<Mater
         }.setPredicate((playerEntity, compoundNBT) -> {
             int button = 0;
             if (compoundNBT.contains("Button")) {
-                button = compoundNBT.getInt("Button");
+                button = compoundNBT.getIntOr("Button", 0);
             }
             getNextRecipe(button == 0);
             markForUpdate();
@@ -201,14 +200,13 @@ public class MaterialStoneWorkFactoryTile extends IndustrialProcessingTile<Mater
         this.fourthRecipeId = 0;
         addButton(new ButtonComponent(62 + 20 * 1, 64, 18, 18) {
             @Override
-            @OnlyIn(Dist.CLIENT)
-            public List<IFactory<? extends IScreenAddon>> getScreenAddons() {
+            public List<IFactory<?>> getScreenAddons() {
                 return Collections.singletonList(() -> new BasicButtonAddon(this) {
                     @Override
-                    public void drawBackgroundLayer(GuiGraphics guiGraphics, Screen screen, IAssetProvider provider, int guiX, int guiY, int mouseX, int mouseY, float partialTicks) {
+                    public void drawBackgroundLayer(GuiGraphicsExtractor guiGraphics, Screen screen, IAssetProvider provider, int guiX, int guiY, int mouseX, int mouseY, float partialTicks) {
                         AssetUtil.drawAsset(guiGraphics, screen, provider.getAsset(AssetTypes.ITEM_BACKGROUND), guiX + getPosX(), guiY + getPosY());
                         //RenderSystem.setupGui3DDiffuseLighting();
-                        guiGraphics.renderItem(ACTION_RECIPES[firstRecipeId].icon, guiX + getPosX() + 1, guiY + getPosY() + 1);
+                        guiGraphics.item(ACTION_RECIPES[firstRecipeId].icon, guiX + getPosX() + 1, guiY + getPosY() + 1);
 //                        Lighting.turnOff();
 //                        RenderSystem.enableAlphaTest();
                     }
@@ -227,14 +225,13 @@ public class MaterialStoneWorkFactoryTile extends IndustrialProcessingTile<Mater
         }));
         addButton(new ButtonComponent(62 + 20 * 2, 64, 18, 18) {
             @Override
-            @OnlyIn(Dist.CLIENT)
-            public List<IFactory<? extends IScreenAddon>> getScreenAddons() {
+            public List<IFactory<?>> getScreenAddons() {
                 return Collections.singletonList(() -> new BasicButtonAddon(this) {
                     @Override
-                    public void drawBackgroundLayer(GuiGraphics guiGraphics, Screen screen, IAssetProvider provider, int guiX, int guiY, int mouseX, int mouseY, float partialTicks) {
+                    public void drawBackgroundLayer(GuiGraphicsExtractor guiGraphics, Screen screen, IAssetProvider provider, int guiX, int guiY, int mouseX, int mouseY, float partialTicks) {
                         AssetUtil.drawAsset(guiGraphics, screen, provider.getAsset(AssetTypes.ITEM_BACKGROUND), guiX + getPosX(), guiY + getPosY());
                         //RenderSystem.setupGui3DDiffuseLighting();
-                        guiGraphics.renderItem(ACTION_RECIPES[secondRecipeId].icon, guiX + getPosX() + 1, guiY + getPosY() + 1);
+                        guiGraphics.item(ACTION_RECIPES[secondRecipeId].icon, guiX + getPosX() + 1, guiY + getPosY() + 1);
 //                        Lighting.turnOff();
 //                        RenderSystem.enableAlphaTest();
                     }
@@ -253,14 +250,13 @@ public class MaterialStoneWorkFactoryTile extends IndustrialProcessingTile<Mater
         }));
         addButton(new ButtonComponent(62 + 20 * 3, 64, 18, 18) {
             @Override
-            @OnlyIn(Dist.CLIENT)
-            public List<IFactory<? extends IScreenAddon>> getScreenAddons() {
+            public List<IFactory<?>> getScreenAddons() {
                 return Collections.singletonList(() -> new BasicButtonAddon(this) {
                     @Override
-                    public void drawBackgroundLayer(GuiGraphics guiGraphics, Screen screen, IAssetProvider provider, int guiX, int guiY, int mouseX, int mouseY, float partialTicks) {
+                    public void drawBackgroundLayer(GuiGraphicsExtractor guiGraphics, Screen screen, IAssetProvider provider, int guiX, int guiY, int mouseX, int mouseY, float partialTicks) {
                         AssetUtil.drawAsset(guiGraphics, screen, provider.getAsset(AssetTypes.ITEM_BACKGROUND), guiX + getPosX(), guiY + getPosY());
                         //RenderSystem.setupGui3DDiffuseLighting();
-                        guiGraphics.renderItem(ACTION_RECIPES[thirdRecipeId].icon, guiX + getPosX() + 1, guiY + getPosY() + 1);
+                        guiGraphics.item(ACTION_RECIPES[thirdRecipeId].icon, guiX + getPosX() + 1, guiY + getPosY() + 1);
 //                        Lighting.turnOff();
 //                        RenderSystem.enableAlphaTest();
                     }
@@ -279,14 +275,13 @@ public class MaterialStoneWorkFactoryTile extends IndustrialProcessingTile<Mater
         }));
         addButton(new ButtonComponent(62 + 20 * 4, 64, 18, 18) {
             @Override
-            @OnlyIn(Dist.CLIENT)
-            public List<IFactory<? extends IScreenAddon>> getScreenAddons() {
+            public List<IFactory<?>> getScreenAddons() {
                 return Collections.singletonList(() -> new BasicButtonAddon(this) {
                     @Override
-                    public void drawBackgroundLayer(GuiGraphics guiGraphics, Screen screen, IAssetProvider provider, int guiX, int guiY, int mouseX, int mouseY, float partialTicks) {
+                    public void drawBackgroundLayer(GuiGraphicsExtractor guiGraphics, Screen screen, IAssetProvider provider, int guiX, int guiY, int mouseX, int mouseY, float partialTicks) {
                         AssetUtil.drawAsset(guiGraphics, screen, provider.getAsset(AssetTypes.ITEM_BACKGROUND), guiX + getPosX(), guiY + getPosY());
                         //RenderSystem.setupGui3DDiffuseLighting();
-                        guiGraphics.renderItem(ACTION_RECIPES[fourthRecipeId].icon, guiX + getPosX() + 1, guiY + getPosY() + 1);
+                        guiGraphics.item(ACTION_RECIPES[fourthRecipeId].icon, guiX + getPosX() + 1, guiY + getPosY() + 1);
 //                        Lighting.turnOff();
 //                        RenderSystem.enableAlphaTest();
                     }
@@ -314,16 +309,16 @@ public class MaterialStoneWorkFactoryTile extends IndustrialProcessingTile<Mater
 
     @Override
     public boolean canIncrease() {
-        return getRecipe().map(recipe -> recipe.canIncrease(water, lava) && ItemHandlerHelper.insertItem(inventoryGenerator, recipe.output.copy(), true).isEmpty()).orElse(false)
+        return getRecipe().map(recipe -> recipe.canIncrease(water, lava) && MachineItems.insertItem(inventoryGenerator, recipe.output().copy(), true).isEmpty()).orElse(false)
                 || process(inventoryThird, inventoryFourth, ACTION_RECIPES[fourthRecipeId], true)
                 || process(inventorySecond, inventoryThird, ACTION_RECIPES[thirdRecipeId], true)
                 || process(inventoryFirst, inventorySecond, ACTION_RECIPES[secondRecipeId], true)
                 || process(inventoryGenerator, inventoryFirst, ACTION_RECIPES[firstRecipeId], true);
     }
 
-    private ResourceLocation getGeneratorRecipeLocation() {
+    private Identifier getGeneratorRecipeLocation() {
         if (generatorRecipe != null && !generatorRecipe.equals(previousGeneratorRecipeString)) {
-            cachedGeneratorRecipeResourceLocation = ResourceLocation.parse(generatorRecipe);
+            cachedGeneratorRecipeResourceLocation = Identifier.parse(generatorRecipe);
             // Strings are immutable so this is fine.
             previousGeneratorRecipeString = generatorRecipe;
         }
@@ -331,7 +326,7 @@ public class MaterialStoneWorkFactoryTile extends IndustrialProcessingTile<Mater
     }
 
     public Optional<StoneWorkGenerateRecipe> getRecipe() {
-        List<RecipeHolder<StoneWorkGenerateRecipe>> recipes = this.level.getRecipeManager().getAllRecipesFor((RecipeType<StoneWorkGenerateRecipe>) ModuleCore.STONEWORK_GENERATE_TYPE.get());
+        var recipes = this.level.getServer().getRecipeManager().recipeMap().byType((RecipeType<StoneWorkGenerateRecipe>) ModuleCore.STONEWORK_GENERATE_TYPE.get());
         for (RecipeHolder<StoneWorkGenerateRecipe> recipe : recipes) {
 
             if (recipe.id().equals(this.getGeneratorRecipeLocation())) {
@@ -341,9 +336,9 @@ public class MaterialStoneWorkFactoryTile extends IndustrialProcessingTile<Mater
         return recipes.stream().filter(stoneWorkGenerateRecipe -> stoneWorkGenerateRecipe.id().equals(DEFAULT)).map(RecipeHolder::value).findFirst();
     }
 
-    public ResourceLocation getNextRecipe(boolean next) {
+    public Identifier getNextRecipe(boolean next) {
         if (generatorRecipe != null) {
-            List<ResourceLocation> rls = this.level.getRecipeManager().getAllRecipesFor((RecipeType<StoneWorkGenerateRecipe>) ModuleCore.STONEWORK_GENERATE_TYPE.get()).stream().map(RecipeHolder::id).toList();
+            List<Identifier> rls = this.level.getServer().getRecipeManager().recipeMap().byType((RecipeType<StoneWorkGenerateRecipe>) ModuleCore.STONEWORK_GENERATE_TYPE.get()).stream().map(holder -> holder.id().identifier()).toList();
             int currentIndex = rls.indexOf(this.getGeneratorRecipeLocation());
             if (next) {
                 this.generatorRecipe = rls.get((currentIndex + 1) % rls.size()).toString();
@@ -363,8 +358,8 @@ public class MaterialStoneWorkFactoryTile extends IndustrialProcessingTile<Mater
         return () -> {
             if (!process(inventoryThird, inventoryFourth, ACTION_RECIPES[fourthRecipeId], false) && !process(inventorySecond, inventoryThird, ACTION_RECIPES[thirdRecipeId], false) && !process(inventoryFirst, inventorySecond, ACTION_RECIPES[secondRecipeId], false) && !process(inventoryGenerator, inventoryFirst, ACTION_RECIPES[firstRecipeId], false)) {
                 getRecipe().ifPresent(recipe -> {
-                    ItemStack output = recipe.output.copy();
-                    if (ItemHandlerHelper.insertItem(inventoryGenerator, output, false).isEmpty()) {
+                    ItemStack output = recipe.output().copy();
+                    if (MachineItems.insertItem(inventoryGenerator, output, false).isEmpty()) {
                         recipe.consume(water, lava);
                     }
                 });
@@ -389,10 +384,10 @@ public class MaterialStoneWorkFactoryTile extends IndustrialProcessingTile<Mater
             if (inputStack.isEmpty()) continue;
             ItemStack outputStack = action.work.apply(this.level, inputStack.copy()).copy();
             if (outputStack.isEmpty()) continue;
-            if (ItemHandlerHelper.insertItem(output, outputStack, true).isEmpty()) {
+            if (MachineItems.insertItem(output, outputStack, true).isEmpty()) {
                 if (!simulate) {
-                    ItemHandlerHelper.insertItem(output, outputStack, false);
-                    inputStack.shrink(action.getShrinkAmount());
+                    MachineItems.insertItem(output, outputStack, false);
+                    com.buuz135.industrial.compat.MachineItems.shrink(input, slot, action.getShrinkAmount());
                 }
                 return true;
             }
@@ -424,19 +419,19 @@ public class MaterialStoneWorkFactoryTile extends IndustrialProcessingTile<Mater
     @Override
     public void loadSettings(Player player, CompoundTag tag) {
         if (tag.contains("MSWF_generatorRecipe")) {
-            this.generatorRecipe = tag.getString("MSWF_generatorRecipe");
+            this.generatorRecipe = tag.getStringOr("MSWF_generatorRecipe", "");
         }
         if (tag.contains("MSWF_firstRecipeId")) {
-            this.firstRecipeId = tag.getInt("MSWF_firstRecipeId");
+            this.firstRecipeId = tag.getIntOr("MSWF_firstRecipeId", 0);
         }
         if (tag.contains("MSWF_secondRecipeId")) {
-            this.secondRecipeId = tag.getInt("MSWF_secondRecipeId");
+            this.secondRecipeId = tag.getIntOr("MSWF_secondRecipeId", 0);
         }
         if (tag.contains("MSWF_thirdRecipeId")) {
-            this.thirdRecipeId = tag.getInt("MSWF_thirdRecipeId");
+            this.thirdRecipeId = tag.getIntOr("MSWF_thirdRecipeId", 0);
         }
         if (tag.contains("MSWF_fourthRecipeId")) {
-            this.fourthRecipeId = tag.getInt("MSWF_fourthRecipeId");
+            this.fourthRecipeId = tag.getIntOr("MSWF_fourthRecipeId", 0);
         }
         super.loadSettings(player, tag);
     }

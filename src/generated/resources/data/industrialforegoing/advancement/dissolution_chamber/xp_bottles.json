@@ -1,8 +1,8 @@
 {
   "neoforge:conditions": [
     {
-      "type": "neoforge:item_exists",
-      "item": "minecraft:experience_bottle"
+      "type": "neoforge:registered",
+      "value": "minecraft:experience_bottle"
     }
   ],
   "parent": "minecraft:recipes/root",

@@ -47,7 +47,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 import net.neoforged.neoforge.common.Tags;
-import net.neoforged.neoforge.items.ItemHandlerHelper;
+import com.buuz135.industrial.compat.MachineItems;
 
 import javax.annotation.Nonnull;
 import java.text.NumberFormat;
@@ -116,8 +116,7 @@ public class DyeMixerTile extends IndustrialProcessingTile<DyeMixerTile> {
         );
         addProgressBar(this.red = new ProgressBarComponent<DyeMixerTile>(33 + 20, 20, 300) {
             @Override
-            @OnlyIn(Dist.CLIENT)
-            public List<IFactory<? extends IScreenAddon>> getScreenAddons() {
+            public List<IFactory<?>> getScreenAddons() {
                 return Collections.singletonList(() -> new ProgressBarScreenAddon<DyeMixerTile>(red.getPosX(), red.getPosY(), this) {
                     @Override
                     public List<Component> getTooltipLines() {
@@ -131,8 +130,7 @@ public class DyeMixerTile extends IndustrialProcessingTile<DyeMixerTile> {
                 .setColor(DyeColor.RED));
         addProgressBar(this.blue = new ProgressBarComponent<DyeMixerTile>(33 + 20 + 13, 20, 300) {
             @Override
-            @OnlyIn(Dist.CLIENT)
-            public List<IFactory<? extends IScreenAddon>> getScreenAddons() {
+            public List<IFactory<?>> getScreenAddons() {
                 return Collections.singletonList(() -> new ProgressBarScreenAddon<DyeMixerTile>(blue.getPosX(), blue.getPosY(), this) {
                     @Override
                     public List<Component> getTooltipLines() {
@@ -146,8 +144,7 @@ public class DyeMixerTile extends IndustrialProcessingTile<DyeMixerTile> {
                 .setColor(DyeColor.BLUE));
         addProgressBar(this.green = new ProgressBarComponent<DyeMixerTile>(33 + 20 + 13 * 2, 20, 300) {
             @Override
-            @OnlyIn(Dist.CLIENT)
-            public List<IFactory<? extends IScreenAddon>> getScreenAddons() {
+            public List<IFactory<?>> getScreenAddons() {
                 return Collections.singletonList(() -> new ProgressBarScreenAddon<DyeMixerTile>(green.getPosX(), green.getPosY(), this) {
                     @Override
                     public List<Component> getTooltipLines() {
@@ -182,30 +179,30 @@ public class DyeMixerTile extends IndustrialProcessingTile<DyeMixerTile> {
     }
 
     @Override
-    @OnlyIn(Dist.CLIENT)
     public void initClient() {
         super.initClient();
         addGuiAddonFactory(() -> new ItemGuiAddon(133, 20) {
             @Override
             public ItemStack getItemStack() {
-                return new ItemStack(DyeItem.byColor(DyeColor.byId(dye)));
+                return new ItemStack(dyeItem(DyeColor.byId(dye)));
             }
         });
     }
 
     @Override
     public boolean canIncrease() {
-        increaseBar(inputRed.getStackInSlot(0), red);
-        increaseBar(inputGreen.getStackInSlot(0), green);
-        increaseBar(inputBlue.getStackInSlot(0), blue);
+        increaseBar(inputRed, red);
+        increaseBar(inputGreen, green);
+        increaseBar(inputBlue, blue);
         ColorUsage color = colorUsages[dye];
-        ItemStack dye = new ItemStack(DyeItem.byColor(DyeColor.byId(this.dye)));
-        return red.getProgress() >= color.r && green.getProgress() >= color.g && blue.getProgress() >= color.b && ItemHandlerHelper.insertItem(output, dye, true).isEmpty();
+        ItemStack dye = new ItemStack(dyeItem(DyeColor.byId(this.dye)));
+        return red.getProgress() >= color.r && green.getProgress() >= color.g && blue.getProgress() >= color.b && MachineItems.insertItem(output, dye, true).isEmpty();
     }
 
-    private void increaseBar(ItemStack stack, ProgressBarComponent bar) {
+    private void increaseBar(SidedInventoryComponent<?> inventory, ProgressBarComponent bar) {
+        ItemStack stack = inventory.getStackInSlot(0);
         if (bar.getProgress() + 3 <= bar.getMaxProgress() && !stack.isEmpty()) {
-            stack.shrink(1);
+            com.buuz135.industrial.compat.MachineItems.shrink(inventory, 0, 1);
             bar.setProgress(bar.getProgress() + 3);
             markForUpdate();
         }
@@ -214,13 +211,13 @@ public class DyeMixerTile extends IndustrialProcessingTile<DyeMixerTile> {
     @Override
     public Runnable onFinish() {
         return () -> {
-            ItemStack dye = new ItemStack(DyeItem.byColor(DyeColor.byId(this.dye)));
-            if (ItemHandlerHelper.insertItem(output, dye, true).isEmpty()) {
+            ItemStack dye = new ItemStack(dyeItem(DyeColor.byId(this.dye)));
+            if (MachineItems.insertItem(output, dye, true).isEmpty()) {
                 ColorUsage color = colorUsages[this.dye];
                 red.setProgress(red.getProgress() - color.r);
                 green.setProgress(green.getProgress() - color.g);
                 blue.setProgress(blue.getProgress() - color.b);
-                ItemHandlerHelper.insertItem(output, dye, false);
+                MachineItems.insertItem(output, dye, false);
                 markForUpdate();
             }
         };
@@ -245,7 +242,7 @@ public class DyeMixerTile extends IndustrialProcessingTile<DyeMixerTile> {
     @Override
     public void loadSettings(Player player, CompoundTag tag) {
         if (tag.contains("DM_dye")) {
-            dye = tag.getInt("DM_dye");
+            dye = tag.getIntOr("DM_dye", 0);
         }
         super.loadSettings(player, tag);
     }
@@ -257,4 +254,7 @@ public class DyeMixerTile extends IndustrialProcessingTile<DyeMixerTile> {
     }
 
     public record ColorUsage(int r, int g, int b) {}
+    private static net.minecraft.world.item.Item dyeItem(DyeColor color) {
+        return net.minecraft.core.registries.BuiltInRegistries.ITEM.getValue(net.minecraft.resources.Identifier.withDefaultNamespace(color.getName() + "_dye"));
+    }
 }

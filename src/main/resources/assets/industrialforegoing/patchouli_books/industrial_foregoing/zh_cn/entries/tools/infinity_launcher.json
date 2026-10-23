@@ -1,0 +1,17 @@
+{
+  "name": "无限发射器",
+  "icon": "industrialforegoing:infinity_launcher",
+  "category": "industrialforegoing:tools",
+  "sortnum": 3,
+  "read_by_default": true,
+  "pages": [
+    {
+      "type": "text",
+      "text": "可以远程捕捉生物，或释放生物捕捉工具中的生物。在界面中选择模式后发射，即可使用物品栏中的生物捕捉工具进行捕捉或释放。"
+    },
+    {
+      "type": "industrialforegoing:dissolution",
+      "recipe": "industrialforegoing:dissolution_chamber/infinity_launcher"
+    }
+  ]
+}

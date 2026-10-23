@@ -1,0 +1,17 @@
+{
+  "name": "生物捕捉工具",
+  "icon": "industrialforegoing:mob_imprisonment_tool",
+  "category": "industrialforegoing:tools",
+  "sortnum": 0,
+  "read_by_default": true,
+  "pages": [
+    {
+      "type": "text",
+      "text": "手持工具对生物$(6)右键$()，即可将其捕获并保存在工具内。$(br2)对地面$(6)右键$()可释放其中的生物。"
+    },
+    {
+      "type": "crafting",
+      "recipe": "industrialforegoing:mob_imprisonment_tool"
+    }
+  ]
+}

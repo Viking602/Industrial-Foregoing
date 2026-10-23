@@ -43,14 +43,14 @@ import mezz.jei.api.recipe.RecipeType;
 import mezz.jei.api.recipe.category.IRecipeCategory;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.navigation.ScreenRectangle;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.level.biome.Biome;
@@ -60,7 +60,7 @@ import org.apache.commons.lang3.text.WordUtils;
 
 import java.util.Arrays;
 
-public class LaserDrillOreCategory implements IRecipeCategory<LaserDrillOreRecipe> {
+public class LaserDrillOreCategory implements com.buuz135.industrial.plugin.jei.MachineRecipeCategory<LaserDrillOreRecipe> {
 
     private IGuiHelper guiHelper;
 
@@ -78,7 +78,7 @@ public class LaserDrillOreCategory implements IRecipeCategory<LaserDrillOreRecip
 
     @Override
     public IDrawable getBackground() {
-        return guiHelper.drawableBuilder(ResourceLocation.fromNamespaceAndPath(Reference.MOD_ID, "textures/gui/jei.png"), 0, 0, 82, 26).addPadding(0, 69, 35, 35).build();
+        return guiHelper.drawableBuilder(Identifier.fromNamespaceAndPath(Reference.MOD_ID, "textures/gui/jei.png"), 0, 0, 82, 26).addPadding(0, 69, 35, 35).build();
     }
 
     @Override
@@ -98,38 +98,39 @@ public class LaserDrillOreCategory implements IRecipeCategory<LaserDrillOreRecip
     }
 
     @Override
-    public void draw(LaserDrillOreRecipe recipe, IRecipeSlotsView recipeSlotsView, GuiGraphics guiGraphics, double mouseX, double mouseY) {
+    public void draw(LaserDrillOreRecipe recipe, IRecipeSlotsView recipeSlotsView, GuiGraphicsExtractor guiGraphics, double mouseX, double mouseY) {
+        getBackground().draw(guiGraphics, 0, 0);
         int recipeWidth = 82 + 35 + 35;
         if (recipe.pointer > 0)
             AssetUtil.drawAsset(guiGraphics, Minecraft.getInstance().screen, DefaultAssetProvider.DEFAULT_PROVIDER.getAsset(AssetTypes.BUTTON_ARROW_LEFT), 0, 70);
         if (recipe.pointer < recipe.rarity.size() - 1)
             AssetUtil.drawAsset(guiGraphics, Minecraft.getInstance().screen, DefaultAssetProvider.DEFAULT_PROVIDER.getAsset(AssetTypes.BUTTON_ARROW_RIGHT), 137, 70);
-        var toasts = ResourceLocation.fromNamespaceAndPath("minecraft", "toast/tree");
-        guiGraphics.blitSprite(toasts, recipeWidth / 10 * 2, 30 + (Minecraft.getInstance().font.lineHeight + 2) * 4, 20, 20);
-        guiGraphics.blitSprite(toasts, recipeWidth / 10 * 7, 30 + (Minecraft.getInstance().font.lineHeight + 2) * 4, 20, 20);
-        var icons = ResourceLocation.fromNamespaceAndPath("neoforge", "textures/gui/icons.png");
-        guiGraphics.blit(icons, recipeWidth / 10 * 7 + 1, 30 + (Minecraft.getInstance().font.lineHeight + 2) * 4 + 3, 0, 16, 16, 16);
+        var toasts = Identifier.fromNamespaceAndPath("minecraft", "toast/tree");
+        guiGraphics.blitSprite(net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED, toasts, recipeWidth / 10 * 2, 30 + (Minecraft.getInstance().font.lineHeight + 2) * 4, 20, 20);
+        guiGraphics.blitSprite(net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED, toasts, recipeWidth / 10 * 7, 30 + (Minecraft.getInstance().font.lineHeight + 2) * 4, 20, 20);
+        var icons = Identifier.fromNamespaceAndPath("neoforge", "textures/gui/icons.png");
+        com.buuz135.industrial.compat.MachineGui.blit(guiGraphics, icons, recipeWidth / 10 * 7 + 1, 30 + (Minecraft.getInstance().font.lineHeight + 2) * 4 + 3, 0, 16, 16, 16);
 
         String minY = Component.translatable("text.industrialforegoing.miny").getString() + " " + recipe.rarity.get(recipe.pointer).depth_min();
         String maxY = Component.translatable("text.industrialforegoing.maxy").getString() + " " + recipe.rarity.get(recipe.pointer).depth_max();
         String wight = Component.translatable("text.industrialforegoing.weight").getString() + " " + recipe.rarity.get(recipe.pointer).weight();
         String biomes = Component.translatable("text.industrialforegoing.requirements").getString();
 
-        guiGraphics.drawString(Minecraft.getInstance().font, ChatFormatting.DARK_GRAY + minY, recipeWidth / 10, 30, 0, false);
-        guiGraphics.drawString(Minecraft.getInstance().font, ChatFormatting.DARK_GRAY + maxY, recipeWidth / 10 * 6, 30, 0, false);
-        guiGraphics.drawString(Minecraft.getInstance().font, ChatFormatting.DARK_GRAY + wight, recipeWidth / 10, 30 + (Minecraft.getInstance().font.lineHeight + 2), 0, false);
+        guiGraphics.text(Minecraft.getInstance().font, ChatFormatting.DARK_GRAY + minY, recipeWidth / 10, 30, 0, false);
+        guiGraphics.text(Minecraft.getInstance().font, ChatFormatting.DARK_GRAY + maxY, recipeWidth / 10 * 6, 30, 0, false);
+        guiGraphics.text(Minecraft.getInstance().font, ChatFormatting.DARK_GRAY + wight, recipeWidth / 10, 30 + (Minecraft.getInstance().font.lineHeight + 2), 0, false);
         if (recipe.entityData.isPresent()) {
             EntityIngredient entityIngredient = recipe.entityData.get().getEntity();
             String name = entityIngredient.isTag() ? "#" + entityIngredient.tag().location() : entityIngredient.getType().getDescription().getString();
             String entity = "Over: " + name;
-            guiGraphics.drawString(Minecraft.getInstance().font, ChatFormatting.DARK_GRAY + entity, recipeWidth / 10, 30 + (Minecraft.getInstance().font.lineHeight + 2) * 2, 0, false);
+            guiGraphics.text(Minecraft.getInstance().font, ChatFormatting.DARK_GRAY + entity, recipeWidth / 10, 30 + (Minecraft.getInstance().font.lineHeight + 2) * 2, 0, false);
         }
-        guiGraphics.drawString(Minecraft.getInstance().font, ChatFormatting.DARK_GRAY + "" + ChatFormatting.UNDERLINE + biomes, recipeWidth / 2 - Minecraft.getInstance().font.width(biomes) / 2, 30 + (Minecraft.getInstance().font.lineHeight + 2) * 3, 0, false);
+        guiGraphics.text(Minecraft.getInstance().font, ChatFormatting.DARK_GRAY + "" + ChatFormatting.UNDERLINE + biomes, recipeWidth / 2 - Minecraft.getInstance().font.width(biomes) / 2, 30 + (Minecraft.getInstance().font.lineHeight + 2) * 3, 0, false);
     }
 
     @Override
     public void getTooltip(ITooltipBuilder tooltip, LaserDrillOreRecipe recipe, IRecipeSlotsView recipeSlotsView, double mouseX, double mouseY) {
-        IRecipeCategory.super.getTooltip(tooltip, recipe, recipeSlotsView, mouseX, mouseY);
+        com.buuz135.industrial.plugin.jei.MachineRecipeCategory.super.getTooltip(tooltip, recipe, recipeSlotsView, mouseX, mouseY);
         if (mouseX > 0 && mouseX < 15 && mouseY > 70 && mouseY < 85 && recipe.pointer > 0) { // Inside the back button
             tooltip.add(Component.translatable("text.industrialforegoing.button.jei.prev_rarity"));
         }
@@ -154,7 +155,7 @@ public class LaserDrillOreCategory implements IRecipeCategory<LaserDrillOreRecip
                 tooltip.add(Component.literal(Component.translatable("text.industrialforegoing.jei.recipe.any").getString()));
             else {
                 for (ResourceKey<DimensionType> registryKey : recipe.rarity.get(recipe.pointer).dimensionRarity().whitelist()) {
-                    tooltip.add(Component.literal("- " + WordUtils.capitalize(Arrays.stream(registryKey.location().getPath().split("_")).reduce((string, string2) -> string + " " + string2).get())));
+                    tooltip.add(Component.literal("- " + WordUtils.capitalize(Arrays.stream(registryKey.identifier().getPath().split("_")).reduce((string, string2) -> string + " " + string2).get())));
                 }
             }
             tooltip.add(Component.empty());
@@ -163,8 +164,8 @@ public class LaserDrillOreCategory implements IRecipeCategory<LaserDrillOreRecip
                 tooltip.add(Component.literal(Component.translatable("text.industrialforegoing.jei.recipe.any").getString()));
             else {
                 for (TagKey<Biome> registryKey : recipe.rarity.get(recipe.pointer).biomeRarity().whitelist()) {
-                    for (Holder<Biome> biomeHolder : Minecraft.getInstance().level.registryAccess().registryOrThrow(Registries.BIOME).getTagOrEmpty(registryKey)) {
-                        tooltip.add(Component.literal("- ").append(Component.translatable("biome." + biomeHolder.getKey().location().getNamespace() + "." + biomeHolder.getKey().location().getPath())));
+                    for (Holder<Biome> biomeHolder : Minecraft.getInstance().level.registryAccess().lookupOrThrow(Registries.BIOME).getTagOrEmpty(registryKey)) {
+                        tooltip.add(Component.literal("- ").append(Component.translatable("biome." + biomeHolder.getKey().identifier().getNamespace() + "." + biomeHolder.getKey().identifier().getPath())));
                     }
                 }
             }
@@ -175,7 +176,7 @@ public class LaserDrillOreCategory implements IRecipeCategory<LaserDrillOreRecip
                 tooltip.add(Component.literal(Component.translatable("text.industrialforegoing.jei.recipe.none").getString()));
             else {
                 for (ResourceKey<DimensionType> registryKey : recipe.rarity.get(recipe.pointer).dimensionRarity().blacklist()) {
-                    tooltip.add(Component.literal("- " + WordUtils.capitalize(Arrays.stream(registryKey.location().getPath().split("_")).reduce((string, string2) -> string + " " + string2).get())));
+                    tooltip.add(Component.literal("- " + WordUtils.capitalize(Arrays.stream(registryKey.identifier().getPath().split("_")).reduce((string, string2) -> string + " " + string2).get())));
                 }
             }
             tooltip.add(Component.empty());
@@ -184,8 +185,8 @@ public class LaserDrillOreCategory implements IRecipeCategory<LaserDrillOreRecip
                 tooltip.add(Component.literal(Component.translatable("text.industrialforegoing.jei.recipe.none").getString()));
             else {
                 for (TagKey<Biome> registryKey : recipe.rarity.get(recipe.pointer).biomeRarity().blacklist()) {
-                    for (Holder<Biome> biomeHolder : Minecraft.getInstance().level.registryAccess().registryOrThrow(Registries.BIOME).getTagOrEmpty(registryKey)) {
-                        tooltip.add(Component.literal("- ").append(Component.translatable("biome." + biomeHolder.getKey().location().getNamespace() + "." + biomeHolder.getKey().location().getPath())));
+                    for (Holder<Biome> biomeHolder : Minecraft.getInstance().level.registryAccess().lookupOrThrow(Registries.BIOME).getTagOrEmpty(registryKey)) {
+                        tooltip.add(Component.literal("- ").append(Component.translatable("biome." + biomeHolder.getKey().identifier().getNamespace() + "." + biomeHolder.getKey().identifier().getPath())));
                     }
                 }
             }
@@ -194,7 +195,7 @@ public class LaserDrillOreCategory implements IRecipeCategory<LaserDrillOreRecip
 
     @Override
     public void createRecipeExtras(IRecipeExtrasBuilder builder, LaserDrillOreRecipe recipe, IFocusGroup focuses) {
-        IRecipeCategory.super.createRecipeExtras(builder, recipe, focuses);
+        com.buuz135.industrial.plugin.jei.MachineRecipeCategory.super.createRecipeExtras(builder, recipe, focuses);
         builder.addInputHandler(new ClickHandler<LaserDrillOreRecipe>(LEFT, recipe, (mouseX, mouseY, iJeiUserInput) -> {
             if (recipe.pointer > 0) {
                 --recipe.pointer;

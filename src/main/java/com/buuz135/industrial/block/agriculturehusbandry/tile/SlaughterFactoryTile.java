@@ -60,13 +60,13 @@ public class SlaughterFactoryTile extends IndustrialAreaWorkingTile<SlaughterFac
 
     public SlaughterFactoryTile(BlockPos blockPos, BlockState blockState) {
         super(ModuleAgricultureHusbandry.SLAUGHTER_FACTORY, RangeManager.RangeType.BEHIND, true, SlaughterFactoryConfig.powerPerOperation, blockPos, blockState);
-        addTank(meat = (SidedFluidTankComponent<SlaughterFactoryTile>) new SidedFluidTankComponent<SlaughterFactoryTile>("meat", SlaughterFactoryConfig.maxMeatTankSize, 43, 20, 0).
+        addTank(meat = (SidedFluidTankComponent<SlaughterFactoryTile>) new com.buuz135.industrial.compat.MachineFluidTank<SlaughterFactoryTile>("meat", SlaughterFactoryConfig.maxMeatTankSize, 43, 20, 0).
                 setColor(DyeColor.BROWN).
                 setTankAction(FluidTankComponent.Action.DRAIN).
                 setComponentHarness(this).
                 setValidator(fluidStack -> fluidStack.getFluid().isSame(ModuleCore.MEAT.getSourceFluid().get()))
         );
-        addTank(pinkSlime = (SidedFluidTankComponent<SlaughterFactoryTile>) new SidedFluidTankComponent<SlaughterFactoryTile>("pink_slime", SlaughterFactoryConfig.maxPinkSlimeTankSize, 63, 20, 1).
+        addTank(pinkSlime = (SidedFluidTankComponent<SlaughterFactoryTile>) new com.buuz135.industrial.compat.MachineFluidTank<SlaughterFactoryTile>("pink_slime", SlaughterFactoryConfig.maxPinkSlimeTankSize, 63, 20, 1).
                 setColor(DyeColor.PINK).
                 setTankAction(FluidTankComponent.Action.DRAIN).
                 setComponentHarness(this).
@@ -84,8 +84,8 @@ public class SlaughterFactoryTile extends IndustrialAreaWorkingTile<SlaughterFac
                 float currentHealth = entity.getHealth();
                 entity.remove(Entity.RemovalReason.KILLED);
                 if (!entity.isAlive()) {
-                    meat.fillForced(new FluidStack(ModuleCore.MEAT.getSourceFluid().get(), entity instanceof Animal ? (int) (currentHealth) : (int) currentHealth * 20), IFluidHandler.FluidAction.EXECUTE);
-                    pinkSlime.fillForced(new FluidStack(ModuleCore.PINK_SLIME.getSourceFluid().get(), entity instanceof Animal ? (int) (currentHealth * 20) : (int) currentHealth), IFluidHandler.FluidAction.EXECUTE);
+                    com.buuz135.industrial.compat.MachineFluids.fillForced(meat, new FluidStack(ModuleCore.MEAT.getSourceFluid().get(), entity instanceof Animal ? (int) (currentHealth) : (int) currentHealth * 20), IFluidHandler.FluidAction.EXECUTE);
+                    com.buuz135.industrial.compat.MachineFluids.fillForced(pinkSlime, new FluidStack(ModuleCore.PINK_SLIME.getSourceFluid().get(), entity instanceof Animal ? (int) (currentHealth * 20) : (int) currentHealth), IFluidHandler.FluidAction.EXECUTE);
                     return new WorkAction(0.2f, powerPerOperation);
                 }
             }

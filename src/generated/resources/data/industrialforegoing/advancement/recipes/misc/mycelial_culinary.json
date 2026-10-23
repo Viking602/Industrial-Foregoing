@@ -1,8 +1,8 @@
 {
   "neoforge:conditions": [
     {
-      "type": "neoforge:item_exists",
-      "item": "industrialforegoing:mycelial_culinary"
+      "type": "neoforge:registered",
+      "value": "industrialforegoing:mycelial_culinary"
     }
   ],
   "parent": "minecraft:recipes/root",

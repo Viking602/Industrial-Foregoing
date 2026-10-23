@@ -36,7 +36,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.animal.Animal;
-import net.minecraft.world.entity.animal.Squid;
+import net.minecraft.world.entity.animal.squid.Squid;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -46,7 +46,7 @@ import net.neoforged.neoforge.common.IShearable;
 import net.neoforged.neoforge.common.util.FakePlayer;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import net.neoforged.neoforge.fluids.capability.IFluidHandlerItem;
-import net.neoforged.neoforge.items.ItemHandlerHelper;
+import com.buuz135.industrial.compat.MachineItems;
 
 import javax.annotation.Nonnull;
 import java.util.List;
@@ -63,7 +63,7 @@ public class AnimalRancherTile extends IndustrialAreaWorkingTile<AnimalRancherTi
 
     public AnimalRancherTile(BlockPos blockPos, BlockState blockState) {
         super(ModuleAgricultureHusbandry.ANIMAL_RANCHER, RangeManager.RangeType.BEHIND, true, AnimalRancherConfig.powerPerOperation, blockPos, blockState);
-        this.addTank(tank = (SidedFluidTankComponent<AnimalRancherTile>) new SidedFluidTankComponent<AnimalRancherTile>("fluid_output", AnimalRancherConfig.maxTankSize, 47, 20, 0).
+        this.addTank(tank = (SidedFluidTankComponent<AnimalRancherTile>) new com.buuz135.industrial.compat.MachineFluidTank<AnimalRancherTile>("fluid_output", AnimalRancherConfig.maxTankSize, 47, 20, 0).
                 setColor(DyeColor.WHITE).
                 setComponentHarness(this)
         );
@@ -87,13 +87,13 @@ public class AnimalRancherTile extends IndustrialAreaWorkingTile<AnimalRancherTi
                     ItemStack shears = new ItemStack(Items.SHEARS);
                     if (mob instanceof IShearable shearable && shearable.isShearable(player, shears, this.level, mob.blockPosition())) { //getPosition
                         List<ItemStack> items = shearable.onSheared(player, shears, this.level, mob.blockPosition()); //getPosition
-                        items.forEach(stack -> ItemHandlerHelper.insertItem(output, stack, false));
+                        items.forEach(stack -> MachineItems.insertItem(output, stack, false));
                         if (items.size() > 0) {
                             return new WorkAction(0.35f, powerPerOperation);
                         }
                     }
-                    if (mob instanceof Squid && !ItemStackUtils.isInventoryFull(output) && level.random.nextBoolean() && level.random.nextBoolean() && level.random.nextBoolean() && level.random.nextBoolean()) {
-                        ItemHandlerHelper.insertItem(output, new ItemStack(Items.BLACK_DYE), false);
+                    if (mob instanceof Squid && !ItemStackUtils.isInventoryFull(output) && level.getRandom().nextBoolean() && level.getRandom().nextBoolean() && level.getRandom().nextBoolean() && level.getRandom().nextBoolean()) {
+                        MachineItems.insertItem(output, new ItemStack(Items.BLACK_DYE), false);
                         return new WorkAction(0.35f, powerPerOperation);
                     }
                     //BUCKET INTERACTION
@@ -101,9 +101,9 @@ public class AnimalRancherTile extends IndustrialAreaWorkingTile<AnimalRancherTi
                         player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Items.BUCKET));
                         if (((Animal) mob).mobInteract(player, InteractionHand.MAIN_HAND).consumesAction()) { //ProcessInteract
                             ItemStack stack = player.getItemInHand(InteractionHand.MAIN_HAND);
-                            IFluidHandlerItem fluidHandlerItem = stack.getCapability(Capabilities.FluidHandler.ITEM);
+                            IFluidHandlerItem fluidHandlerItem = com.buuz135.industrial.compat.MachineCapabilities.fluids(stack);
                             if (fluidHandlerItem != null) {
-                                tank.fillForced(fluidHandlerItem.drain(Integer.MAX_VALUE, IFluidHandler.FluidAction.EXECUTE), IFluidHandler.FluidAction.EXECUTE);
+                                com.buuz135.industrial.compat.MachineFluids.fillForced(tank, fluidHandlerItem.drain(Integer.MAX_VALUE, IFluidHandler.FluidAction.EXECUTE), IFluidHandler.FluidAction.EXECUTE);
                                 player.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
                                 return new WorkAction(0.35f, powerPerOperation);
                             }

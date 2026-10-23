@@ -31,7 +31,7 @@ import com.hrznstudio.titanium.component.energy.EnergyStorageComponent;
 import com.hrznstudio.titanium.component.fluid.FluidTankComponent;
 import com.hrznstudio.titanium.component.fluid.SidedFluidTankComponent;
 import com.hrznstudio.titanium.component.inventory.SidedInventoryComponent;
-import com.hrznstudio.titanium.util.RecipeUtil;
+import com.buuz135.industrial.compat.MachineRecipes;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.ItemStack;
@@ -39,7 +39,7 @@ import net.minecraft.world.item.crafting.SmeltingRecipe;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
-import net.neoforged.neoforge.items.ItemHandlerHelper;
+import com.buuz135.industrial.compat.MachineItems;
 
 import javax.annotation.Nonnull;
 import java.util.Collection;
@@ -70,7 +70,7 @@ public class ResourcefulFurnaceTile extends IndustrialProcessingTile<Resourceful
                 setColor(DyeColor.ORANGE).
                 setInputFilter((itemStack, integer) -> false).
                 setRange(1, 3));
-        addTank(this.tank = (SidedFluidTankComponent<ResourcefulFurnaceTile>) new SidedFluidTankComponent<ResourcefulFurnaceTile>("essence", ResourcefulFurnaceConfig.maxEssenceTankSize, 132, 20, 2).
+        addTank(this.tank = (SidedFluidTankComponent<ResourcefulFurnaceTile>) new com.buuz135.industrial.compat.MachineFluidTank<ResourcefulFurnaceTile>("essence", ResourcefulFurnaceConfig.maxEssenceTankSize, 132, 20, 2).
                 setColor(DyeColor.LIME).
                 setTankAction(FluidTankComponent.Action.DRAIN));
         this.recipes = new SmeltingRecipe[3];
@@ -94,14 +94,15 @@ public class ResourcefulFurnaceTile extends IndustrialProcessingTile<Resourceful
     }
 
     private void checkForRecipe(int slot) {
-        Collection<SmeltingRecipe> recipes = RecipeUtil.getCookingRecipes(this.level);
-        this.recipes[slot] = recipes.stream().filter(furnaceRecipe -> furnaceRecipe.getIngredients().get(0).test(input.getStackInSlot(slot))).findAny().orElse(null);
+        Collection<SmeltingRecipe> recipes = MachineRecipes.getCookingRecipes(this.level);
+        this.recipes[slot] = recipes.stream().filter(furnaceRecipe -> furnaceRecipe.input().test(input.getStackInSlot(slot))).findAny().orElse(null);
     }
 
     @Override
     public boolean canIncrease() {
-        for (SmeltingRecipe recipe : this.recipes) {
-            if (recipe != null && ItemHandlerHelper.insertItem(output, recipe.getResultItem(this.level.registryAccess()).copy(), true).isEmpty())
+        for (int i = 0; i < this.recipes.length; i++) {
+            SmeltingRecipe recipe = this.recipes[i];
+            if (recipe != null && MachineItems.insertItem(output, recipe.assemble(new net.minecraft.world.item.crafting.SingleRecipeInput(input.getStackInSlot(i))), true).isEmpty())
                 return true;
         }
         return false;
@@ -112,11 +113,12 @@ public class ResourcefulFurnaceTile extends IndustrialProcessingTile<Resourceful
         return () -> {
             for (int i = 0; i < this.recipes.length; i++) {
                 SmeltingRecipe recipe = this.recipes[i];
-                if (recipe != null && ItemHandlerHelper.insertItem(output, recipe.getResultItem(this.level.registryAccess()).copy(), true).isEmpty()) {
-                    if (ItemHandlerHelper.insertItem(output, recipe.getResultItem(this.level.registryAccess()).copy(), true).isEmpty()) {
+                if (recipe != null) {
+                    ItemStack result = recipe.assemble(new net.minecraft.world.item.crafting.SingleRecipeInput(input.getStackInSlot(i)));
+                    if (!result.isEmpty() && MachineItems.insertItem(output, result, true).isEmpty()) {
                         input.setStackInSlot(i, ItemStack.EMPTY);
-                        ItemHandlerHelper.insertItem(output, recipe.getResultItem(this.level.registryAccess()).copy(), false);
-                        tank.fillForced(new FluidStack(ModuleCore.ESSENCE.getSourceFluid().get(), (int) (recipe.getExperience() * 20)), IFluidHandler.FluidAction.EXECUTE);
+                        MachineItems.insertItem(output, result, false);
+                        com.buuz135.industrial.compat.MachineFluids.fillForced(tank, new FluidStack(ModuleCore.ESSENCE.getSourceFluid().get(), (int) (recipe.experience() * 20)), IFluidHandler.FluidAction.EXECUTE);
                     }
                 }
             }

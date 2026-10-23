@@ -60,7 +60,7 @@ public class ItemInfinityNuke extends ItemInfinity {
     public InteractionResult useOn(UseOnContext context) {
         InfinityNukeEntity entity = new InfinityNukeEntity(context.getLevel(), context.getPlayer(), context.getItemInHand().copy());
         BlockPos blockPos = context.getClickedPos().relative(context.getClickedFace());
-        entity.absMoveTo(blockPos.getX() + 0.5, blockPos.getY(), blockPos.getZ() + 0.5, 0, 0);
+        entity.snapTo(blockPos.getX() + 0.5, blockPos.getY(), blockPos.getZ() + 0.5, 0, 0);
         context.getPlayer().setItemInHand(context.getHand(), ItemStack.EMPTY);
         context.getLevel().addFreshEntity(entity);
         IndustrialForegoing.LOGGER.info(context.getPlayer().getUUID() + " (" + context.getPlayer().getDisplayName().toString() + ") placed an Infinity Nuke");
@@ -75,14 +75,14 @@ public class ItemInfinityNuke extends ItemInfinity {
     @Override
     public void registerRecipe(RecipeOutput consumer) {
         DissolutionChamberRecipe.createRecipe(consumer, "infinity_nuke", new DissolutionChamberRecipe(List.of(
-                Ingredient.of(new ItemStack(Items.TNT)),
-                Ingredient.of(new ItemStack(Items.TNT)),
-                Ingredient.of(new ItemStack(Items.TNT)),
-                Ingredient.of(new ItemStack(Items.TNT)),
-                Ingredient.of(new ItemStack(ModuleCore.RANGE_ADDONS[11].get())),
-                Ingredient.of(new ItemStack(Items.DIAMOND_BLOCK)),
-                Ingredient.of(new ItemStack(Items.NETHER_STAR)),
-                Ingredient.of(new ItemStack(Items.NETHER_STAR))
+                com.buuz135.industrial.compat.Ingredients.of(new ItemStack(Items.TNT)),
+                com.buuz135.industrial.compat.Ingredients.of(new ItemStack(Items.TNT)),
+                com.buuz135.industrial.compat.Ingredients.of(new ItemStack(Items.TNT)),
+                com.buuz135.industrial.compat.Ingredients.of(new ItemStack(Items.TNT)),
+                com.buuz135.industrial.compat.Ingredients.of(new ItemStack(ModuleCore.RANGE_ADDONS[11].get())),
+                com.buuz135.industrial.compat.Ingredients.of(new ItemStack(Items.DIAMOND_BLOCK)),
+                com.buuz135.industrial.compat.Ingredients.of(new ItemStack(Items.NETHER_STAR)),
+                com.buuz135.industrial.compat.Ingredients.of(new ItemStack(Items.NETHER_STAR))
         ), new FluidStack(ModuleCore.ETHER.getSourceFluid().get(), 2000), 400, Optional.of(new ItemStack(this)), Optional.empty()));
     }
 }

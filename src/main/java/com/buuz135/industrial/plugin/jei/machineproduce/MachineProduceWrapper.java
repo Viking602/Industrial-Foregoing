@@ -37,13 +37,13 @@ public class MachineProduceWrapper {
 
     public MachineProduceWrapper(Block block, ItemStack... output) {
         this.block = block;
-        this.outputItem = Ingredient.of(output);
+        this.outputItem = com.buuz135.industrial.compat.Ingredients.of(output);
         this.outputFluid = FluidStack.EMPTY;
     }
 
     public MachineProduceWrapper(Block block, TagKey<Item> output) {
         this.block = block;
-        this.outputItem = Ingredient.of(output);
+        this.outputItem = com.buuz135.industrial.compat.Ingredients.of(output);
         this.outputFluid = FluidStack.EMPTY;
     }
 

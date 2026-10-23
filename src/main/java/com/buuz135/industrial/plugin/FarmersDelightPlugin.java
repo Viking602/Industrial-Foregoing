@@ -48,11 +48,11 @@
 //import com.hrznstudio.titanium.event.handler.EventManager;
 //import com.hrznstudio.titanium.plugin.FeaturePluginInstance;
 //import com.hrznstudio.titanium.plugin.PluginPhase;
-//import net.minecraft.block.BlockState;
-//import net.minecraft.block.Blocks;
-//import net.minecraft.item.ItemStack;
-//import net.minecraft.util.NonNullList;
-//import net.minecraft.util.math.BlockPos;
+//import net.minecraft.world.level.block.state.BlockState;
+//import net.minecraft.world.level.block.Blocks;
+//import net.minecraft.world.item.ItemStack;
+//import net.minecraft.core.NonNullList;
+//import net.minecraft.core.BlockPos;
 //import net.minecraft.world.World;
 //import net.neoforged.neoforge.event.RegistryEvent;
 //import vectorwing.farmersdelight.blocks.RiceCropBlock;

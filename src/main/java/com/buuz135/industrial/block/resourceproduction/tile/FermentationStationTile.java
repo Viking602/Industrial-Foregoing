@@ -40,7 +40,7 @@ import com.hrznstudio.titanium.container.addon.IContainerAddon;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.level.Level;
@@ -75,9 +75,9 @@ public class FermentationStationTile extends IndustrialProcessingTile<Fermentati
 
     public FermentationStationTile(BlockPos blockPos, BlockState blockState) {
         super(ModuleResourceProduction.FERMENTATION_STATION, 90, 40, blockPos, blockState);
-        addTank(this.input = (SidedFluidTankComponent<FermentationStationTile>) new SidedFluidTankComponent<FermentationStationTile>("input", 4000, 50, 20, 0) {
+        addTank(this.input = (SidedFluidTankComponent<FermentationStationTile>) new com.buuz135.industrial.compat.MachineFluidTank<FermentationStationTile>("input", 4000, 50, 20, 0) {
                     @Override
-                    protected void onContentsChanged() {
+                    protected void onContentsChanged(int index, net.neoforged.neoforge.fluids.FluidStack previousContents) {
                         syncObject(FermentationStationTile.this.input);
                     }
 
@@ -90,9 +90,9 @@ public class FermentationStationTile extends IndustrialProcessingTile<Fermentati
                         .setTankAction(FluidTankComponent.Action.FILL)
                         .setValidator(fluidStack -> !isSealed && fluidStack.getFluid().isSame(ModuleCore.RAW_ORE_MEAT.getSourceFluid()))
         );
-        addTank(this.output = (SidedFluidTankComponent<FermentationStationTile>) new SidedFluidTankComponent<FermentationStationTile>("output", 32000, 130, 20, 1) {
+        addTank(this.output = (SidedFluidTankComponent<FermentationStationTile>) new com.buuz135.industrial.compat.MachineFluidTank<FermentationStationTile>("output", 32000, 130, 20, 1) {
                     @Override
-                    protected void onContentsChanged() {
+                    protected void onContentsChanged(int index, net.neoforged.neoforge.fluids.FluidStack previousContents) {
                         syncObject(FermentationStationTile.this.output);
                     }
 
@@ -104,7 +104,7 @@ public class FermentationStationTile extends IndustrialProcessingTile<Fermentati
                         .setColor(DyeColor.ORANGE)
                         .setTankAction(FluidTankComponent.Action.DRAIN)
         );
-        addTank(this.catalyst = (SidedFluidTankComponent<FermentationStationTile>) new SidedFluidTankComponent<FermentationStationTile>("catalyst", 2000, 90, 60, 2)
+        addTank(this.catalyst = (SidedFluidTankComponent<FermentationStationTile>) new com.buuz135.industrial.compat.MachineFluidTank<FermentationStationTile>("catalyst", 2000, 90, 60, 2)
                 .setColor(DyeColor.LIME)
                 .setTankType(FluidTankComponent.Type.SMALL)
                 .setTankAction(FluidTankComponent.Action.FILL)
@@ -115,8 +115,7 @@ public class FermentationStationTile extends IndustrialProcessingTile<Fermentati
         this.isSealed = false;
         addButton(new ButtonComponent(75, 22, 14, 14) {
             @Override
-            @OnlyIn(Dist.CLIENT)
-            public List<IFactory<? extends IScreenAddon>> getScreenAddons() {
+            public List<IFactory<?>> getScreenAddons() {
                 return Collections.singletonList(() ->
                         new StateButtonAddon(this, Arrays.stream(SealType.values()).map(sealType -> sealType.info).toArray(StateButtonInfo[]::new)) {
                             @Override
@@ -131,8 +130,7 @@ public class FermentationStationTile extends IndustrialProcessingTile<Fermentati
         }));
         addButton(new ButtonComponent(110, 22, 14, 14) {
             @Override
-            @OnlyIn(Dist.CLIENT)
-            public List<IFactory<? extends IScreenAddon>> getScreenAddons() {
+            public List<IFactory<?>> getScreenAddons() {
                 return Collections.singletonList(() ->
                         new StateButtonAddon(this, Arrays.stream(ProductionType.values()).map(sealType -> sealType.info).toArray(StateButtonInfo[]::new)) {
                             @Override
@@ -141,7 +139,6 @@ public class FermentationStationTile extends IndustrialProcessingTile<Fermentati
                             }
 
                             @Override
-                            @OnlyIn(Dist.CLIENT)
                             public List<Component> getTooltipLines() {
                                 ProductionType type = ProductionType.values()[production];
                                 List<Component> list = new ArrayList<>(super.getTooltipLines());
@@ -175,7 +172,7 @@ public class FermentationStationTile extends IndustrialProcessingTile<Fermentati
     public boolean canIncrease() {
         ProductionType productionType = ProductionType.values()[this.production];
         int multipliedAmount = productionType.amount * this.input.getFluidAmount();
-        return isSealed && this.output.getFluidAmount() + multipliedAmount <= this.output.getCapacity() && (productionType.neededFluid.isEmpty() || (!this.catalyst.isEmpty() && productionType.neededFluid.getFluid().isSame(this.catalyst.getFluid().getFluid()) && this.catalyst.getFluidAmount() >= (productionType.neededFluid.getAmount() * this.input.getFluidAmount() / 100)));
+        return isSealed && this.output.getFluidAmount() + multipliedAmount <= this.output.getCapacity() && (productionType.neededFluid.isEmpty() || (!this.catalyst.getFluid().isEmpty() && productionType.neededFluid.getFluid().isSame(this.catalyst.getFluid().getFluid()) && this.catalyst.getFluidAmount() >= (productionType.neededFluid.getAmount() * this.input.getFluidAmount() / 100)));
     }
 
     @Override
@@ -185,10 +182,10 @@ public class FermentationStationTile extends IndustrialProcessingTile<Fermentati
             var toDrain = Math.min(SealType.values()[this.seal].sealAmount.apply(this.input), this.input.getFluidAmount());
             if (toDrain > 0) {
                 int multipliedAmount = productionType.amount * toDrain;
-                FluidStack stack = OreTitaniumFluidType.getFluidWithTag(ModuleCore.FERMENTED_ORE_MEAT, multipliedAmount, ResourceLocation.parse(OreTitaniumFluidType.getFluidTag(this.input.getFluid())));
-                this.output.fillForced(stack, IFluidHandler.FluidAction.EXECUTE);
-                this.catalyst.drainForced(productionType.neededFluid.getAmount() * toDrain / 100, IFluidHandler.FluidAction.EXECUTE);
-                this.input.drainForced(toDrain, IFluidHandler.FluidAction.EXECUTE);
+                FluidStack stack = OreTitaniumFluidType.getFluidWithTag(ModuleCore.FERMENTED_ORE_MEAT, multipliedAmount, Identifier.parse(OreTitaniumFluidType.getFluidTag(this.input.getFluid())));
+                com.buuz135.industrial.compat.MachineFluids.fillForced(this.output, stack, IFluidHandler.FluidAction.EXECUTE);
+                com.buuz135.industrial.compat.MachineFluids.drainForced(this.catalyst, productionType.neededFluid.getAmount() * toDrain / 100, IFluidHandler.FluidAction.EXECUTE);
+                com.buuz135.industrial.compat.MachineFluids.drainForced(this.input, toDrain, IFluidHandler.FluidAction.EXECUTE);
             }
         };
     }
@@ -225,10 +222,10 @@ public class FermentationStationTile extends IndustrialProcessingTile<Fermentati
     @Override
     public void loadSettings(Player player, CompoundTag tag) {
         if (tag.contains("FS_production")) {
-            this.production = tag.getInt("FS_production");
+            this.production = tag.getIntOr("FS_production", 0);
         }
         if (tag.contains("FS_seal")) {
-            this.seal = tag.getInt("FS_seal");
+            this.seal = tag.getIntOr("FS_seal", 0);
         }
         super.loadSettings(player, tag);
     }

@@ -1,0 +1,17 @@
+{
+  "name": "低端火力发电机",
+  "icon": "industrialforegoing:pitiful_generator",
+  "category": "industrialforegoing:generators",
+  "sortnum": 0,
+  "read_by_default": true,
+  "pages": [
+    {
+      "type": "text",
+      "text": "消耗煤炭等可燃物发电，效率较低。$(br2)即使内部能量缓存已满，也会继续消耗燃料。"
+    },
+    {
+      "type": "crafting",
+      "recipe": "industrialforegoing:pitiful_generator"
+    }
+  ]
+}

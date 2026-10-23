@@ -30,14 +30,10 @@ import com.buuz135.industrial.proxy.CommonProxy;
 import com.buuz135.industrial.proxy.client.ClientProxy;
 import com.buuz135.industrial.proxy.network.*;
 import com.buuz135.industrial.recipe.LaserDrillRarity;
-import com.buuz135.industrial.recipe.provider.IndustrialRecipeProvider;
-import com.buuz135.industrial.recipe.provider.IndustrialTagsProvider;
 import com.buuz135.industrial.registry.IFRegistries;
 import com.buuz135.industrial.utils.IFAttachments;
 import com.buuz135.industrial.utils.IFFakePlayer;
 import com.buuz135.industrial.utils.Reference;
-import com.buuz135.industrial.utils.data.IndustrialBlockstateProvider;
-import com.buuz135.industrial.utils.data.IndustrialModelProvider;
 import com.hrznstudio.titanium.datagenerator.loot.TitaniumLootTableProvider;
 import com.hrznstudio.titanium.datagenerator.model.BlockItemModelGeneratorProvider;
 import com.hrznstudio.titanium.event.handler.EventManager;
@@ -49,10 +45,10 @@ import com.hrznstudio.titanium.reward.RewardGiver;
 import com.hrznstudio.titanium.reward.RewardManager;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.resources.model.ModelResourceLocation;
+
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.ItemStack;
@@ -111,10 +107,6 @@ public class IndustrialForegoing extends ModuleController {
         proxy = new CommonProxy();
         if (dist.isClient()) {
             EventManager.mod(FMLClientSetupEvent.class).process(fmlClientSetupEvent -> fmlClientSetupEvent.enqueueWork(() -> new ClientProxy().run())).subscribe();
-            EventManager.mod(ModelEvent.RegisterAdditional.class).process(modelRegistryEvent -> {
-                modelRegistryEvent.register(new ModelResourceLocation(ResourceLocation.fromNamespaceAndPath(Reference.MOD_ID, "block/catears"), "standalone"));
-                modelRegistryEvent.register(new ModelResourceLocation(ResourceLocation.fromNamespaceAndPath(Reference.MOD_ID, "item/clean_hydroponic_simulation_processor"), "standalone"));
-            }).subscribe();
             this.initClient();
         }
 
@@ -123,11 +115,11 @@ public class IndustrialForegoing extends ModuleController {
         EventManager.mod(NewRegistryEvent.class).process(IFRegistries::create).subscribe();
         /*
         EventManager.forge(ItemTooltipEvent.class).process(itemTooltipEvent -> BuiltInRegistries.ITEM.tags().getReverseTag(itemTooltipEvent.getItemStack().getItem()).ifPresent(itemIReverseTag -> {
-            itemIReverseTag.getTagKeys().forEach(itemTagKey -> itemTooltipEvent.getToolTip().add(Component.literal(itemTagKey.location().toString())));
+            itemIReverseTag.getTagKeys().forEach(itemTagKey -> itemTooltipEvent.getToolTip().add(Component.literal(itemTagKey.identifier().toString())));
         })).subscribe();*/
         RewardGiver giver = RewardManager.get().getGiver(UUID.fromString("d28b7061-fb92-4064-90fb-7e02b95a72a6"), "Buuz135");
         try {
-            CAT_EARS = new Reward(ResourceLocation.fromNamespaceAndPath(Reference.MOD_ID, "cat_ears"), new URL("https://raw.githubusercontent.com/Buuz135/Industrial-Foregoing/master/contributors.json"), () -> iDist -> {
+            CAT_EARS = new Reward(Identifier.fromNamespaceAndPath(Reference.MOD_ID, "cat_ears"), new URL("https://raw.githubusercontent.com/Buuz135/Industrial-Foregoing/master/contributors.json"), () -> iDist -> {
             }, new String[]{"normal", "cat", "spooky", "snowy"});
             giver.addReward(CAT_EARS);
         } catch (MalformedURLException e) {
@@ -159,37 +151,13 @@ public class IndustrialForegoing extends ModuleController {
 
     public static FakePlayer getFakePlayer(Level world, BlockPos pos, String uuid) {
         FakePlayer player = getFakePlayer(world, uuid);
-        if (player != null) player.absMoveTo(pos.getX(), pos.getY(), pos.getZ(), 90, 90);
+        if (player != null) player.snapTo(pos.getX(), pos.getY(), pos.getZ(), 90, 90);
         return player;
     }
 
     @Override
     public void onPreInit() {
         super.onPreInit();
-    }
-
-    @Override
-    public void addDataProvider(GatherDataEvent event) {
-        super.addDataProvider(event);
-        Lazy<List<Block>> blocksToProcess = Lazy.of(() ->
-                BuiltInRegistries.BLOCK
-                        .stream()
-                        .filter(block -> !block.getClass().equals(LiquidBlock.class))
-                        .filter(basicBlock -> Optional.ofNullable(BuiltInRegistries.BLOCK.getKey(basicBlock))
-                                .map(ResourceLocation::getNamespace)
-                                .filter(Reference.MOD_ID::equalsIgnoreCase)
-                                .isPresent())
-                        .collect(Collectors.toList())
-        );
-        var blockProvider = new IndustrialTagsProvider.Blocks(event.getGenerator(),event.getLookupProvider() ,Reference.MOD_ID, event.getExistingFileHelper());
-        event.getGenerator().addProvider(true, blockProvider);
-        event.getGenerator().addProvider(true, new IndustrialTagsProvider.Items(event.getGenerator(),event.getLookupProvider(), blockProvider.contentsGetter(), Reference.MOD_ID, event.getExistingFileHelper()));
-        event.getGenerator().addProvider(true, new IndustrialRecipeProvider(event.getGenerator(), blocksToProcess, event.getLookupProvider()));
-        //event.getGenerator().addProvider(true, new IndustrialSerializableProvider(event.getGenerator(), Reference.MOD_ID));
-        event.getGenerator().addProvider(true, new TitaniumLootTableProvider(event.getGenerator(), blocksToProcess, event.getLookupProvider()));
-        event.getGenerator().addProvider(true, new BlockItemModelGeneratorProvider(event.getGenerator(), Reference.MOD_ID, blocksToProcess));
-        event.getGenerator().addProvider(true, new IndustrialBlockstateProvider(event.getGenerator(), event.getExistingFileHelper(), blocksToProcess));
-        event.getGenerator().addProvider(true, new IndustrialModelProvider(event.getGenerator(), event.getExistingFileHelper()));
     }
 
     @Override
@@ -214,23 +182,14 @@ public class IndustrialForegoing extends ModuleController {
         this.addCreativeTab("tool", () ->  new ItemStack(ModuleTool.INFINITY_DRILL.get()), Reference.MOD_ID + "_tool", ModuleTool.TAB_TOOL);
     }
 
-    @OnlyIn(Dist.CLIENT)
     private void initClient() {
         EventManager.mod(RegisterMenuScreensEvent.class).process(registerMenuScreensEvent -> {
             registerMenuScreensEvent.register((MenuType<? extends ContainerTransporter>) ContainerTransporter.TYPE.get(), GuiTransporter::new);
             registerMenuScreensEvent.register((MenuType<? extends ContainerConveyor>) ContainerConveyor.TYPE.get(), GuiConveyor::new);
         }).subscribe();
-        EventManager.mod(ModelEvent.BakingCompleted.class).process(event -> {
-            ClientProxy.ears_baked = event.getModels().get(new ModelResourceLocation(ResourceLocation.fromNamespaceAndPath(Reference.MOD_ID, "block/catears"), "standalone"));
-            ClientProxy.HYDROPONIC_SIM_PROCESSOR = event.getModels().get(new ModelResourceLocation(ResourceLocation.fromNamespaceAndPath(Reference.MOD_ID, "item/clean_hydroponic_simulation_processor"), "standalone"));
-        }).subscribe();
-        ClientProxy.OPEN_BACKPACK = new KeyMapping("key.industrialforegoing.backpack.desc", -1, "key.industrialforegoing.category");
-        EventManager.mod(RegisterKeyMappingsEvent.class).process(event -> {
-            event.register(ClientProxy.OPEN_BACKPACK);
-        }).subscribe();
         EventManager.forge(ClientTickEvent.Post.class).process(event -> {
             if (ClientProxy.OPEN_BACKPACK.consumeClick()) {
-                IndustrialForegoing.NETWORK.sendToServer(new BackpackOpenMessage(Screen.hasControlDown()));
+                IndustrialForegoing.NETWORK.sendToServer(new BackpackOpenMessage(net.minecraft.client.Minecraft.getInstance().hasControlDown()));
             }
         }).subscribe();
     }

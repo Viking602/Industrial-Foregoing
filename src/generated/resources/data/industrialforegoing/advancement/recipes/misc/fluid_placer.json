@@ -1,8 +1,8 @@
 {
   "neoforge:conditions": [
     {
-      "type": "neoforge:item_exists",
-      "item": "industrialforegoing:fluid_placer"
+      "type": "neoforge:registered",
+      "value": "industrialforegoing:fluid_placer"
     }
   ],
   "parent": "minecraft:recipes/root",

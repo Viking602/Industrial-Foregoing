@@ -59,7 +59,7 @@ public class MechanicalDirtTile extends IndustrialWorkingTile<MechanicalDirtTile
 
     public MechanicalDirtTile(BlockPos blockPos, BlockState blockState) {
         super(ModuleResourceProduction.MECHANICAL_DIRT, MechanicalDirtConfig.powerPerOperation, blockPos, blockState);
-        addTank(meat = (SidedFluidTankComponent<MechanicalDirtTile>) new SidedFluidTankComponent<MechanicalDirtTile>("meat", MechanicalDirtConfig.maxMeatTankSize, 43, 20, 0).
+        addTank(meat = (SidedFluidTankComponent<MechanicalDirtTile>) new com.buuz135.industrial.compat.MachineFluidTank<MechanicalDirtTile>("meat", MechanicalDirtConfig.maxMeatTankSize, 43, 20, 0).
                 setColor(DyeColor.BROWN).
                 setComponentHarness(this).
                 setTankAction(FluidTankComponent.Action.FILL).
@@ -70,9 +70,9 @@ public class MechanicalDirtTile extends IndustrialWorkingTile<MechanicalDirtTile
 
     @Override
     public WorkAction work() {
-        if (level.random.nextDouble() > 0.1
+        if (level.getRandom().nextDouble() > 0.1
                 || level.getDifficulty() == Difficulty.PEACEFUL
-                || (level.isDay() && level.getBrightness(LightLayer.SKY, worldPosition.above()) > 0.5f && level.canSeeSkyFromBelowWater(worldPosition.above()))
+                || (level.isBrightOutside() && level.getBrightness(LightLayer.SKY, worldPosition.above()) > 0.5f && level.canSeeSkyFromBelowWater(worldPosition.above()))
                 || level.getEntitiesOfClass(Mob.class, new AABB(0, 0, 0, 1, 1, 1).move(worldPosition).inflate(3)).size() > 10
                 || level.getMaxLocalRawBrightness(worldPosition.above()) > 7) {
             if (hasEnergy(getPowerPerOperation / 10)) return new WorkAction(0.5f, getPowerPerOperation / 10);
@@ -82,7 +82,7 @@ public class MechanicalDirtTile extends IndustrialWorkingTile<MechanicalDirtTile
             Mob entity = getMobToSpawn();
             if (entity != null) {
                 level.addFreshEntity(entity);
-                meat.drainForced(20, IFluidHandler.FluidAction.EXECUTE);
+                com.buuz135.industrial.compat.MachineFluids.drainForced(meat, 20, IFluidHandler.FluidAction.EXECUTE);
                 if (hasEnergy(getPowerPerOperation)) return new WorkAction(0.5f, getPowerPerOperation);
             }
         }
@@ -90,14 +90,14 @@ public class MechanicalDirtTile extends IndustrialWorkingTile<MechanicalDirtTile
     }
 
     private Mob getMobToSpawn() {
-        List<MobSpawnSettings.SpawnerData> spawnListEntries = ((ServerLevel) this.level).getChunkSource().getGenerator().getMobsAt(this.level.getBiome(this.worldPosition.above()), ((ServerLevel) this.level).structureManager(), MobCategory.MONSTER, this.worldPosition.above()).unwrap();
+        var spawnListEntries = ((ServerLevel) this.level).getChunkSource().getGenerator().getMobsAt(this.level.getBiome(this.worldPosition.above()), ((ServerLevel) this.level).structureManager(), MobCategory.MONSTER, this.worldPosition.above()).unwrap().stream().map(net.minecraft.util.random.Weighted::value).toList();
         if (spawnListEntries.isEmpty()) return null;
-        MobSpawnSettings.SpawnerData spawnListEntry = spawnListEntries.get(level.random.nextInt(spawnListEntries.size()));
-        if (!SpawnPlacements.checkSpawnRules(spawnListEntry.type, (ServerLevelAccessor) this.level, MobSpawnType.NATURAL, worldPosition.above(), level.random))
+        MobSpawnSettings.SpawnerData spawnListEntry = spawnListEntries.get(level.getRandom().nextInt(spawnListEntries.size()));
+        if (!SpawnPlacements.checkSpawnRules(spawnListEntry.type(), (ServerLevelAccessor) this.level, EntitySpawnReason.NATURAL, worldPosition.above(), level.getRandom()))
             return null;
-        Entity entity = spawnListEntry.type.create(level);
+        Entity entity = spawnListEntry.type().create(level, net.minecraft.world.entity.EntitySpawnReason.NATURAL);
         if (entity instanceof Mob) {
-            EventHooks.finalizeMobSpawn((Mob) entity, (ServerLevelAccessor) level, level.getCurrentDifficultyAt(worldPosition), MobSpawnType.NATURAL, null);
+            EventHooks.finalizeMobSpawn((Mob) entity, (ServerLevelAccessor) level, ((net.minecraft.server.level.ServerLevel) level).getCurrentDifficultyAt(worldPosition), EntitySpawnReason.NATURAL, null);
             entity.setPos(worldPosition.getX() + 0.5, worldPosition.getY() + 1.001, worldPosition.getZ() + 0.5);
             if (level.noCollision(entity) && level.isUnobstructed(entity, level.getBlockState(worldPosition.above()).getShape(level, worldPosition.above()))) { //doesNotCollide
                 return (Mob) entity;
@@ -123,7 +123,7 @@ public class MechanicalDirtTile extends IndustrialWorkingTile<MechanicalDirtTile
                         if (difference <= 25) difference = difference / 2;
                         else difference = 25;
                         if (meat.getFluidAmount() >= difference) {
-                            meat.drainForced(((MechanicalDirtTile) tile).getMeat().fill(new FluidStack(ModuleCore.MEAT.getSourceFluid().get(), meat.drainForced(difference, IFluidHandler.FluidAction.SIMULATE).getAmount()), IFluidHandler.FluidAction.EXECUTE), IFluidHandler.FluidAction.EXECUTE);
+                        com.buuz135.industrial.compat.MachineFluids.move(meat, ((MechanicalDirtTile) tile).getMeat(), difference);
                         }
                     }
                     difference = getEnergyStorage().getEnergyStored() - ((MechanicalDirtTile) tile).getEnergyStorage().getEnergyStored();
@@ -131,7 +131,7 @@ public class MechanicalDirtTile extends IndustrialWorkingTile<MechanicalDirtTile
                         if (difference <= 1000 && difference > 1) difference = difference / 2;
                         if (difference > 1000) difference = 1000;
                         if (getEnergyStorage().getEnergyStored() >= difference) {
-                            getEnergyStorage().extractEnergy(((MechanicalDirtTile) tile).getEnergyStorage().receiveEnergy(difference, false), false);
+                            com.buuz135.industrial.compat.MachineEnergy.extractEnergy(getEnergyStorage(), com.buuz135.industrial.compat.MachineEnergy.receiveEnergy(((MechanicalDirtTile) tile).getEnergyStorage(), difference, false), false);
                         }
                     }
                 }

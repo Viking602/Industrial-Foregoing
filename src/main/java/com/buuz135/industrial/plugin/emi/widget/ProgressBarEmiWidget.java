@@ -5,7 +5,7 @@ import com.hrznstudio.titanium.client.screen.addon.ProgressBarScreenAddon;
 import com.hrznstudio.titanium.client.screen.asset.DefaultAssetProvider;
 import dev.emi.emi.api.widget.Bounds;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent;
 import net.minecraft.network.chat.Component;
 
@@ -30,7 +30,7 @@ public class ProgressBarEmiWidget extends EmiDrawableWidget {
     }
 
     @Override
-    public void render(GuiGraphics draw, int mouseX, int mouseY, float delta) {
+    public void render(GuiGraphicsExtractor draw, int mouseX, int mouseY, float delta) {
         this.addon.drawBackgroundLayer(draw, Minecraft.getInstance().screen, DefaultAssetProvider.DEFAULT_PROVIDER, 0, 0, 0, 0, 3);
     }
 

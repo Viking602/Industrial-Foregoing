@@ -26,7 +26,7 @@ import com.buuz135.industrial.api.conveyor.gui.PositionedGuiComponent;
 import com.buuz135.industrial.gui.component.StateButtonInfo;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.nbt.CompoundTag;
@@ -55,21 +55,21 @@ public abstract class TexturedStateButtonGuiComponent extends PositionedGuiCompo
         if (conveyor instanceof ICanSendNetworkMessage) {
             ((ICanSendNetworkMessage) conveyor).sendMessage(id, new CompoundTag());
         }
-        Minecraft.getInstance().getSoundManager().play(new SimpleSoundInstance(SoundEvents.UI_BUTTON_CLICK.value(), SoundSource.PLAYERS, 1.0F, 0.5F, Minecraft.getInstance().level.random, Minecraft.getInstance().player.blockPosition()));//getPos
+        Minecraft.getInstance().getSoundManager().play(new SimpleSoundInstance(SoundEvents.UI_BUTTON_CLICK.value(), SoundSource.PLAYERS, 1.0F, 0.5F, Minecraft.getInstance().level.getRandom(), Minecraft.getInstance().player.blockPosition()));//getPos
         return true;
     }
 
     @Override
-    public void drawGuiBackgroundLayer(GuiGraphics guiGraphics, int guiX, int guiY, double mouseX, double mouseY) {
+    public void drawGuiBackgroundLayer(GuiGraphicsExtractor guiGraphics, int guiX, int guiY, double mouseX, double mouseY) {
         StateButtonInfo buttonInfo = getStateInfo();
         if (buttonInfo != null) {
-            RenderSystem.setShaderColor(1, 1, 1, 1);
-            guiGraphics.blit(buttonInfo.getTexture(), guiX + getXPos(), guiY + getYPos(), buttonInfo.getTextureX(), buttonInfo.getTextureY(), getXSize(), getYSize()); //blit
+            
+            com.buuz135.industrial.compat.MachineGui.blit(guiGraphics, buttonInfo.getTexture(), guiX + getXPos(), guiY + getYPos(), buttonInfo.getTextureX(), buttonInfo.getTextureY(), getXSize(), getYSize()); //blit
         }
     }
 
     @Override
-    public void drawGuiForegroundLayer(GuiGraphics guiGraphics, int guiX, int guiY, double mouseX, double mouseY) {
+    public void drawGuiForegroundLayer(GuiGraphicsExtractor guiGraphics, int guiX, int guiY, double mouseX, double mouseY) {
         StateButtonInfo buttonInfo = getStateInfo();
         if (buttonInfo != null && isInside(mouseX, mouseY)) {
 //            RenderSystem.disableLighting();

@@ -47,19 +47,19 @@ import com.mojang.math.Transformation;
 import net.minecraft.client.resources.model.*;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 import net.neoforged.fml.loading.FMLEnvironment;
 import net.neoforged.neoforge.client.event.ModelEvent;
-import net.neoforged.neoforge.client.model.SimpleModelState;
+
 import net.neoforged.neoforge.common.extensions.IMenuTypeExtension;
 
 import java.util.HashMap;
 
 public class ModuleTransportStorage implements IModule {
 
-    public static TitaniumTab TAB_TRANSPORT = new TitaniumTab(ResourceLocation.fromNamespaceAndPath(Reference.MOD_ID, "transport"));
+    public static TitaniumTab TAB_TRANSPORT = new TitaniumTab(Identifier.fromNamespaceAndPath(Reference.MOD_ID, "transport"));
 
     public static ConveyorUpgradeFactory upgrade_extraction = new ConveyorExtractionUpgrade.Factory();
     public static ConveyorUpgradeFactory upgrade_insertion = new ConveyorInsertionUpgrade.Factory();
@@ -70,14 +70,14 @@ public class ModuleTransportStorage implements IModule {
     public static ConveyorUpgradeFactory upgrade_splitting = new ConveyorSplittingUpgrade.Factory();
 
     public static BlockWithTile CONVEYOR = IndustrialForegoing.INSTANCE.getRegistries().registerBlockWithTileItem("conveyor", () -> new ConveyorBlock(TAB_TRANSPORT), blockRegistryObject -> () -> new IndustrialBlockItem(blockRegistryObject.get(), TAB_TRANSPORT), TAB_TRANSPORT);
-    public static HashMap<ResourceLocation, BakedModel> CONVEYOR_UPGRADES_CACHE = new HashMap<>();
+    public static HashMap<Identifier, net.minecraft.client.renderer.block.dispatch.BlockStateModelPart> CONVEYOR_UPGRADES_CACHE = new HashMap<>();
 
     public static TransporterTypeFactory ITEM_TRANSPORTER = new TransporterItemType.Factory();
     public static TransporterTypeFactory FLUID_TRANSPORTER = new TransporterFluidType.Factory();
     public static TransporterTypeFactory WORLD_TRANSPORTER = new TransporterWorldType.Factory();
 
     public static BlockWithTile TRANSPORTER = IndustrialForegoing.INSTANCE.getRegistries().registerBlockWithTileItem("transporter", () -> new TransporterBlock(), blockRegistryObject -> () -> new TransporterBlock.Item(blockRegistryObject.get(), TAB_TRANSPORT), TAB_TRANSPORT);
-    public static HashMap<ResourceLocation, BakedModel> TRANSPORTER_CACHE = new HashMap<>();
+    public static HashMap<Identifier, net.minecraft.client.renderer.block.dispatch.BlockStateModelPart> TRANSPORTER_CACHE = new HashMap<>();
 
     @Override
     public void generateFeatures(DeferredRegistryHelper registryHelper) {
@@ -85,80 +85,43 @@ public class ModuleTransportStorage implements IModule {
         ConveyorUpgradeFactory.FACTORIES.forEach(conveyorUpgradeFactory -> registryHelper.registerGeneric(Registries.ITEM, "conveyor_" + conveyorUpgradeFactory.getName() + "_upgrade", () -> new ItemConveyorUpgrade(conveyorUpgradeFactory, TAB_TRANSPORT)));
         ContainerTransporter.TYPE = registryHelper.registerGeneric(Registries.MENU, "transporter", () -> IMenuTypeExtension.create(ContainerTransporter::new));
         TransporterTypeFactory.FACTORIES.forEach(transporterTypeFactory -> registryHelper.registerGeneric(Registries.ITEM, transporterTypeFactory.getName() + "_transporter_type", () -> new ItemTransporterType(transporterTypeFactory, TAB_TRANSPORT)));
-        if (FMLEnvironment.dist.isClient()) {
-            this.onClient();
+        if (FMLEnvironment.getDist().isClient()) {
+            new Client().onClient();
         }
     }
 
-    @OnlyIn(Dist.CLIENT)
+    private static final class Client {
+    private static final java.util.Map<Identifier, net.neoforged.neoforge.client.model.standalone.StandaloneModelKey<net.minecraft.client.renderer.block.dispatch.BlockStateModelPart>> MODEL_KEYS = new HashMap<>();
+
+    private void registerModels(ModelEvent.RegisterStandalone event) {
+        java.util.Set<Identifier> models = new java.util.HashSet<>();
+        for (var factory : TransporterTypeFactory.FACTORIES) for (var facing : factory.getValidFacings()) for (var action : TransporterTypeFactory.TransporterAction.values()) models.add(factory.getModel(facing,action));
+        for (var factory : ConveyorUpgradeFactory.FACTORIES) for (var facing : factory.getValidFacings()) for (var conveyor : ConveyorBlock.FACING.getPossibleValues()) models.add(factory.getModel(facing,conveyor));
+        for (var id : models) {
+            var key = MODEL_KEYS.computeIfAbsent(id, name -> new net.neoforged.neoforge.client.model.standalone.StandaloneModelKey<>(name::toString));
+            event.register(key, net.neoforged.neoforge.client.model.standalone.SimpleUnbakedStandaloneModel.simpleModelWrapper(id));
+        }
+    }
     private void bakingCompleted(ModelEvent.BakingCompleted event) {
-        var models = event.getModels();
-        var modelBakery = event.getModelBakery();
-        for (TransporterTypeFactory transporterTypeFactory : TransporterTypeFactory.FACTORIES) {
-            for (Direction upgradeFacing : transporterTypeFactory.getValidFacings()) {
-                for (TransporterTypeFactory.TransporterAction actions : TransporterTypeFactory.TransporterAction.values()) {
-                    try {
-                        ResourceLocation resourceLocation = transporterTypeFactory.getModel(upgradeFacing, actions);
-                        var modelResourceLocation = new ModelResourceLocation(resourceLocation, "standalone");
-                        UnbakedModel unbakedModel = event.getModelBakery().getModel(resourceLocation);
-                        ModelBaker baker = modelBakery.new ModelBakerImpl((modelLoc, material) -> material.sprite(), modelResourceLocation);
-                        BakedModel bakedModel = unbakedModel.bake(baker, Material::sprite, new SimpleModelState(Transformation.identity()));
-                        TRANSPORTER_CACHE.put(resourceLocation, bakedModel);
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-
-        }
-        for (ConveyorUpgradeFactory conveyorUpgradeFactory : ConveyorUpgradeFactory.FACTORIES) {
-            for (Direction upgradeFacing : conveyorUpgradeFactory.getValidFacings()) {
-                for (Direction conveyorFacing : ConveyorBlock.FACING.getPossibleValues()) {
-                    try {
-                        ResourceLocation resourceLocation = conveyorUpgradeFactory.getModel(upgradeFacing, conveyorFacing);
-                        var modelResourceLocation = new ModelResourceLocation(resourceLocation, "standalone");
-                        UnbakedModel unbakedModel = event.getModelBakery().getModel(resourceLocation);
-                        ModelBaker baker = modelBakery.new ModelBakerImpl((modelLoc, material) -> material.sprite(), modelResourceLocation);
-                        CONVEYOR_UPGRADES_CACHE.put(resourceLocation, unbakedModel.bake(baker, Material::sprite, new SimpleModelState(Transformation.identity())));
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-        }
+        CONVEYOR_UPGRADES_CACHE.clear();
+        TRANSPORTER_CACHE.clear();
+        MODEL_KEYS.forEach((id,key) -> {
+            var model = event.getModelManager().getStandaloneModel(key);
+            CONVEYOR_UPGRADES_CACHE.put(id,model);
+            TRANSPORTER_CACHE.put(id,model);
+        });
     }
-
-    @OnlyIn(Dist.CLIENT)
     private void modifyBakingResult(ModelEvent.ModifyBakingResult event) {
-        for (ModelResourceLocation resourceLocation : event.getModels().keySet()) {
-            if (resourceLocation.id().getNamespace().equals(Reference.MOD_ID)) {
-                if (resourceLocation.id().getPath().contains("transporter") && !resourceLocation.id().getPath().contains("transporters/") && !resourceLocation.id().getPath().contains("type")) {
-                    event.getModels().put(resourceLocation, new TransporterBlockModel(event.getModels().get(resourceLocation)));
-                }
-                if (resourceLocation.id().getPath().contains("conveyor") && !resourceLocation.id().getPath().contains("upgrade")) {
-                    event.getModels().put(resourceLocation, new ConveyorBlockModel(event.getModels().get(resourceLocation)));
-                }
-            }
-        }
+        event.getBakingResult().blockStateModels().replaceAll((state,model) -> {
+            if (state.is(CONVEYOR.getBlock())) return new ConveyorBlockModel(model);
+            if (state.is(TRANSPORTER.getBlock())) return new TransporterBlockModel(model);
+            return model;
+        });
     }
-
-    /*@OnlyIn(Dist.CLIENT)
-    private void onClientSetupConveyor(FMLClientSetupEvent event) {
-        MenuScreens.register(ContainerConveyor.TYPE.get(), GuiConveyor::new);
-    }
-
-    @OnlyIn(Dist.CLIENT)
-    private void onClientSetupTransporter(FMLClientSetupEvent event) {
-        MenuScreens.register(ContainerTransporter.TYPE, GuiTransporter::new);
-    }*/
-
-    @OnlyIn(Dist.CLIENT)
     private void onClient() {
-        //EventManager.mod(FMLClientSetupEvent.class).process(this::onClientSetupConveyor).subscribe();
+        EventManager.mod(ModelEvent.RegisterStandalone.class).process(this::registerModels).subscribe();
         EventManager.mod(ModelEvent.BakingCompleted.class).process(this::bakingCompleted).subscribe();
-        //EventManager.mod(TextureStitchEvent.Pre.class).process(this::textureStitch).subscribe();
         EventManager.mod(ModelEvent.ModifyBakingResult.class).process(this::modifyBakingResult).subscribe();
-        //EventManager.mod(TextureStitchEvent.Pre.class).process(this::transporterTextureStitch).subscribe();
-        //EventManager.mod(FMLClientSetupEvent.class).process(this::onClientSetupTransporter).subscribe();
     }
+}
 }

@@ -48,7 +48,7 @@ public class CocoaBeanRightClickHarvesting {
             }
             ForgeEventFactory.fireBlockHarvesting(drops, event.getWorld(), event.getPos(), state, fortune, 1f, false, event.getPlayerEntity());
             event.getWorld().setBlockState(event.getPos(), state.withProperty(BlockCocoa.AGE, 0));
-            for (ItemStack stack : drops) ItemHandlerHelper.giveItemToPlayer(event.getPlayerEntity(), stack);
+            for (ItemStack stack : drops) MachineItems.giveItemToPlayer(event.getPlayerEntity(), stack);
         }
 
          */

@@ -35,7 +35,7 @@ import com.hrznstudio.titanium.component.fluid.SidedFluidTankComponent;
 import com.hrznstudio.titanium.component.inventory.SidedInventoryComponent;
 import com.hrznstudio.titanium.container.addon.IContainerAddon;
 import net.minecraft.core.BlockPos;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.level.block.state.BlockState;
@@ -63,7 +63,7 @@ public class WashingFactoryTile extends IndustrialProcessingTile<WashingFactoryT
                 .setInputFilter((stack, integer) -> {
                     if (!stack.is(Tags.Items.RAW_MATERIALS)) return false;
 
-                    for (ResourceLocation resourceLocation : stack.getTags().map(TagKey::location).toList()) {
+                    for (Identifier resourceLocation : stack.typeHolder().tags().map(TagKey::location).toList()) {
                         if (resourceLocation.toString().startsWith("c:raw_materials/") && OreTitaniumFluidType.isValid(resourceLocation)) {
                             return true;
                         }
@@ -71,14 +71,14 @@ public class WashingFactoryTile extends IndustrialProcessingTile<WashingFactoryT
                     return false;
                 })
         );
-        addTank(this.meatInput = (SidedFluidTankComponent<WashingFactoryTile>) new SidedFluidTankComponent<WashingFactoryTile>("meat", WashingFactoryConfig.maxTankSize, 70, 20, 1)
+        addTank(this.meatInput = (SidedFluidTankComponent<WashingFactoryTile>) new com.buuz135.industrial.compat.MachineFluidTank<WashingFactoryTile>("meat", WashingFactoryConfig.maxTankSize, 70, 20, 1)
                 .setColor(DyeColor.BROWN)
                 .setTankAction(FluidTankComponent.Action.FILL)
                 .setValidator(fluidStack -> fluidStack.getFluid().isSame(ModuleCore.MEAT.getSourceFluid().get()))
         );
-        addTank(this.meatOutput = (SidedFluidTankComponent<WashingFactoryTile>) new SidedFluidTankComponent<WashingFactoryTile>("output", WashingFactoryConfig.maxOutputSize, 135, 20, 2) {
+        addTank(this.meatOutput = (SidedFluidTankComponent<WashingFactoryTile>) new com.buuz135.industrial.compat.MachineFluidTank<WashingFactoryTile>("output", WashingFactoryConfig.maxOutputSize, 135, 20, 2) {
                     @Override
-                    protected void onContentsChanged() {
+                    protected void onContentsChanged(int index, net.neoforged.neoforge.fluids.FluidStack previousContents) {
                         syncObject(WashingFactoryTile.this.meatOutput);
                     }
 
@@ -95,21 +95,21 @@ public class WashingFactoryTile extends IndustrialProcessingTile<WashingFactoryT
     @Override
     public boolean canIncrease() {
         if (this.input.getStackInSlot(0).isEmpty()) return false;
-        ResourceLocation resourceLocation = ItemStackUtils.getOreTag(this.input.getStackInSlot(0));
+        Identifier resourceLocation = ItemStackUtils.getOreTag(this.input.getStackInSlot(0));
         if (resourceLocation == null) return false;
         FluidStack output = OreTitaniumFluidType.getFluidWithTag(ModuleCore.RAW_ORE_MEAT, 100, resourceLocation);
-        return this.meatInput.getFluidAmount() >= 100 && this.meatOutput.fillForced(output, IFluidHandler.FluidAction.SIMULATE) == 100;
+        return this.meatInput.getFluidAmount() >= 100 && com.buuz135.industrial.compat.MachineFluids.fillForced(this.meatOutput, output, IFluidHandler.FluidAction.SIMULATE) == 100;
     }
 
     @Override
     public Runnable onFinish() {
         return () -> {
             if (!this.input.getStackInSlot(0).isEmpty()) {
-                ResourceLocation resourceLocation = ItemStackUtils.getOreTag(this.input.getStackInSlot(0));
-                this.meatInput.drainForced(100, IFluidHandler.FluidAction.EXECUTE);
+                Identifier resourceLocation = ItemStackUtils.getOreTag(this.input.getStackInSlot(0));
+                com.buuz135.industrial.compat.MachineFluids.drainForced(this.meatInput, 100, IFluidHandler.FluidAction.EXECUTE);
                 FluidStack output = OreTitaniumFluidType.getFluidWithTag(ModuleCore.RAW_ORE_MEAT, 100, resourceLocation);
-                this.input.getStackInSlot(0).shrink(1);
-                this.meatOutput.fillForced(output, IFluidHandler.FluidAction.EXECUTE);
+                com.buuz135.industrial.compat.MachineItems.shrink(this.input, 0, 1);
+                com.buuz135.industrial.compat.MachineFluids.fillForced(this.meatOutput, output, IFluidHandler.FluidAction.EXECUTE);
             }
         };
     }

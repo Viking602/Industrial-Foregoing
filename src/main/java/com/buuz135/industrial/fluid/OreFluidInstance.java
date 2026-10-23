@@ -43,6 +43,8 @@ import java.util.function.Consumer;
 
 public class OreFluidInstance {
 
+    public static final java.util.List<OreFluidInstance> INSTANCES = new java.util.ArrayList<>();
+    public final IClientFluidTypeExtensions renderProperties;
     private DeferredHolder<FluidType, FluidType> fluidType;
     private DeferredHolder<Fluid, Fluid> flowingFluid;
     private DeferredHolder<Fluid, Fluid> sourceFluid;
@@ -52,22 +54,17 @@ public class OreFluidInstance {
 
     public OreFluidInstance(DeferredRegistryHelper helper, String fluid, FluidType.Properties properties, IClientFluidTypeExtensions renderProperties, @Nullable TitaniumTab group) {
         this.fluid = fluid;
+        this.renderProperties = renderProperties;
+        INSTANCES.add(this);
         this.sourceFluid = helper.registerGeneric(Registries.FLUID, fluid, () -> new OreFluid.Source(this));
         this.flowingFluid = helper.registerGeneric(Registries.FLUID, fluid + "_flowing", () -> new OreFluid.Flowing(this));
         this.bucketFluid = helper.registerGeneric(Registries.ITEM, fluid + "_bucket", () -> {
-            var item = new BucketItem(this.sourceFluid.get(), new Item.Properties().craftRemainder(Items.BUCKET).stacksTo(1));
+            var item = new BucketItem(this.sourceFluid.get(), DeferredRegistryHelper.applyItemRegistrationId(new Item.Properties()).craftRemainder(Items.BUCKET).stacksTo(1));
             if (group != null) group.getTabList().add(item);
             return item;
         });
-        this.blockFluid = helper.registerGeneric(Registries.BLOCK, fluid, () -> new LiquidBlock((FlowingFluid) sourceFluid.get(), Block.Properties.ofFullCopy(Blocks.WATER).noCollission().strength(100.0F)));
-        this.fluidType = helper.registerGeneric(NeoForgeRegistries.FLUID_TYPES.key(), fluid, () -> new OreTitaniumFluidType(properties) {
-            @Override
-            public void initializeClient(Consumer<IClientFluidTypeExtensions> consumer) {
-                consumer.accept(renderProperties);
-            }
-
-
-        });
+        this.blockFluid = helper.registerGeneric(Registries.BLOCK, fluid, () -> new LiquidBlock((FlowingFluid) sourceFluid.get(), DeferredRegistryHelper.applyBlockRegistrationId(Block.Properties.ofFullCopy(Blocks.WATER)).noCollision().strength(100.0F)));
+        this.fluidType = helper.registerGeneric(NeoForgeRegistries.FLUID_TYPES.key(), fluid, () -> new OreTitaniumFluidType(properties));
     }
 
     public Fluid getFlowingFluid() {

@@ -28,10 +28,10 @@ import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.advancements.AdvancementRequirements;
 import net.minecraft.advancements.AdvancementRewards;
-import net.minecraft.advancements.critereon.RecipeUnlockedTrigger;
+import net.minecraft.advancements.criterion.RecipeUnlockedTrigger;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.data.recipes.RecipeOutput;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.*;
@@ -43,7 +43,7 @@ import net.neoforged.neoforge.common.conditions.TagEmptyCondition;
 import java.util.ArrayList;
 import java.util.List;
 
-public class CrusherRecipe implements Recipe<CraftingInput> {
+public class CrusherRecipe implements com.buuz135.industrial.compat.MachineRecipe {
 
     public static final MapCodec<CrusherRecipe> CODEC = RecordCodecBuilder.mapCodec(in -> in.group(
             Ingredient.CODEC.fieldOf("input").forGetter(crusherRecipe -> crusherRecipe.input),
@@ -55,7 +55,7 @@ public class CrusherRecipe implements Recipe<CraftingInput> {
         this(input, output, null);
     }
 
-    public CrusherRecipe(Ingredient input, Ingredient output, ResourceLocation isTag) {
+    public CrusherRecipe(Ingredient input, Ingredient output, Identifier isTag) {
         this.input = input;
         this.output = output;
         this.isTag = isTag;
@@ -66,29 +66,29 @@ public class CrusherRecipe implements Recipe<CraftingInput> {
 
     public Ingredient input;
     public Ingredient output;
-    private ResourceLocation isTag;
+    private Identifier isTag;
 
     public static void init(RecipeOutput output) {
-        createRecipe(output, "cobblestone", new CrusherRecipe(Ingredient.of(TagUtil.getItemTag(ResourceLocation.fromNamespaceAndPath("c", "cobblestones/normal"))), Ingredient.of(Items.GRAVEL)));
-        createRecipe(output, "gravel", new CrusherRecipe(Ingredient.of(TagUtil.getItemTag(ResourceLocation.fromNamespaceAndPath("c", "gravels"))), Ingredient.of(Items.SAND)));
-        createRecipe(output, "sand", new CrusherRecipe(Ingredient.of(TagUtil.getItemTag(ResourceLocation.fromNamespaceAndPath("c", "sands"))), Ingredient.of(TagUtil.getItemTag(ResourceLocation.fromNamespaceAndPath("c", "silicon"))), ResourceLocation.fromNamespaceAndPath("c", "silicon")));
+        createRecipe(output, "cobblestone", new CrusherRecipe(com.buuz135.industrial.compat.Ingredients.of(TagUtil.getItemTag(Identifier.fromNamespaceAndPath("c", "cobblestones/normal"))), com.buuz135.industrial.compat.Ingredients.of(Items.GRAVEL)));
+        createRecipe(output, "gravel", new CrusherRecipe(com.buuz135.industrial.compat.Ingredients.of(TagUtil.getItemTag(Identifier.fromNamespaceAndPath("c", "gravels"))), com.buuz135.industrial.compat.Ingredients.of(Items.SAND)));
+        createRecipe(output, "sand", new CrusherRecipe(com.buuz135.industrial.compat.Ingredients.of(TagUtil.getItemTag(Identifier.fromNamespaceAndPath("c", "sands"))), com.buuz135.industrial.compat.Ingredients.of(TagUtil.getItemTag(Identifier.fromNamespaceAndPath("c", "silicon"))), Identifier.fromNamespaceAndPath("c", "silicon")));
     }
 
     public static void createRecipe(RecipeOutput recipeOutput, String name, CrusherRecipe recipe) {
         var rl = generateRL(name);
         var advancementHolder = recipeOutput.advancement()
-                .addCriterion("has_the_recipe", RecipeUnlockedTrigger.unlocked(rl))
-                .rewards(AdvancementRewards.Builder.recipe(rl))
+                .addCriterion("has_the_recipe", RecipeUnlockedTrigger.unlocked(net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.RECIPE, rl)))
+                .rewards(AdvancementRewards.Builder.recipe(net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.RECIPE, rl)))
                 .requirements(AdvancementRequirements.Strategy.OR).build(rl);
         List<ICondition> conditions = new ArrayList<>();
         if (recipe.isTag != null) {
-            conditions.add(new NotCondition(new TagEmptyCondition(recipe.isTag)));
+            conditions.add(new NotCondition(new TagEmptyCondition(net.minecraft.tags.TagKey.create(net.minecraft.core.registries.Registries.ITEM, recipe.isTag))));
         }
-        recipeOutput.accept(rl, recipe, advancementHolder, conditions.toArray(new ICondition[conditions.size()]));
+        recipeOutput.accept(net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.RECIPE, rl), recipe, advancementHolder, conditions.toArray(new ICondition[conditions.size()]));
     }
 
-    public static ResourceLocation generateRL(String key) {
-        return ResourceLocation.fromNamespaceAndPath(Reference.MOD_ID, "crusher/" + key);
+    public static Identifier generateRL(String key) {
+        return Identifier.fromNamespaceAndPath(Reference.MOD_ID, "crusher/" + key);
     }
 
     @Override
@@ -97,7 +97,7 @@ public class CrusherRecipe implements Recipe<CraftingInput> {
     }
 
     @Override
-    public ItemStack assemble(CraftingInput craftingInput, HolderLookup.Provider provider) {
+    public ItemStack assemble(CraftingInput craftingInput) {
         return ItemStack.EMPTY;
     }
 
@@ -112,12 +112,12 @@ public class CrusherRecipe implements Recipe<CraftingInput> {
     }
 
     @Override
-    public RecipeSerializer<?> getSerializer() {
+    public RecipeSerializer getSerializer() {
         return ModuleCore.CRUSHER_SERIALIZER.get();
     }
 
     @Override
-    public RecipeType<?> getType() {
+    public RecipeType getType() {
         return ModuleCore.CRUSHER_TYPE.get();
     }
 

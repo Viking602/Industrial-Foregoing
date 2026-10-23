@@ -21,81 +21,66 @@
  */
 
 package com.buuz135.industrial.proxy.client.render;
-
 import com.buuz135.industrial.proxy.client.ClientProxy;
-import com.buuz135.industrial.utils.Reference;
 import com.hrznstudio.titanium.reward.storage.ClientRewardStorage;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.model.PlayerModel;
-import net.minecraft.client.player.AbstractClientPlayer;
-import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.entity.LivingEntityRenderer;
+import net.minecraft.client.model.player.PlayerModel;
+import net.minecraft.client.renderer.SubmitNodeCollector;
+import net.minecraft.client.renderer.block.dispatch.BlockStateModelPart;
+import net.minecraft.client.renderer.entity.RenderLayerParent;
 import net.minecraft.client.renderer.entity.layers.RenderLayer;
+import net.minecraft.client.renderer.entity.state.AvatarRenderState;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.renderer.texture.OverlayTexture;
-import net.minecraft.client.resources.model.BakedModel;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
+import net.minecraft.util.RandomSource;
+import net.minecraft.util.context.ContextKey;
+import net.minecraft.world.entity.Avatar;
 import net.minecraft.world.level.block.Blocks;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
-
-import java.util.Calendar;
-
-public class ContributorsCatEarsRender extends RenderLayer<AbstractClientPlayer, PlayerModel<AbstractClientPlayer>> {
-
-    public ContributorsCatEarsRender(LivingEntityRenderer<AbstractClientPlayer, PlayerModel<AbstractClientPlayer>> renderer) {
-        super(renderer);
+import java.util.*;
+public class ContributorsCatEarsRender extends RenderLayer<AvatarRenderState, PlayerModel> {
+    public static final ContextKey<Ears> EARS = new ContextKey<>(Identifier.fromNamespaceAndPath("industrialforegoing", "ears"));
+    public record Ears(boolean seasonal, List<BlockStateModelPart> parts) {}
+    public ContributorsCatEarsRender(RenderLayerParent<AvatarRenderState, PlayerModel> parent) { super(parent); }
+    public static void extract(Avatar avatar, AvatarRenderState state) {
+        state.setRenderData(EARS, null);
+        var rewards = ClientRewardStorage.REWARD_STORAGE.getRewards().get(avatar.getUUID());
+        if (rewards == null) return;
+        String type = rewards.getEnabled().get(Identifier.fromNamespaceAndPath("industrialforegoing", "cat_ears"));
+        if (type == null) return;
+        int month = Calendar.getInstance().get(Calendar.MONTH);
+        boolean spooky = type.equalsIgnoreCase("spooky") || month == Calendar.OCTOBER && type.equalsIgnoreCase("normal");
+        boolean snowy = type.equalsIgnoreCase("snowy") || month == Calendar.DECEMBER && type.equalsIgnoreCase("normal");
+        List<BlockStateModelPart> parts = new ArrayList<>();
+        if (spooky || snowy) {
+            var block = snowy ? Blocks.CAKE : avatar.level().getGameTime() % 200 < 100 ? Blocks.CARVED_PUMPKIN : Blocks.JACK_O_LANTERN;
+            Minecraft.getInstance().getModelManager().getBlockStateModelSet().get(block.defaultBlockState()).collectParts(RandomSource.create(0), parts);
+        } else if (ClientProxy.ears_baked != null) parts.add(ClientProxy.ears_baked);
+        state.setRenderData(EARS, new Ears(spooky || snowy, List.copyOf(parts)));
     }
-
-    @Override
-    public void render(PoseStack stack, MultiBufferSource buffer, int p_225628_3_, AbstractClientPlayer entitylivingbaseIn, float limbSwing, float limbSwingAmount, float partialTicks, float ageInTicks, float netHeadYaw, float headPitch) {
-        if (!ClientRewardStorage.REWARD_STORAGE.getRewards().containsKey(entitylivingbaseIn.getUUID())) return;
-        if (!ClientRewardStorage.REWARD_STORAGE.getRewards().get(entitylivingbaseIn.getUUID()).getEnabled().containsKey(ResourceLocation.fromNamespaceAndPath(Reference.MOD_ID, "cat_ears")))
-            return;
-        stack.pushPose();
-        stack.translate(0, -0.015f, 0);
-        if (!entitylivingbaseIn.getInventory().armor.get(3).isEmpty()) stack.translate(0, -0.02f, 0);
-        if (entitylivingbaseIn.isCrouching()) stack.translate(0, 0.27f, 0);
-        String type = ClientRewardStorage.REWARD_STORAGE.getRewards().get(entitylivingbaseIn.getUUID()).getEnabled().get(ResourceLocation.fromNamespaceAndPath(Reference.MOD_ID, "cat_ears"));
-        stack.mulPose(Axis.YP.rotationDegrees(90));
-        stack.mulPose(Axis.XP.rotationDegrees(180));
-        stack.mulPose(Axis.YN.rotationDegrees(netHeadYaw));
-        stack.mulPose(Axis.ZN.rotationDegrees(headPitch));
-        Calendar calendar = Calendar.getInstance();
-        if ((calendar.get(Calendar.MONTH) == Calendar.OCTOBER && type.equalsIgnoreCase("normal")) || type.equalsIgnoreCase("spooky")) {
-            spookyScarySkeletons(stack, buffer);
-        } else if ((calendar.get(Calendar.MONTH) == Calendar.DECEMBER && type.equalsIgnoreCase("normal")) || type.equalsIgnoreCase("snowy")) {
-            itsSnowyHere(stack, buffer);
-        } else if (ClientProxy.ears_baked != null) {
-            Minecraft.getInstance().getBlockRenderer().getModelRenderer().renderModel(stack.last(), buffer.getBuffer(RenderType.cutout()), null, ClientProxy.ears_baked, 1f, 1f, 1f, p_225628_3_, OverlayTexture.NO_OVERLAY);
+    @Override public void submit(PoseStack pose, SubmitNodeCollector collector, int light, AvatarRenderState state, float yaw, float pitch) {
+        Ears ears = state.getRenderData(EARS);
+        if (ears == null || ears.parts.isEmpty()) return;
+        pose.pushPose();
+        pose.translate(0,-0.015,0);
+        if (!state.headEquipment.isEmpty()) pose.translate(0,-0.02,0);
+        if (state.isCrouching) pose.translate(0,0.27,0);
+        pose.mulPose(Axis.YP.rotationDegrees(90));
+        pose.mulPose(Axis.XP.rotationDegrees(180));
+        pose.mulPose(Axis.YN.rotationDegrees(yaw));
+        pose.mulPose(Axis.ZN.rotationDegrees(pitch));
+        if (ears.seasonal) {
+            pose.mulPose(Axis.YN.rotationDegrees(90));
+            pose.translate(0.08,0.485,-0.1);
+            pose.scale(0.125f,0.125f,0.125f);
         }
-        stack.popPose();
+        collector.submitBlockModel(pose, RenderTypes.cutoutMovingBlock(), ears.parts, new int[0], light, OverlayTexture.NO_OVERLAY, state.outlineColor);
+        if (ears.seasonal) {
+            pose.translate(-0.08 * 28,0,0);
+            collector.submitBlockModel(pose, RenderTypes.cutoutMovingBlock(), ears.parts, new int[0], light, OverlayTexture.NO_OVERLAY, state.outlineColor);
+        }
+        pose.popPose();
     }
-
-    @OnlyIn(Dist.CLIENT)
-    public void spookyScarySkeletons(PoseStack stack, MultiBufferSource buffer) {
-        BakedModel pumpkin = Minecraft.getInstance().getBlockRenderer().getBlockModel(Minecraft.getInstance().level.getGameTime() % 200 < 100 ? Blocks.CARVED_PUMPKIN.defaultBlockState() : Blocks.JACK_O_LANTERN.defaultBlockState());
-        stack.mulPose(Axis.YN.rotationDegrees(90f));
-        stack.translate(0.08f, 0.485f, -0.1f);
-        stack.scale(2 / 16f, 2 / 16f, 2 / 16f);
-
-        Minecraft.getInstance().getBlockRenderer().getModelRenderer().renderModel(stack.last(), buffer.getBuffer(RenderType.solid()), null, pumpkin, 0.5f, 255, 255, 255, 255);
-        stack.translate(-0.08f * 28f, 0f, 0f);
-        Minecraft.getInstance().getBlockRenderer().getModelRenderer().renderModel(stack.last(), buffer.getBuffer(RenderType.solid()), null, pumpkin, 0.5f, 255, 255, 255, 255);
-    }
-
-    @OnlyIn(Dist.CLIENT)
-    public void itsSnowyHere(PoseStack stack, MultiBufferSource buffer) {
-        BakedModel pumpkin = Minecraft.getInstance().getBlockRenderer().getBlockModel(Blocks.CAKE.defaultBlockState());
-        stack.mulPose(Axis.YN.rotationDegrees(90f));
-        stack.translate(0.08f, 0.485f, -0.1f);
-        stack.scale(2 / 16f, 2 / 16f, 2 / 16f);
-
-        Minecraft.getInstance().getBlockRenderer().getModelRenderer().renderModel(stack.last(), buffer.getBuffer(RenderType.solid()), null, pumpkin, 255, 255, 255, 255, 255);
-        stack.translate(-0.08f * 28f, 0f, 0f);
-        Minecraft.getInstance().getBlockRenderer().getModelRenderer().renderModel(stack.last(), buffer.getBuffer(RenderType.solid()), null, pumpkin, 255, 255, 255, 255, 255);
-    }
-
 }

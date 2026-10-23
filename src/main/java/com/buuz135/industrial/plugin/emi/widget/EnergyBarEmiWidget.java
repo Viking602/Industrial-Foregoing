@@ -7,7 +7,7 @@ import com.hrznstudio.titanium.client.screen.asset.DefaultAssetProvider;
 import com.hrznstudio.titanium.util.AssetUtil;
 import dev.emi.emi.api.widget.Bounds;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent;
 import net.minecraft.network.chat.Component;
 
@@ -33,7 +33,7 @@ public class EnergyBarEmiWidget extends EmiDrawableWidget {
     }
 
     @Override
-    public void render(GuiGraphics draw, int mouseX, int mouseY, float delta) {
+    public void render(GuiGraphicsExtractor draw, int mouseX, int mouseY, float delta) {
         AssetUtil.drawAsset(draw, Minecraft.getInstance().screen, DefaultAssetProvider.DEFAULT_PROVIDER.getAsset(AssetTypes.ENERGY_BACKGROUND), x, y);
         EnergyBarScreenAddon.drawForeground(draw, Minecraft.getInstance().screen, DefaultAssetProvider.DEFAULT_PROVIDER, x, y, 0, 0, this.energy, Math.max(this.maxEnergy, this.energy));
     }

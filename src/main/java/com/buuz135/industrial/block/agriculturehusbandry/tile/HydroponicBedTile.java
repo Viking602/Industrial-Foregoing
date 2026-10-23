@@ -26,7 +26,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.BonemealableBlock;
-import net.minecraft.world.level.block.BushBlock;
+import net.minecraft.world.level.block.VegetationBlock;
 import net.minecraft.world.level.block.StemBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
@@ -35,7 +35,7 @@ import net.neoforged.neoforge.common.SpecialPlantable;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import net.neoforged.neoforge.items.IItemHandler;
-import net.neoforged.neoforge.items.ItemHandlerHelper;
+import com.buuz135.industrial.compat.MachineItems;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
@@ -58,13 +58,13 @@ public class HydroponicBedTile extends IndustrialWorkingTile<HydroponicBedTile> 
 
     public HydroponicBedTile(BlockPos blockPos, BlockState blockState) {
         super(ModuleAgricultureHusbandry.HYDROPONIC_BED, HydroponicBedConfig.powerPerOperation, blockPos, blockState);
-        addTank(this.water = (SidedFluidTankComponent<HydroponicBedTile>) new SidedFluidTankComponent<HydroponicBedTile>("water", 1000, 43, 20, 0)
+        addTank(this.water = (SidedFluidTankComponent<HydroponicBedTile>) new com.buuz135.industrial.compat.MachineFluidTank<HydroponicBedTile>("water", 1000, 43, 20, 0)
                 .setColor(DyeColor.BLUE)
                 .setTankType(FluidTankComponent.Type.SMALL)
                 .setTankAction(FluidTankComponent.Action.FILL)
                 .setValidator(fluidStack -> fluidStack.getFluid().isSame(Fluids.WATER) || fluidStack.getFluid().isSame(Fluids.LAVA))
         );
-        addTank(this.ether = (SidedFluidTankComponent<HydroponicBedTile>) new SidedFluidTankComponent<HydroponicBedTile>("ether", 10, 43, 57, 1)
+        addTank(this.ether = (SidedFluidTankComponent<HydroponicBedTile>) new com.buuz135.industrial.compat.MachineFluidTank<HydroponicBedTile>("ether", 10, 43, 57, 1)
                 .setColor(DyeColor.CYAN)
                 .setTankType(FluidTankComponent.Type.SMALL)
                 .setTankAction(FluidTankComponent.Action.FILL)
@@ -89,7 +89,7 @@ public class HydroponicBedTile extends IndustrialWorkingTile<HydroponicBedTile> 
     private PlantRecollectable cachedRecollectable = null;
     private int errorAttempts = 0;
 
-    public static boolean tryToHarvestAndReplant(Level level, BlockPos up, BlockState state, IItemHandler output, ProgressBarComponent<?> etherBuffer, IndustrialWorkingTile tile, Supplier<PlantRecollectable> plantSupplier, ItemStack simulationOutput) {
+    public static boolean tryToHarvestAndReplant(Level level, BlockPos up, BlockState state, net.neoforged.neoforge.transfer.ResourceHandler<net.neoforged.neoforge.transfer.item.ItemResource> output, ProgressBarComponent<?> etherBuffer, IndustrialWorkingTile tile, Supplier<PlantRecollectable> plantSupplier, ItemStack simulationOutput) {
         var cachedRecollectable = plantSupplier.get();
         if (cachedRecollectable != null) {
             List<ItemStack> drops = new ArrayList<>();
@@ -103,7 +103,7 @@ public class HydroponicBedTile extends IndustrialWorkingTile<HydroponicBedTile> 
             var planted = ItemStack.EMPTY;
             if (level.isEmptyBlock(up)) {
                 for (ItemStack drop : drops) {
-                    if (!drop.isEmpty() && drop.getItem() instanceof BlockItem blockItem && blockItem.getBlock() instanceof BushBlock bushBlock) {
+                    if (!drop.isEmpty() && drop.getItem() instanceof BlockItem blockItem && blockItem.getBlock() instanceof VegetationBlock bushBlock) {
                         planted = drop.copyWithCount(1);
                         BlockState blockstate1 = blockItem.getBlock().defaultBlockState();
                         level.setBlockAndUpdate(up, blockstate1);
@@ -125,8 +125,9 @@ public class HydroponicBedTile extends IndustrialWorkingTile<HydroponicBedTile> 
                 var sim = new HydroponicSimulationProcessorItem.Simulation(simulationOutput.get(IFAttachments.HYDROPONIC_SIMULATION_PROCESSOR));
                 sim.acceptExecution(planted, drops);
                 simulationOutput.set(IFAttachments.HYDROPONIC_SIMULATION_PROCESSOR, sim.toNBT(level.registryAccess()));
+                if (tile instanceof HydroponicBedTile bed) bed.simulation_slot.setStackInSlot(0, simulationOutput);
             }
-            drops.forEach(stack -> ItemHandlerHelper.insertItem(output, stack, false));
+            drops.forEach(stack -> MachineItems.insertItem(output, stack, false));
             if (tile instanceof IndustrialAreaWorkingTile<?> && cachedRecollectable.shouldCheckNextPlant(level, up, level.getBlockState(up))) {
                 ((IndustrialAreaWorkingTile<?>) tile).increasePointer();
             }
@@ -147,7 +148,7 @@ public class HydroponicBedTile extends IndustrialWorkingTile<HydroponicBedTile> 
     @Override
     public WorkAction work() {
         if (this.etherBuffer.getProgress() <= 0 && this.ether.getFluidAmount() > 0) {
-            this.ether.drainForced(1, IFluidHandler.FluidAction.EXECUTE);
+            com.buuz135.industrial.compat.MachineFluids.drainForced(this.ether, 1, IFluidHandler.FluidAction.EXECUTE);
             this.etherBuffer.setProgress(this.etherBuffer.getMaxProgress());
         }
         if (hasEnergy(1000)) {
@@ -174,14 +175,14 @@ public class HydroponicBedTile extends IndustrialWorkingTile<HydroponicBedTile> 
                     BonemealableBlock growable = (BonemealableBlock) this.level.getBlockState(up).getBlock();
                     if (growable.isValidBonemealTarget(this.level, up, this.level.getBlockState(up)) || state.getBlock() instanceof StemBlock) {
                         if (this.etherBuffer.getProgress() > 0) {
-                            growable.performBonemeal((ServerLevel) this.level, this.level.random, up, this.level.getBlockState(up));
+                            growable.performBonemeal((ServerLevel) this.level, this.level.getRandom(), up, this.level.getBlockState(up));
                             this.etherBuffer.setProgress(this.etherBuffer.getProgress() - 1);
                         } else {
                             for (int i = 0; i < 4; i++) {
-                                this.level.getBlockState(up).randomTick((ServerLevel) this.level, up, this.level.random);
+                                this.level.getBlockState(up).randomTick((ServerLevel) this.level, up, this.level.getRandom());
                             }
                         }
-                        this.water.drainForced(10, IFluidHandler.FluidAction.EXECUTE);
+                        com.buuz135.industrial.compat.MachineFluids.drainForced(this.water, 10, IFluidHandler.FluidAction.EXECUTE);
                         return new WorkAction(1, HydroponicBedConfig.powerPerOperation);
                     } else if (this.etherBuffer.getProgress() > 0) {
                         tryToHarvestAndReplant(this.level, up, state, this.output, this.etherBuffer, this, plantRecollectableSupplier, this.simulation_slot.getStackInSlot(0));
@@ -191,15 +192,15 @@ public class HydroponicBedTile extends IndustrialWorkingTile<HydroponicBedTile> 
                     if (!tryToHarvestAndReplant(this.level, up, state, this.output, this.etherBuffer, this, plantRecollectableSupplier, this.simulation_slot.getStackInSlot(0))) {
                         if (this.etherBuffer.getProgress() > 0) {
                             for (int i = 0; i < 10; i++) {
-                                this.level.getBlockState(up).randomTick((ServerLevel) this.level, up, this.level.random);
+                                this.level.getBlockState(up).randomTick((ServerLevel) this.level, up, this.level.getRandom());
                             }
                             this.etherBuffer.setProgress(this.etherBuffer.getProgress() - 1);
                         } else {
                             for (int i = 0; i < 4; i++) {
-                                this.level.getBlockState(up).randomTick((ServerLevel) this.level, up, this.level.random);
+                                this.level.getBlockState(up).randomTick((ServerLevel) this.level, up, this.level.getRandom());
                             }
                         }
-                        this.water.drainForced(10, IFluidHandler.FluidAction.EXECUTE);
+                        com.buuz135.industrial.compat.MachineFluids.drainForced(this.water, 10, IFluidHandler.FluidAction.EXECUTE);
                     }
                     return new WorkAction(1, HydroponicBedConfig.powerPerOperation);
                 }
@@ -224,18 +225,18 @@ public class HydroponicBedTile extends IndustrialWorkingTile<HydroponicBedTile> 
                 BlockEntity tile = level.getBlockEntity(worldPosition.relative(direction));
                 if (tile instanceof HydroponicBedTile) {
                     int difference = water.getFluidAmount() - ((HydroponicBedTile) tile).getWater().getFluidAmount();
-                    if (difference > 0 && (water.getFluid().is(((HydroponicBedTile) tile).getWater().getFluid().getFluid()) || ((HydroponicBedTile) tile).getWater().isEmpty())) {
+                    if (difference > 0 && (water.getFluid().is(((HydroponicBedTile) tile).getWater().getFluid().getFluid()) || ((HydroponicBedTile) tile).getWater().getFluid().isEmpty())) {
                         if (difference <= 25) difference = difference / 2;
                         else difference = 25;
                         if (water.getFluidAmount() >= difference) {
-                            water.drainForced(((HydroponicBedTile) tile).getWater().fill(new FluidStack(Fluids.WATER, water.drainForced(difference, IFluidHandler.FluidAction.SIMULATE).getAmount()), IFluidHandler.FluidAction.EXECUTE), IFluidHandler.FluidAction.EXECUTE);
+                            com.buuz135.industrial.compat.MachineFluids.move(water, ((HydroponicBedTile) tile).getWater(), difference);
                         }
                     }
                     difference = ether.getFluidAmount() - ((HydroponicBedTile) tile).getEther().getFluidAmount();
                     if (difference > 0) {
                         difference = 1;
                         if (ether.getFluidAmount() >= difference) {
-                            ether.drainForced(((HydroponicBedTile) tile).getEther().fill(new FluidStack(ModuleCore.ETHER.getSourceFluid().get(), ether.drainForced(difference, IFluidHandler.FluidAction.SIMULATE).getAmount()), IFluidHandler.FluidAction.EXECUTE), IFluidHandler.FluidAction.EXECUTE);
+                            com.buuz135.industrial.compat.MachineFluids.move(ether, ((HydroponicBedTile) tile).getEther(), difference);
                         }
                     }
                     difference = getEnergyStorage().getEnergyStored() - ((HydroponicBedTile) tile).getEnergyStorage().getEnergyStored();
@@ -243,7 +244,7 @@ public class HydroponicBedTile extends IndustrialWorkingTile<HydroponicBedTile> 
                         if (difference <= 1000 && difference > 1) difference = difference / 2;
                         if (difference > 1000) difference = 1000;
                         if (getEnergyStorage().getEnergyStored() >= difference) {
-                            getEnergyStorage().extractEnergy(((HydroponicBedTile) tile).getEnergyStorage().receiveEnergy(difference, false), false);
+                            com.buuz135.industrial.compat.MachineEnergy.extractEnergy(getEnergyStorage(), com.buuz135.industrial.compat.MachineEnergy.receiveEnergy(((HydroponicBedTile) tile).getEnergyStorage(), difference, false), false);
                         }
                     }
                 }

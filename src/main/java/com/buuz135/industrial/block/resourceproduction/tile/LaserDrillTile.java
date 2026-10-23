@@ -51,7 +51,6 @@ public class LaserDrillTile extends IndustrialAreaWorkingTile<LaserDrillTile> {
     }
 
     @Override
-    @OnlyIn(Dist.CLIENT)
     public void initClient() {
         super.initClient();
         addGuiAddonFactory(() -> new TextScreenAddon(ChatFormatting.DARK_GRAY + Component.translatable("text.industrialforegoing.target").getString(), 44, 26, false));
@@ -88,7 +87,7 @@ public class LaserDrillTile extends IndustrialAreaWorkingTile<LaserDrillTile> {
 
     @Override
     public VoxelShape getWorkingArea() {
-        Vec3i vector = this.getFacingDirection().getOpposite().getNormal();
+        Vec3i vector = this.getFacingDirection().getOpposite().getUnitVec3i();
         return Shapes.box(-1, 0, -1, 2, 3, 2).move(this.worldPosition.getX() + vector.getX() * 2, this.worldPosition.getY() + vector.getY() * 2 - 1, this.worldPosition.getZ() + vector.getZ() * 2);
     }
 

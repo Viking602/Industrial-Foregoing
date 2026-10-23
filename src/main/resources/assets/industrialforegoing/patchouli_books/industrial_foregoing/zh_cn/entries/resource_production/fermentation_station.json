@@ -1,0 +1,17 @@
+{
+  "name": "发酵站",
+  "icon": "industrialforegoing:fermentation_station",
+  "category": "industrialforegoing:resource_production",
+  "sortnum": 20,
+  "read_by_default": true,
+  "pages": [
+    {
+      "type": "text",
+      "text": "输入生矿物肉汤，达到设定储量后密封内容物，再按选定的生产类型进行发酵。"
+    },
+    {
+      "type": "crafting",
+      "recipe": "industrialforegoing:fermentation_station"
+    }
+  ]
+}

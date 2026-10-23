@@ -27,7 +27,7 @@ import com.buuz135.industrial.utils.IndustrialTags;
 import com.hrznstudio.titanium.component.inventory.SidedInventoryComponent;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.data.recipes.ShapedRecipeBuilder;
+import com.hrznstudio.titanium.recipe.generator.TitaniumShapedRecipeBuilder;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.Item;
@@ -36,7 +36,7 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.level.block.Blocks;
 import net.neoforged.neoforge.common.Tags;
-import net.neoforged.neoforge.common.util.INBTSerializable;
+import com.hrznstudio.titanium.nbthandler.INBTSerializable;
 import net.neoforged.neoforge.fluids.FluidStack;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -70,15 +70,15 @@ public class PinkGeneratorType implements IMycelialGeneratorType {
     }
 
     @Override
-    public boolean canStart(INBTSerializable<CompoundTag>[] inputs) {
+    public boolean canStart(net.neoforged.neoforge.common.util.ValueIOSerializable[] inputs) {
         return inputs.length > 0 && inputs[0] instanceof SidedInventoryComponent && ((SidedInventoryComponent<?>) inputs[0]).getStackInSlot(0).getCount() > 0;
     }
 
     @Override
-    public Pair<Integer, Integer> getTimeAndPowerGeneration(INBTSerializable<CompoundTag>[] inputs) {
+    public Pair<Integer, Integer> getTimeAndPowerGeneration(net.neoforged.neoforge.common.util.ValueIOSerializable[] inputs) {
         if (inputs.length > 0 && inputs[0] instanceof SidedInventoryComponent && ((SidedInventoryComponent<?>) inputs[0]).getStackInSlot(0).getCount() > 0) {
             ItemStack stack = ((SidedInventoryComponent<?>) inputs[0]).getStackInSlot(0).copy();
-            ((SidedInventoryComponent<?>) inputs[0]).getStackInSlot(0).shrink(1);
+            com.buuz135.industrial.compat.MachineItems.shrink(((SidedInventoryComponent<?>) inputs[0]), 0, 1);
             return calculate(stack);
         }
         return Pair.of(0, 80);
@@ -101,7 +101,7 @@ public class PinkGeneratorType implements IMycelialGeneratorType {
 
     @Override
     public List<MycelialGeneratorRecipe> getRecipes(RegistryAccess registryAccess) {
-        return BuiltInRegistries.ITEM.stream().map(ItemStack::new).filter(stack -> BuiltInRegistries.ITEM.getKey(stack.getItem()).getPath().contains("pink")).map(item -> new MycelialGeneratorRecipe(Collections.singletonList(Collections.singletonList(Ingredient.of(item))), new ArrayList<>(), 69, 135)).collect(Collectors.toList());
+        return BuiltInRegistries.ITEM.stream().map(ItemStack::new).filter(stack -> BuiltInRegistries.ITEM.getKey(stack.getItem()).getPath().contains("pink")).map(item -> new MycelialGeneratorRecipe(Collections.singletonList(Collections.singletonList(com.buuz135.industrial.compat.Ingredients.of(item))), new ArrayList<>(), 69, 135)).collect(Collectors.toList());
     }
 
     private Pair<Integer, Integer> calculate(ItemStack stack) {
@@ -109,7 +109,7 @@ public class PinkGeneratorType implements IMycelialGeneratorType {
     }
 
     @Override
-    public ShapedRecipeBuilder addIngredients(ShapedRecipeBuilder recipeBuilder) {
+    public TitaniumShapedRecipeBuilder addIngredients(TitaniumShapedRecipeBuilder recipeBuilder) {
         recipeBuilder = recipeBuilder.define('B', Tags.Items.DYES_PINK)
                 .define('C', Blocks.PINK_WOOL)
                 .define('M', IndustrialTags.Items.MACHINE_FRAME_SIMPLE);

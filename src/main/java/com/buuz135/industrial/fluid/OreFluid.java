@@ -64,12 +64,12 @@ public class OreFluid extends FlowingFluid {
     }
 
     @Override
-    public boolean canConvertToSource(FluidState state, Level level, BlockPos pos) {
+    public boolean canConvertToSource(FluidState state, net.minecraft.server.level.ServerLevel level, BlockPos pos) {
         return false;
     }
 
     @Override
-    protected boolean canConvertToSource(Level p_256009_) {
+    protected boolean canConvertToSource(net.minecraft.server.level.ServerLevel p_256009_) {
         return false;
     }
 

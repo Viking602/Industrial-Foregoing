@@ -43,7 +43,7 @@ import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
-import net.neoforged.neoforge.common.util.INBTSerializable;
+import com.hrznstudio.titanium.nbthandler.INBTSerializable;
 import org.joml.Vector3f;
 
 import java.util.ArrayList;
@@ -199,7 +199,7 @@ public class TransporterType implements INBTSerializable<CompoundTag> {
             action = TransporterTypeFactory.TransporterAction.EXTRACT;
         }
         this.getContainer().requestSync();
-        if (this.getLevel().isClientSide && getContainer() instanceof BlockEntity)
+        if (this.getLevel().isClientSide() && getContainer() instanceof BlockEntity)
             this.getLevel().getModelDataManager().requestRefresh((BlockEntity) getContainer());
     }
 
@@ -212,7 +212,7 @@ public class TransporterType implements INBTSerializable<CompoundTag> {
 
     @Override
     public void deserializeNBT(HolderLookup.Provider provider, CompoundTag nbt) {
-        action = nbt.getBoolean("Insert") ? TransporterTypeFactory.TransporterAction.INSERT : TransporterTypeFactory.TransporterAction.EXTRACT;
+        action = nbt.getBooleanOr("Insert", false) ? TransporterTypeFactory.TransporterAction.INSERT : TransporterTypeFactory.TransporterAction.EXTRACT;
     }
 
     public float getSpeed() {
@@ -231,7 +231,6 @@ public class TransporterType implements INBTSerializable<CompoundTag> {
         return 1;
     }
 
-    @OnlyIn(Dist.CLIENT)
     public void renderTransfer(Vector3f pos, Direction direction, int step, PoseStack stack, int combinedOverlayIn, MultiBufferSource buffer, float frame, Level level) {
 
     }

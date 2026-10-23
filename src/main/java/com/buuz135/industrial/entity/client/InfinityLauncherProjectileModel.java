@@ -34,11 +34,12 @@ import net.minecraft.client.model.geom.builders.LayerDefinition;
 import net.minecraft.client.model.geom.builders.MeshDefinition;
 import net.minecraft.client.model.geom.builders.PartDefinition;
 
-public class InfinityLauncherProjectileModel extends EntityModel<InfinityLauncherProjectileEntity> {
+public class InfinityLauncherProjectileModel extends EntityModel<net.minecraft.client.renderer.entity.state.EntityRenderState> {
 
     private final ModelPart bone;
 
     public InfinityLauncherProjectileModel(ModelPart model) {
+        super(model);
         this.bone = model;
     }
 
@@ -55,14 +56,6 @@ public class InfinityLauncherProjectileModel extends EntityModel<InfinityLaunche
         return LayerDefinition.create(meshDefinition, 32, 32);
     }
 
-    @Override
-    public void setupAnim(InfinityLauncherProjectileEntity p_102618_, float p_102619_, float p_102620_, float p_102621_, float p_102622_, float p_102623_) {
 
-    }
-
-    @Override
-    public void renderToBuffer(PoseStack poseStack, VertexConsumer buffer, int packedLight, int packedOverlay, int color) {
-        bone.render(poseStack, buffer, packedLight, packedOverlay);
-    }
 
 }

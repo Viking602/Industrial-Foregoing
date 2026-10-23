@@ -42,6 +42,11 @@ public class InfinityEnergyStorage<T extends IComponentHarness> extends EnergySt
 
     private final long capacity;
     private long energy;
+    private final net.neoforged.neoforge.transfer.transaction.SnapshotJournal<Long> journal =
+        new net.neoforged.neoforge.transfer.transaction.SnapshotJournal<>() {
+            @Override protected Long createSnapshot() { return getLongEnergyStored(); }
+            @Override protected void revertToSnapshot(Long snapshot) { setEnergyStored(snapshot); }
+        };
 
     public InfinityEnergyStorage(long capacity, int xPos, int yPos) {
         super(Integer.MAX_VALUE, xPos, yPos);
@@ -50,17 +55,20 @@ public class InfinityEnergyStorage<T extends IComponentHarness> extends EnergySt
     }
 
     @Override
-    public int receiveEnergy(int maxReceive, boolean simulate) {
+    public int insert(int maxReceive, net.neoforged.neoforge.transfer.transaction.TransactionContext transaction) {
+        net.neoforged.neoforge.transfer.TransferPreconditions.checkNonNegative(maxReceive);
         if (!canReceive()) return 0;
         long stored = getLongEnergyStored();
         int energyReceived = (int) Math.min(capacity - stored, Math.min(Long.MAX_VALUE, maxReceive));
-        if (!simulate)
+        if (energyReceived > 0) {
+            journal.updateSnapshots(transaction);
             setEnergyStored(stored + energyReceived);
+        }
         return energyReceived;
     }
 
     @Override
-    public int extractEnergy(int maxExtract, boolean simulate) {
+    public int extract(int maxExtract, net.neoforged.neoforge.transfer.transaction.TransactionContext transaction) {
         return 0;
     }
 
@@ -70,7 +78,7 @@ public class InfinityEnergyStorage<T extends IComponentHarness> extends EnergySt
     }
 
     public void setEnergyStored(long power) {
-        this.energy = power;
+        this.energy = Math.clamp(power, 0L, capacity);
         if (this.componentHarness != null) {
             this.componentHarness.markComponentForUpdate(false);
         }
@@ -78,15 +86,13 @@ public class InfinityEnergyStorage<T extends IComponentHarness> extends EnergySt
 
     @Override
     public int getMaxEnergyStored() {
-        return (int) capacity;
+        return (int) Math.min(capacity, Integer.MAX_VALUE);
     }
 
-    @Override
     public boolean canExtract() {
         return false;
     }
 
-    @Override
     public boolean canReceive() {
         return true;
     }
@@ -98,6 +104,12 @@ public class InfinityEnergyStorage<T extends IComponentHarness> extends EnergySt
     public long getLongCapacity() {
         return capacity;
     }
+
+    @Override public long getAmountAsLong() { return getLongEnergyStored(); }
+    @Override public long getCapacityAsLong() { return getLongCapacity(); }
+    @Override public void setEnergyStored(int power) { setEnergyStored((long) power); }
+    @Override public void serialize(net.minecraft.world.level.storage.ValueOutput output) { output.putLong("energy", getLongEnergyStored()); }
+    @Override public void deserialize(net.minecraft.world.level.storage.ValueInput input) { this.energy = Math.clamp(input.getLongOr("energy", 0L), 0L, capacity); }
 
     @Override
     @Nonnull
@@ -113,16 +125,13 @@ public class InfinityEnergyStorage<T extends IComponentHarness> extends EnergySt
     }
 
     @Override
-    public void deserializeNBT(HolderLookup.Provider provider, Tag nbt) {
-        if (nbt instanceof CompoundTag compoundTag) {
-            this.energy = compoundTag.getLong("energy");
-        }
+    public void deserializeNBT(HolderLookup.Provider provider, CompoundTag nbt) {
+        this.energy = Math.clamp(nbt.getLongOr("energy", 0L), 0L, capacity);
     }
 
     @Nonnull
     @Override
-    @OnlyIn(Dist.CLIENT)
-    public List<IFactory<? extends IScreenAddon>> getScreenAddons() {
+    public List<IFactory<?>> getScreenAddons() {
         return Collections.singletonList(() -> new InfinityEnergyScreenAddon(getX(), getY(), this));
     }
 }

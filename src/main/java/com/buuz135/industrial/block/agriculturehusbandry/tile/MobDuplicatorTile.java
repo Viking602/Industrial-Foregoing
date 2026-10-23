@@ -20,7 +20,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
-import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.ItemStack;
@@ -49,7 +49,7 @@ public class MobDuplicatorTile extends IndustrialAreaWorkingTile<MobDuplicatorTi
 
     public MobDuplicatorTile(BlockPos blockPos, BlockState blockState) {
         super(ModuleAgricultureHusbandry.MOB_DUPLICATOR, RangeManager.RangeType.TOP_UP, true, MobDuplicatorConfig.powerPerOperation, blockPos, blockState);
-        this.addTank(tank = (SidedFluidTankComponent<MobDuplicatorTile>) new SidedFluidTankComponent<MobDuplicatorTile>("essence", MobDuplicatorConfig.tankSize, 43, 20, 0)
+        this.addTank(tank = (SidedFluidTankComponent<MobDuplicatorTile>) new com.buuz135.industrial.compat.MachineFluidTank<MobDuplicatorTile>("essence", MobDuplicatorConfig.tankSize, 43, 20, 0)
                 .setColor(DyeColor.LIME)
                 .setTankAction(FluidTankComponent.Action.FILL)
                 .setComponentHarness(this)
@@ -86,23 +86,23 @@ public class MobDuplicatorTile extends IndustrialAreaWorkingTile<MobDuplicatorTi
         int canSpawn = (int) ((tank.getFluid().isEmpty() ? 0 : tank.getFluid().getAmount()) / Math.max(essenceNeeded, 1));
         if (canSpawn == 0) return new WorkAction(1, 0);
 
-        int spawnAmount = 1 + this.level.random.nextInt(Math.min(canSpawn, 4));
+        int spawnAmount = 1 + this.level.getRandom().nextInt(Math.min(canSpawn, 4));
         List<BlockPos> blocks = BlockUtils.getBlockPosInAABB(getWorkingArea().bounds());
         while (spawnAmount > 0) {
             if (tank.getFluid().getAmount() >= essenceNeeded) {
                 entity = (LivingEntity) ((MobImprisonmentToolItem) stack.getItem()).getEntityFromStack(stack, this.level, MobDuplicatorConfig.exactCopy && exactCopy, true);
                 int tries = 20;
-                Vec3 random = blockPosToVec3d(blocks.get(this.level.random.nextInt(blocks.size())));
+                Vec3 random = blockPosToVec3d(blocks.get(this.level.getRandom().nextInt(blocks.size())));
                 random = random.add(0.5, 0, 0.5);
-                entity.moveTo(random.x, random.y, random.z, level.random.nextFloat() * 360F, 0);
+                entity.snapTo(random.x, random.y, random.z, level.getRandom().nextFloat() * 360F, 0);
                 entity.setUUID(UUID.randomUUID());
                 if (entity instanceof Mob) {
-                    ((Mob) entity).finalizeSpawn((ServerLevelAccessor) this.level, this.level.getCurrentDifficultyAt(this.worldPosition), MobSpawnType.MOB_SUMMONED, null);
+                    ((Mob) entity).finalizeSpawn((ServerLevelAccessor) this.level, ((net.minecraft.server.level.ServerLevel) this.level).getCurrentDifficultyAt(this.worldPosition), EntitySpawnReason.MOB_SUMMONED, null);
                 }
                 while (tries > 0 && !canEntitySpawn(entity)) {
-                    random = blockPosToVec3d(blocks.get(this.level.random.nextInt(blocks.size())));
+                    random = blockPosToVec3d(blocks.get(this.level.getRandom().nextInt(blocks.size())));
                     random = random.add(0.5, 0, 0.5);
-                    entity.moveTo(random.x, random.y, random.z, level.random.nextFloat() * 360F, 0);
+                    entity.snapTo(random.x, random.y, random.z, level.getRandom().nextFloat() * 360F, 0);
                     --tries;
                 }
                 if (tries <= 0) {
@@ -112,7 +112,7 @@ public class MobDuplicatorTile extends IndustrialAreaWorkingTile<MobDuplicatorTi
 
                 this.level.addFreshEntity(entity);
 
-                tank.drainForced(essenceNeeded, IFluidHandler.FluidAction.EXECUTE);
+                com.buuz135.industrial.compat.MachineFluids.drainForced(tank, essenceNeeded, IFluidHandler.FluidAction.EXECUTE);
             }
             --spawnAmount;
         }
@@ -172,7 +172,7 @@ public class MobDuplicatorTile extends IndustrialAreaWorkingTile<MobDuplicatorTi
     @Override
     public void loadSettings(Player player, CompoundTag tag) {
         if (tag.contains("MC_exactCopy")) {
-            exactCopy = tag.getBoolean("MC_exactCopy");
+            exactCopy = tag.getBooleanOr("MC_exactCopy", false);
         }
         super.loadSettings(player, tag);
     }

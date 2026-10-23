@@ -47,13 +47,13 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.stats.Stats;
 import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.InteractionResultHolder;
+
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.entity.projectile.AbstractArrow;
+import net.minecraft.world.entity.projectile.arrow.AbstractArrow;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.minecraft.world.item.UseAnim;
+import net.minecraft.world.item.ItemUseAnimation;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
@@ -76,7 +76,7 @@ public class ItemInfinityLauncher extends ItemInfinity {
     public static String PLUNGER_NBT = "Plunger";
 
     public ItemInfinityLauncher(TitaniumTab group) {
-        super("infinity_launcher", group, new Properties().stacksTo(1), POWER_CONSUMPTION, FUEL_CONSUMPTION, false);
+        super("infinity_launcher", group, new Properties().stacksTo(1).component(IFAttachments.PLUNGER_ACTION.get(), PlungerAction.RELEASE), POWER_CONSUMPTION, FUEL_CONSUMPTION, false);
         this.disableArea();
     }
 
@@ -96,11 +96,6 @@ public class ItemInfinityLauncher extends ItemInfinity {
         stack.set(IFAttachments.PLUNGER_ACTION, PlungerAction.RELEASE);
     }
 
-    @Override
-    public void verifyComponentsAfterLoad(ItemStack stack) {
-        super.verifyComponentsAfterLoad(stack);
-        if (!stack.has(IFAttachments.PLUNGER_ACTION)) stack.set(IFAttachments.PLUNGER_ACTION, PlungerAction.RELEASE);
-    }
 
     @Override
     public void addTooltipDetails(BasicItem.Key key, ItemStack stack, List<Component> tooltip, boolean advanced) {
@@ -118,8 +113,8 @@ public class ItemInfinityLauncher extends ItemInfinity {
     }
 
     @Override
-    public UseAnim getUseAnimation(ItemStack stack) {
-        return UseAnim.BOW;
+    public ItemUseAnimation getUseAnimation(ItemStack stack) {
+        return ItemUseAnimation.BOW;
     }
 
 
@@ -134,24 +129,24 @@ public class ItemInfinityLauncher extends ItemInfinity {
     }
 
     @Override
-    public InteractionResultHolder<ItemStack> use(Level worldIn, Player playerIn, InteractionHand handIn) {
+    public net.minecraft.world.InteractionResult use(Level worldIn, Player playerIn, InteractionHand handIn) {
         ItemStack itemstack = playerIn.getItemInHand(handIn);
         if (!playerIn.isShiftKeyDown()) {
             playerIn.startUsingItem(handIn);
-            return InteractionResultHolder.consume(itemstack);
+            return net.minecraft.world.InteractionResult.CONSUME;
         }
         return super.use(worldIn, playerIn, handIn);
     }
 
     @Override
-    public void releaseUsing(ItemStack stack, Level worldIn, LivingEntity entityLiving, int timeLeft) {
+    public boolean releaseUsing(ItemStack stack, Level worldIn, LivingEntity entityLiving, int timeLeft) {
         if (entityLiving instanceof Player) {
             int time = this.getUseDuration(stack, entityLiving) - timeLeft;
             float velo = getArrowVelocity(time);
             if (!((double) velo < 0.1D) && enoughFuel(stack)) {
                 Player playerentity = (Player) entityLiving;
-                playerentity.getCooldowns().addCooldown(this, 20);
-                if (!worldIn.isClientSide) {
+                playerentity.getCooldowns().addCooldown(stack, 20);
+                if (!worldIn.isClientSide()) {
                     InfinityLauncherProjectileEntity abstractarrowentity = new InfinityLauncherProjectileEntity(worldIn, playerentity, getPlungerAction(stack), getSelectedTier(stack).getRadius(), stack);
                     abstractarrowentity.shootFromRotation(playerentity, playerentity.xRotO, playerentity.yRotO, 0.0F, velo * 3.0F, 1.0F);
                     if (velo == 1.0F) {
@@ -164,16 +159,16 @@ public class ItemInfinityLauncher extends ItemInfinity {
                     abstractarrowentity.pickup = AbstractArrow.Pickup.DISALLOWED;
                     worldIn.addFreshEntity(abstractarrowentity);
                 }
-                worldIn.playSound((Player) null, playerentity.getX(), playerentity.getY(), playerentity.getZ(), SoundEvents.ARROW_SHOOT, SoundSource.PLAYERS, 1.0F, 1.0F / (worldIn.random.nextFloat() * 0.4F + 1.2F) + velo * 0.5F);
+                worldIn.playSound((Player) null, playerentity.getX(), playerentity.getY(), playerentity.getZ(), SoundEvents.ARROW_SHOOT, SoundSource.PLAYERS, 1.0F, 1.0F / (worldIn.getRandom().nextFloat() * 0.4F + 1.2F) + velo * 0.5F);
                 playerentity.awardStat(Stats.ITEM_USED.get(this));
             }
         }
+        return entityLiving instanceof Player && this.getUseDuration(stack, entityLiving) - timeLeft >= 10;
     }
 
     @Override
-    @OnlyIn(Dist.CLIENT)
-    public List<IFactory<? extends IScreenAddon>> getScreenAddons(Supplier<ItemStack> stack) {
-        List<IFactory<? extends IScreenAddon>> factory = super.getScreenAddons(stack);
+    public List<IFactory<?>> getScreenAddons(Supplier<ItemStack> stack) {
+        List<IFactory<?>> factory = super.getScreenAddons(stack);
         factory.add(() -> new ArrowButtonScreenAddon((ArrowButtonComponent) new ArrowButtonComponent(154, 20 + 16 * 2, 14, 14, FacingUtil.Sideness.RIGHT).setId(4)));
         factory.add(() -> new ArrowButtonScreenAddon((ArrowButtonComponent) new ArrowButtonComponent(54, 20 + 16 * 2, 14, 14, FacingUtil.Sideness.LEFT).setId(5)));
         factory.add(() -> new TextScreenAddon("", 54 + 14 + 4, 24 + 16 * 2, false) {
@@ -204,14 +199,14 @@ public class ItemInfinityLauncher extends ItemInfinity {
     public void registerRecipe(RecipeOutput consumer) {
         DissolutionChamberRecipe.createRecipe(consumer, "infinity_launcher", new DissolutionChamberRecipe(
                 List.of(
-                        Ingredient.of(new ItemStack(Items.DIAMOND_BLOCK)),
-                        Ingredient.of(new ItemStack(Items.BOW)),
-                        Ingredient.of(new ItemStack(Items.DIAMOND_BLOCK)),
-                        Ingredient.of(new ItemStack(ModuleTool.MOB_IMPRISONMENT_TOOL.get())),
-                        Ingredient.of(new ItemStack(ModuleCore.RANGE_ADDONS[11].get())),
-                        Ingredient.of(IndustrialTags.Items.GEAR_GOLD),
-                        Ingredient.of(IndustrialTags.Items.GEAR_GOLD),
-                        Ingredient.of(IndustrialTags.Items.GEAR_GOLD)
+                        com.buuz135.industrial.compat.Ingredients.of(new ItemStack(Items.DIAMOND_BLOCK)),
+                        com.buuz135.industrial.compat.Ingredients.of(new ItemStack(Items.BOW)),
+                        com.buuz135.industrial.compat.Ingredients.of(new ItemStack(Items.DIAMOND_BLOCK)),
+                        com.buuz135.industrial.compat.Ingredients.of(new ItemStack(ModuleTool.MOB_IMPRISONMENT_TOOL.get())),
+                        com.buuz135.industrial.compat.Ingredients.of(new ItemStack(ModuleCore.RANGE_ADDONS[11].get())),
+                        com.buuz135.industrial.compat.Ingredients.of(IndustrialTags.Items.GEAR_GOLD),
+                        com.buuz135.industrial.compat.Ingredients.of(IndustrialTags.Items.GEAR_GOLD),
+                        com.buuz135.industrial.compat.Ingredients.of(IndustrialTags.Items.GEAR_GOLD)
                 ), new FluidStack(ModuleCore.PINK_SLIME.getSourceFluid().get(), 2000), 400, Optional.of(new ItemStack(this)), Optional.empty()));
     }
 

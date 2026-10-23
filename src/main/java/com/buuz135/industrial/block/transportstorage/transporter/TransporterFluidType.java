@@ -43,7 +43,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.data.recipes.RecipeOutput;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.neoforged.api.distmarker.Dist;
@@ -90,7 +90,7 @@ public class TransporterFluidType extends FilteredTransporterType<FluidStack, IF
         super.update();
         float speed = getSpeed();
 
-        if (getLevel().isClientSide || getLevel().getGameTime() % (Math.max(1, 4 - speed)) != 0) return;
+        if (getLevel().isClientSide() || getLevel().getGameTime() % (Math.max(1, 4 - speed)) != 0) return;
 
         IBlockContainer<?> container = getContainer();
         if (getAction() != TransporterTypeFactory.TransporterAction.EXTRACT || !(container instanceof TransporterTile transporterTile)) return;
@@ -98,10 +98,10 @@ public class TransporterFluidType extends FilteredTransporterType<FluidStack, IF
         for (Direction direction : transporterTile.getTransporterTypeMap().keySet()) {
             TransporterType transporterType = transporterTile.getTransporterTypeMap().get(direction);
             if (transporterType instanceof TransporterFluidType fluidTransporter && transporterType.getAction() == TransporterTypeFactory.TransporterAction.INSERT) {
-                var origin = getLevel().getCapability(Capabilities.FluidHandler.BLOCK, getPos().relative(this.getSide()), getSide().getOpposite());
+                var origin = com.buuz135.industrial.compat.MachineCapabilities.fluids(getLevel(), getPos().relative(this.getSide()), getSide().getOpposite());
                 if (origin == null) continue;
 
-                var destination = getLevel().getCapability(Capabilities.FluidHandler.BLOCK, getPos().relative(direction), direction.getOpposite());
+                var destination = com.buuz135.industrial.compat.MachineCapabilities.fluids(getLevel(), getPos().relative(direction), direction.getOpposite());
                 if (destination == null) continue;
 
                 int possibleAmount = (int) Math.ceil(1000 * getEfficiency());
@@ -139,15 +139,14 @@ public class TransporterFluidType extends FilteredTransporterType<FluidStack, IF
     }
 
     public void addTransferredStack(Direction direction, @NotNull FluidStack stack) {
-        syncRender(direction, (CompoundTag) stack.saveOptional(getLevel().registryAccess()));
+        syncRender(direction, (CompoundTag) FluidStack.CODEC.encodeStart(getLevel().registryAccess().createSerializationContext(net.minecraft.nbt.NbtOps.INSTANCE), stack).getOrThrow());
     }
 
     @Override
     public void handleRenderSync(Direction origin, CompoundTag compoundNBT) {
-        this.queue.computeIfAbsent(origin, direction -> new ArrayList<>()).addFirst(FluidStack.parseOptional(getLevel().registryAccess(), compoundNBT));
+        this.queue.computeIfAbsent(origin, direction -> new ArrayList<>()).addFirst(FluidStack.CODEC.parse(getLevel().registryAccess().createSerializationContext(net.minecraft.nbt.NbtOps.INSTANCE), compoundNBT).result().orElse(FluidStack.EMPTY));
     }
 
-    @OnlyIn(Dist.CLIENT)
     @Override
     public void renderTransfer(Vector3f pos, Direction direction, int step, PoseStack stack, int combinedOverlayIn, MultiBufferSource buffer, float frame, Level level) {
         super.renderTransfer(pos, direction, step, stack, combinedOverlayIn, buffer, frame, level);
@@ -156,7 +155,7 @@ public class TransporterFluidType extends FilteredTransporterType<FluidStack, IF
             stack.scale(scale, scale, scale);
             FluidStack fluidStack = queue.get(direction).get(step);
             stack.pushPose();
-            stack.mulPose(Minecraft.getInstance().getEntityRenderDispatcher().cameraOrientation());
+            stack.mulPose(Minecraft.getInstance().gameRenderer.getMainCamera().rotation());
             //stack.mulPose(Axis.ZP.rotationDegrees(90f));
             stack.mulPose(Axis.XP.rotationDegrees(-90f));
             VertexConsumer buffer1 = buffer.getBuffer(TransporterTESR.TYPE);
@@ -209,24 +208,24 @@ public class TransporterFluidType extends FilteredTransporterType<FluidStack, IF
 
         @Override
         @Nonnull
-        public ResourceLocation getModel(Direction upgradeSide, TransporterAction action) {
-            return ResourceLocation.fromNamespaceAndPath(Reference.MOD_ID, "block/transporters/fluid_transporter_" + action.name().toLowerCase(Locale.ROOT) + "_" + upgradeSide.getSerializedName().toLowerCase(Locale.ROOT));
+        public Identifier getModel(Direction upgradeSide, TransporterAction action) {
+            return Identifier.fromNamespaceAndPath(Reference.MOD_ID, "block/transporters/fluid_transporter_" + action.name().toLowerCase(Locale.ROOT) + "_" + upgradeSide.getSerializedName().toLowerCase(Locale.ROOT));
         }
 
         @Override
-        public Set<ResourceLocation> getTextures() {
-            return Sets.newHashSet(ResourceLocation.parse("industrialforegoing:block/transporters/fluid"), ResourceLocation.parse("industrialforegoing:block/base/bottom"));
+        public Set<Identifier> getTextures() {
+            return Sets.newHashSet(Identifier.parse("industrialforegoing:block/transporters/fluid"), Identifier.parse("industrialforegoing:block/base/bottom"));
         }
 
         @Override
         public boolean canBeAttachedAgainst(Level world, BlockPos pos, Direction face) {
-            return world.getCapability(Capabilities.FluidHandler.BLOCK, pos, face) != null;
+            return com.buuz135.industrial.compat.MachineCapabilities.fluids(world, pos, face) != null;
         }
 
         @Nonnull
         @Override
-        public ResourceLocation getItemModel() {
-            return ResourceLocation.fromNamespaceAndPath(Reference.MOD_ID, "block/transporters/fluid_transporter_" + TransporterAction.EXTRACT.name().toLowerCase(Locale.ROOT) + "_" + Direction.NORTH.getSerializedName().toLowerCase(Locale.ROOT));
+        public Identifier getItemModel() {
+            return Identifier.fromNamespaceAndPath(Reference.MOD_ID, "block/transporters/fluid_transporter_" + TransporterAction.EXTRACT.name().toLowerCase(Locale.ROOT) + "_" + Direction.NORTH.getSerializedName().toLowerCase(Locale.ROOT));
         }
 
         @Override

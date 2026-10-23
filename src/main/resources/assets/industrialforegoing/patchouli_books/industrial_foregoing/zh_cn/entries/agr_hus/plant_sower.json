@@ -1,0 +1,17 @@
+{
+  "name": "播种机",
+  "icon": "industrialforegoing:plant_sower",
+  "category": "industrialforegoing:agriculture_husbandry",
+  "sortnum": 4,
+  "read_by_default": true,
+  "pages": [
+    {
+      "type": "text",
+      "text": "自动$(6)种植$()作物和树苗。$(br2)内部的九个物品槽以$(6)颜色$()区分，对应机器顶部的颜色标记。机器上方的工作区域分为九块，每块区域只会种植对应物品槽中的种子。"
+    },
+    {
+      "type": "crafting",
+      "recipe": "industrialforegoing:plant_sower"
+    }
+  ]
+}

@@ -156,7 +156,7 @@ public abstract class RegulatorFilter<TYPE, CAP> {
         for (int i = 0; i < this.getFilterSlots().length; i++) {
             if (!this.getFilterSlots()[i].getStack().isEmpty()) {
                 CompoundTag slot = new CompoundTag();
-                slot.put("Stack", this.getFilterSlots()[i].getStack().saveOptional(provider));
+                slot.put("Stack", com.buuz135.industrial.compat.ItemNbt.saveOptional(this.getFilterSlots()[i].getStack(), provider));
                 slot.putInt("Amount", this.getFilterSlots()[i].getAmount());
                 compound.put(String.valueOf(i), slot);
             }
@@ -165,13 +165,13 @@ public abstract class RegulatorFilter<TYPE, CAP> {
     }
 
     public void deserializeNBT(HolderLookup.Provider provider, CompoundTag nbt) {
-        whitelisted = nbt.getBoolean("Whitelist");
-        isRegulated = nbt.getBoolean("Regulated");
+        whitelisted = nbt.getBooleanOr("Whitelist", false);
+        isRegulated = nbt.getBooleanOr("Regulated", false);
         for (int i = 0; i < this.getFilterSlots().length; i++) {
             if (nbt.contains(String.valueOf(i))) {
-                CompoundTag slot = nbt.getCompound(String.valueOf(i));
-                this.getFilterSlots()[i].setStack(ItemStack.parseOptional(provider, slot.getCompound("Stack")));
-                this.getFilterSlots()[i].setAmount(slot.getInt("Amount"));
+                CompoundTag slot = nbt.getCompoundOrEmpty(String.valueOf(i));
+                this.getFilterSlots()[i].setStack(com.buuz135.industrial.compat.ItemNbt.parseOptional(provider, slot.getCompoundOrEmpty("Stack")));
+                this.getFilterSlots()[i].setAmount(slot.getIntOr("Amount", 0));
             } else {
                 this.getFilterSlots()[i].setStack(ItemStack.EMPTY);
             }

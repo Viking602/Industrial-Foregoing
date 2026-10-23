@@ -23,7 +23,7 @@
 package com.buuz135.industrial.proxy.client.render;
 
 import com.buuz135.industrial.block.generator.tile.MycelialReactorTile;
-import com.mojang.blaze3d.platform.GlStateManager;
+
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -33,35 +33,22 @@ import com.mojang.math.Axis;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderStateShard;
-import net.minecraft.client.renderer.RenderType;
+
+import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.FastColor;
+import net.minecraft.resources.Identifier;
+import net.minecraft.util.ARGB;
 import net.minecraft.world.phys.AABB;
 import org.joml.Matrix4f;
 
 import java.awt.*;
 
-public class MycelialReactorTESR implements BlockEntityRenderer<MycelialReactorTile> {
+public class MycelialReactorTESR extends com.buuz135.industrial.compat.CapturedBlockRenderer<MycelialReactorTile> {
 
     public static RenderType TYPE = createRenderType();
 
-    public static RenderType createRenderType() {
-        RenderType.CompositeState state = RenderType.CompositeState.builder()
-                .setShaderState(new RenderStateShard.ShaderStateShard(GameRenderer::getPositionTexColorShader))
-                .setTextureState(new RenderStateShard.TextureStateShard(ResourceLocation.fromNamespaceAndPath("industrialforegoing", "textures/block/mycelial.png"), false, false))
-                .setTransparencyState(new RenderStateShard.TransparencyStateShard("translucent_transparency", () -> {
-                    RenderSystem.enableBlend();
-                    RenderSystem.depthMask(false);
-                    RenderSystem.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.SRC_ALPHA);
-                }, () -> {
-                    RenderSystem.disableBlend();
-                    RenderSystem.depthMask(true);
-                })).createCompositeState(true);
-        return RenderType.create("mycelial_render", DefaultVertexFormat.POSITION_TEX_COLOR, VertexFormat.Mode.QUADS, 262144, false, true, state);
-    }
+    public static RenderType createRenderType() { return net.minecraft.client.renderer.rendertype.RenderTypes.entityTranslucentEmissive(Identifier.fromNamespaceAndPath("industrialforegoing", "textures/block/mycelial.png")); }
 
     public MycelialReactorTESR(BlockEntityRendererProvider.Context p_173540_) {
 
@@ -74,7 +61,7 @@ public class MycelialReactorTESR implements BlockEntityRenderer<MycelialReactorT
         stack.pushPose();
         stack.scale(1.5F, 1.5F, 1.5F);
         stack.translate(0.30, 1.75, 0.3D);
-        stack.mulPose(Minecraft.getInstance().getEntityRenderDispatcher().cameraOrientation());
+        stack.mulPose(Minecraft.getInstance().gameRenderer.getMainCamera().rotation());
         stack.mulPose(Axis.ZP.rotationDegrees((Minecraft.getInstance().level.getGameTime() / 20F) % 360));
         stack.mulPose(Axis.XP.rotationDegrees(-90f));
 
@@ -88,9 +75,9 @@ public class MycelialReactorTESR implements BlockEntityRenderer<MycelialReactorT
         float pX2 = 0;
         float u2 = 0;
         int color = Color.CYAN.getRGB();
-        int red = FastColor.ARGB32.red(color);
-        int green = FastColor.ARGB32.green(color);
-        int blue = FastColor.ARGB32.blue(color);
+        int red = ARGB.red(color);
+        int green = ARGB.green(color);
+        int blue = ARGB.blue(color);
         float xOffset = -0.75f;
         float yOffset = -0f;
         float zOffset = -0.75f;
@@ -102,9 +89,9 @@ public class MycelialReactorTESR implements BlockEntityRenderer<MycelialReactorT
         yOffset = 0.01f;
         sin = ((float) Math.cos(te.getLevel().getGameTime() / speed)) * 0.05f;
         color = new Color(0xB578FF).getRGB();
-        red = FastColor.ARGB32.red(color);
-        green = FastColor.ARGB32.green(color);
-        blue = FastColor.ARGB32.blue(color);
+        red = ARGB.red(color);
+        green = ARGB.green(color);
+        blue = ARGB.blue(color);
         buffer1.addVertex(matrix, pX2 + xOffset + sin, yOffset, 0 + zOffset + sin).setUv(u2, 0).setColor(red, green, blue, alpha);
         buffer1.addVertex(matrix, pX1 + xOffset - sin + 0.5f, yOffset, 0 + zOffset - sin).setUv(u, 0).setColor(red, green, blue, alpha);
         buffer1.addVertex(matrix, pX1 + xOffset + sin + 0.5f, yOffset, 1.5f + zOffset + sin).setUv(u, 1).setColor(red, green, blue, alpha);
@@ -114,6 +101,6 @@ public class MycelialReactorTESR implements BlockEntityRenderer<MycelialReactorT
 
     @Override
     public AABB getRenderBoundingBox(MycelialReactorTile blockEntity) {
-        return BlockEntityRenderer.super.getRenderBoundingBox(blockEntity).inflate(4);
+        return super.getRenderBoundingBox(blockEntity).inflate(4);
     }
 }

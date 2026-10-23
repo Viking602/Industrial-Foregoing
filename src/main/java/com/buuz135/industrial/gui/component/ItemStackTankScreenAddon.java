@@ -29,14 +29,14 @@ import com.hrznstudio.titanium.component.fluid.FluidTankComponent;
 import com.hrznstudio.titanium.util.AssetUtil;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.ChatFormatting;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.renderer.texture.AbstractTexture;
 import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.neoforged.neoforge.client.extensions.common.IClientFluidTypeExtensions;
 import net.neoforged.neoforge.common.Tags;
 import net.neoforged.neoforge.fluids.FluidStack;
@@ -64,46 +64,27 @@ public class ItemStackTankScreenAddon extends BasicScreenAddon {
     }
 
     @Override
-    public void drawBackgroundLayer(GuiGraphics guiGraphics, Screen screen, IAssetProvider provider, int guiX, int guiY, int mouseX, int mouseY, float partialTicks) {
+    public void drawBackgroundLayer(GuiGraphicsExtractor guiGraphics, Screen screen, IAssetProvider provider, int guiX, int guiY, int mouseX, int mouseY, float partialTicks) {
         asset = IAssetProvider.getAsset(provider, type.getAssetType());
         Rectangle area = asset.getArea();
-        if (!tank.getFluidInTank(tankSlot).isEmpty()) {
-            FluidStack fluidStack = tank.getFluidInTank(tankSlot);
-            int stored = fluidStack.getAmount();
-            int capacity = tank.getTankCapacity(tankSlot);
-            int topBottomPadding = asset.getFluidRenderPadding(Direction.UP) + asset.getFluidRenderPadding(Direction.DOWN);
-            int offset = (stored * (area.height - topBottomPadding) / capacity);
-            IClientFluidTypeExtensions renderProperties = IClientFluidTypeExtensions.of(fluidStack.getFluid());
-            ResourceLocation flowing = renderProperties.getStillTexture(fluidStack);
-            if (flowing != null) {
-                AbstractTexture texture = screen.getMinecraft().getTextureManager().getTexture(TextureAtlas.LOCATION_BLOCKS); //getAtlasSprite
-                if (texture instanceof TextureAtlas) {
-                    TextureAtlasSprite sprite = ((TextureAtlas) texture).getSprite(flowing);
-                    if (sprite != null) {
-                        RenderSystem.setShaderTexture(0, TextureAtlas.LOCATION_BLOCKS);
-                        Color color = new Color(renderProperties.getTintColor());
-                        RenderSystem.setShaderColor(color.getRed() / 255f, color.getGreen() / 255f, color.getBlue() / 255f, color.getAlpha() / 255f);
-                        RenderSystem.enableBlend();
-                        guiGraphics.blit(
-                                this.getPosX() + guiX + asset.getFluidRenderPadding(Direction.WEST),
-                                this.getPosY() + guiY + asset.getFluidRenderPadding(Direction.UP) + (fluidStack.getFluid().is(Tags.Fluids.GASEOUS) ? 0 : (area.height - topBottomPadding) - offset),
-                                0,
-                                (int) (area.getWidth() - asset.getFluidRenderPadding(Direction.EAST) - asset.getFluidRenderPadding(Direction.WEST)),
-                                offset,
-                                sprite);
-                        RenderSystem.disableBlend();
-                        RenderSystem.setShaderColor(1, 1, 1, 1);
-                    }
-                }
-            }
+        FluidStack fluid = tank.getFluidInTank(tankSlot);
+        int capacity = tank.getTankCapacity(tankSlot);
+        if (!fluid.isEmpty() && capacity > 0) {
+            int usableHeight = area.height - asset.getFluidRenderPadding(Direction.UP) - asset.getFluidRenderPadding(Direction.DOWN);
+            int height = (int) Math.clamp((long) fluid.getAmount() * usableHeight / capacity, 0, usableHeight);
+            var model = screen.getMinecraft().getModelManager().getFluidStateModelSet().get(fluid.getFluid().defaultFluidState());
+            int color = model.fluidTintSource() == null ? -1 : model.fluidTintSource().colorAsStack(fluid);
+            int x = guiX + getPosX() + asset.getFluidRenderPadding(Direction.WEST);
+            int y = guiY + getPosY() + asset.getFluidRenderPadding(Direction.UP);
+            if (!fluid.is(Tags.Fluids.GASEOUS)) y += usableHeight - height;
+            int width = area.width - asset.getFluidRenderPadding(Direction.WEST) - asset.getFluidRenderPadding(Direction.EAST);
+            guiGraphics.blitSprite(net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED, model.stillMaterial().sprite(), x, y, width, height, color);
         }
-        RenderSystem.setShaderColor(1, 1, 1, 1);
-        ITankAsset asset = IAssetProvider.getAsset(provider, type.getAssetType());
         AssetUtil.drawAsset(guiGraphics, screen, asset, guiX + getPosX(), guiY + getPosY());
     }
 
     @Override
-    public void drawForegroundLayer(GuiGraphics stack, Screen screen, IAssetProvider provider, int guiX, int guiY, int mouseX, int mouseY, float partialTicks) {
+    public void drawForegroundLayer(GuiGraphicsExtractor stack, Screen screen, IAssetProvider provider, int guiX, int guiY, int mouseX, int mouseY, float partialTicks) {
 
     }
 

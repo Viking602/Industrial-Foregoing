@@ -27,7 +27,7 @@ import com.buuz135.industrial.utils.IndustrialTags;
 import com.hrznstudio.titanium.component.inventory.SidedInventoryComponent;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.data.recipes.ShapedRecipeBuilder;
+import com.hrznstudio.titanium.recipe.generator.TitaniumShapedRecipeBuilder;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.Item;
@@ -37,7 +37,7 @@ import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.block.Blocks;
 import net.neoforged.neoforge.common.Tags;
-import net.neoforged.neoforge.common.util.INBTSerializable;
+import com.hrznstudio.titanium.nbthandler.INBTSerializable;
 import net.neoforged.neoforge.fluids.FluidStack;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -62,7 +62,7 @@ public class FurnaceGeneratorType implements IMycelialGeneratorType {
 
     @Override
     public List<BiPredicate<ItemStack, Integer>> getSlotInputPredicates() {
-        return Collections.singletonList((stack, slot) -> stack.getBurnTime(RecipeType.SMELTING) > 0);
+        return Collections.singletonList((stack, slot) -> stack.getBurnTime(RecipeType.SMELTING, com.buuz135.industrial.utils.IFAttachments.fuelValues()) > 0);
     }
 
     @Override
@@ -71,21 +71,22 @@ public class FurnaceGeneratorType implements IMycelialGeneratorType {
     }
 
     @Override
-    public boolean canStart(INBTSerializable<CompoundTag>[] inputs) {
+    public boolean canStart(net.neoforged.neoforge.common.util.ValueIOSerializable[] inputs) {
         return inputs.length > 0 && inputs[0] instanceof SidedInventoryComponent && ((SidedInventoryComponent<?>) inputs[0]).getStackInSlot(0).getCount() > 0;
     }
 
     @Override
-    public Pair<Integer, Integer> getTimeAndPowerGeneration(INBTSerializable<CompoundTag>[] inputs) {
+    public Pair<Integer, Integer> getTimeAndPowerGeneration(net.neoforged.neoforge.common.util.ValueIOSerializable[] inputs) {
         if (inputs.length > 0 && inputs[0] instanceof SidedInventoryComponent && ((SidedInventoryComponent<?>) inputs[0]).getStackInSlot(0).getCount() > 0) {
             ItemStack itemstack = ((SidedInventoryComponent) inputs[0]).getStackInSlot(0);
-            int burnTime = itemstack.getBurnTime(RecipeType.SMELTING);
-            if (itemstack.hasCraftingRemainingItem())
-                ((SidedInventoryComponent) inputs[0]).setStackInSlot(0, itemstack.getCraftingRemainingItem());
+            int burnTime = itemstack.getBurnTime(RecipeType.SMELTING, com.buuz135.industrial.utils.IFAttachments.fuelValues());
+            if (!com.buuz135.industrial.compat.MachineItems.getCraftingRemainder(itemstack).isEmpty())
+                ((SidedInventoryComponent) inputs[0]).setStackInSlot(0, com.buuz135.industrial.compat.MachineItems.getCraftingRemainder(itemstack));
             else if (!itemstack.isEmpty()) {
                 itemstack.shrink(1);
+                ((SidedInventoryComponent<?>) inputs[0]).setStackInSlot(0, itemstack);
                 if (itemstack.isEmpty()) {
-                    ((SidedInventoryComponent) inputs[0]).setStackInSlot(0, itemstack.getCraftingRemainingItem());
+                    ((SidedInventoryComponent) inputs[0]).setStackInSlot(0, com.buuz135.industrial.compat.MachineItems.getCraftingRemainder(itemstack));
                 }
             }
             return Pair.of(burnTime, 80);
@@ -110,11 +111,11 @@ public class FurnaceGeneratorType implements IMycelialGeneratorType {
 
     @Override
     public List<MycelialGeneratorRecipe> getRecipes(RegistryAccess registryAccess) {
-        return BuiltInRegistries.ITEM.stream().map(ItemStack::new).filter(stack -> stack.getBurnTime(RecipeType.SMELTING) > 0).map(item -> new MycelialGeneratorRecipe(Collections.singletonList(Collections.singletonList(Ingredient.of(item))), new ArrayList<>(), item.getBurnTime(RecipeType.SMELTING), 80)).collect(Collectors.toList());
+        return BuiltInRegistries.ITEM.stream().map(ItemStack::new).filter(stack -> stack.getBurnTime(RecipeType.SMELTING, com.buuz135.industrial.utils.IFAttachments.fuelValues()) > 0).map(item -> new MycelialGeneratorRecipe(Collections.singletonList(Collections.singletonList(com.buuz135.industrial.compat.Ingredients.of(item))), new ArrayList<>(), item.getBurnTime(RecipeType.SMELTING, com.buuz135.industrial.utils.IFAttachments.fuelValues()), 80)).collect(Collectors.toList());
     }
 
     @Override
-    public ShapedRecipeBuilder addIngredients(ShapedRecipeBuilder recipeBuilder) {
+    public TitaniumShapedRecipeBuilder addIngredients(TitaniumShapedRecipeBuilder recipeBuilder) {
         recipeBuilder = recipeBuilder.define('B', Tags.Items.STORAGE_BLOCKS_COAL)
                 .define('C', Blocks.FURNACE)
                 .define('M', IndustrialTags.Items.MACHINE_FRAME_SIMPLE);

@@ -1,0 +1,13 @@
+{
+  "name": "生物燃油（流体）",
+  "icon": "industrialforegoing:biofuel_bucket",
+  "category": "industrialforegoing:generators",
+  "sortnum": 1,
+  "read_by_default": true,
+  "pages": [
+    {
+      "type": "text",
+      "text": "在$(l:generators/bioreactor)生物质炉$()中，以植物、染料以及头颅等可疑材料制成的紫色流体。$(br2)可供$(l:generators/biofuel_generator)生物燃油发电机$()和$(l:tools/infinity_tools)无限工具$()使用。"
+    }
+  ]
+}

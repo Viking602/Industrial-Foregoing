@@ -54,10 +54,10 @@ import net.minecraft.core.Direction;
 import net.minecraft.data.recipes.RecipeOutput;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.InteractionResultHolder;
+
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.EquipmentSlotGroup;
 import net.minecraft.world.entity.LivingEntity;
@@ -68,7 +68,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.UseAnim;
+import net.minecraft.world.item.ItemUseAnimation;
 import net.minecraft.world.item.component.ItemAttributeModifiers;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.item.enchantment.Enchantments;
@@ -100,7 +100,7 @@ public class ItemInfinity extends IFCustomItem implements MenuProvider, IButtonH
     private boolean usesArea;
 
     public ItemInfinity(String name, TitaniumTab group, Properties builder, int powerConsumption, int biofuelConsumption, boolean usesDepth) {
-        super(name, group, builder);
+        super(name, group, builder.enchantable(50).component(IFAttachments.INFINITY_ITEM_POWER.get(), 0L).component(IFAttachments.INFINITY_ITEM_SPECIAL.get(), false).component(IFAttachments.INFINITY_ITEM_SELECTED_TIER.get(), InfinityTier.POOR).component(IFAttachments.INFINITY_ITEM_CAN_CHARGE.get(), true));
         this.powerConsumption = powerConsumption;
         this.biofuelConsumption = biofuelConsumption;
         this.usesDepth = usesDepth;
@@ -135,15 +135,6 @@ public class ItemInfinity extends IFCustomItem implements MenuProvider, IButtonH
         stack.set(IFAttachments.INFINITY_ITEM_CAN_CHARGE, true);
     }
 
-    @Override
-    public void verifyComponentsAfterLoad(ItemStack stack) {
-        super.verifyComponentsAfterLoad(stack);
-        if (!stack.has(IFAttachments.INFINITY_ITEM_POWER)) stack.set(IFAttachments.INFINITY_ITEM_POWER, 0L);
-        if (!stack.has(IFAttachments.INFINITY_ITEM_SPECIAL)) stack.set(IFAttachments.INFINITY_ITEM_SPECIAL, false);
-        if (!stack.has(IFAttachments.INFINITY_ITEM_SELECTED_TIER))
-            stack.set(IFAttachments.INFINITY_ITEM_SELECTED_TIER, InfinityTier.getTierBraquet(0).getLeft());
-        if (!stack.has(IFAttachments.INFINITY_ITEM_CAN_CHARGE)) stack.set(IFAttachments.INFINITY_ITEM_CAN_CHARGE, true);
-    }
 
     @Override
     public void addToTab(BuildCreativeModeTabContentsEvent event) {
@@ -159,23 +150,15 @@ public class ItemInfinity extends IFCustomItem implements MenuProvider, IButtonH
         return stack;
     }
 
+
+
     @Override
-    public boolean isEnchantable(ItemStack stack) {
-        return true;
+    public ItemUseAnimation getUseAnimation(ItemStack p_77661_1_) {
+        return ItemUseAnimation.BOW;
     }
 
     @Override
-    public int getEnchantmentValue() {
-        return 50;
-    }
-
-    @Override
-    public UseAnim getUseAnimation(ItemStack p_77661_1_) {
-        return UseAnim.BOW;
-    }
-
-    @Override
-    public boolean onEntitySwing(ItemStack stack, LivingEntity entity) {
+    public boolean onEntitySwing(ItemStack stack, LivingEntity entity, InteractionHand hand) {
         return true;
     }
 
@@ -197,7 +180,7 @@ public class ItemInfinity extends IFCustomItem implements MenuProvider, IButtonH
     @Override
     public int getBarWidth(ItemStack stack) {
         Supplier<Supplier<Boolean>> checker = () -> () -> false;
-        if (FMLEnvironment.dist.isClient()) checker = () -> Screen::hasShiftDown;
+        if (FMLEnvironment.getDist().isClient()) checker = () -> net.minecraft.client.Minecraft.getInstance()::hasShiftDown;
         if (!checker.get().get()) { //hasShiftDown
             int fuel = getFuelFromStack(stack);
             return (int) Math.round(fuel * 13D / 1_000_000D);
@@ -210,7 +193,7 @@ public class ItemInfinity extends IFCustomItem implements MenuProvider, IButtonH
     @Override
     public int getBarColor(ItemStack p_150901_) {
         Supplier<Supplier<Boolean>> checker = () -> () -> false;
-        if (FMLEnvironment.dist.isClient()) checker = () -> Screen::hasShiftDown;
+        if (FMLEnvironment.getDist().isClient()) checker = () -> net.minecraft.client.Minecraft.getInstance()::hasShiftDown;
         return !checker.get().get() ? 0xcb00ff /*Purple*/ : 0x00d0ff /*Cyan*/;
     }
 
@@ -221,7 +204,7 @@ public class ItemInfinity extends IFCustomItem implements MenuProvider, IButtonH
 
     public int getFuelFromStack(ItemStack stack) {
         int fuelAmount = 0;
-        var capability = stack.getCapability(Capabilities.FluidHandler.ITEM);
+        var capability = com.buuz135.industrial.compat.MachineCapabilities.fluids(stack);
         if (capability != null) {
             for (int i = 0; i < capability.getTanks(); i++) {
                 if (capability.getFluidInTank(i).is(ModuleCore.BIOFUEL.getSourceFluid())) {
@@ -252,7 +235,7 @@ public class ItemInfinity extends IFCustomItem implements MenuProvider, IButtonH
     public void consumeFuel(ItemStack stack) {
         int level = EnchantmentHelper.getItemEnchantmentLevel(IFAttachments.registryAccess().holderOrThrow(Enchantments.UNBREAKING), stack);
         if (getFuelFromStack(stack) >= biofuelConsumption * (1D / (level + 1))) {
-            var capability = stack.getCapability(Capabilities.FluidHandler.ITEM);
+            var capability = com.buuz135.industrial.compat.MachineCapabilities.fluids(stack);
             if (capability != null) {
                 for (int i = 0; i < capability.getTanks(); i++) {
                     if (capability.getFluidInTank(i).is(ModuleCore.BIOFUEL.getSourceFluid())) {
@@ -313,14 +296,14 @@ public class ItemInfinity extends IFCustomItem implements MenuProvider, IButtonH
     @Override
     public ItemAttributeModifiers getDefaultAttributeModifiers(ItemStack stack) {
         var attributes = super.getDefaultAttributeModifiers(stack);
-        attributes = attributes.withModifierAdded(Attributes.ATTACK_DAMAGE, new AttributeModifier(ResourceLocation.fromNamespaceAndPath(Reference.MOD_ID, "base_attack_damage"), 3, AttributeModifier.Operation.ADD_VALUE), EquipmentSlotGroup.ANY);
-        attributes = attributes.withModifierAdded(Attributes.ATTACK_SPEED, new AttributeModifier(ResourceLocation.fromNamespaceAndPath(Reference.MOD_ID, "base_attack_speed"), -2.5D, AttributeModifier.Operation.ADD_VALUE), EquipmentSlotGroup.ANY);
+        attributes = attributes.withModifierAdded(Attributes.ATTACK_DAMAGE, new AttributeModifier(Identifier.fromNamespaceAndPath(Reference.MOD_ID, "base_attack_damage"), 3, AttributeModifier.Operation.ADD_VALUE), EquipmentSlotGroup.ANY);
+        attributes = attributes.withModifierAdded(Attributes.ATTACK_SPEED, new AttributeModifier(Identifier.fromNamespaceAndPath(Reference.MOD_ID, "base_attack_speed"), -2.5D, AttributeModifier.Operation.ADD_VALUE), EquipmentSlotGroup.ANY);
         return attributes;
     }
 
     @Override
     public Component getDisplayName() {
-        return getDescription().copy().withStyle(ChatFormatting.DARK_GRAY);
+        return Component.translatable(getDescriptionId()).withStyle(ChatFormatting.DARK_GRAY);
     }
 
     @Nullable
@@ -335,14 +318,14 @@ public class ItemInfinity extends IFCustomItem implements MenuProvider, IButtonH
     }
 
     @Override
-    public InteractionResultHolder<ItemStack> use(Level worldIn, Player player, InteractionHand handIn) {
+    public net.minecraft.world.InteractionResult use(Level worldIn, Player player, InteractionHand handIn) {
         if (player.isCrouching()) {
             if (player instanceof ServerPlayer) {
-                IndustrialForegoing.NETWORK.sendTo(new BackpackOpenedMessage(player.getInventory().selected, PlayerInventoryFinder.MAIN), ((ServerPlayer) player));
+                IndustrialForegoing.NETWORK.sendTo(new BackpackOpenedMessage(player.getInventory().getSelectedSlot(), PlayerInventoryFinder.MAIN), ((ServerPlayer) player));
                 player.openMenu(this, buffer ->
                         LocatorFactory.writePacketBuffer(buffer, new HeldStackLocatorInstance(handIn == InteractionHand.MAIN_HAND)));
             }
-            return InteractionResultHolder.success(player.getItemInHand(handIn));
+            return net.minecraft.world.InteractionResult.SUCCESS;
         }
         if (IndustrialForegoing.CAT_EARS.getPlayers().contains(player.getUUID())) {
             player.getItemInHand(handIn).set(IFAttachments.INFINITY_ITEM_SPECIAL, true);
@@ -378,10 +361,9 @@ public class ItemInfinity extends IFCustomItem implements MenuProvider, IButtonH
 
     }
 
-    @OnlyIn(Dist.CLIENT)
     @Override
-    public List<IFactory<? extends IScreenAddon>> getScreenAddons(Supplier<ItemStack> stack) {
-        List<IFactory<? extends IScreenAddon>> factory = new ArrayList<>();
+    public List<IFactory<?>> getScreenAddons(Supplier<ItemStack> stack) {
+        List<IFactory<?>> factory = new ArrayList<>();
         factory.add(() -> new ArrowButtonScreenAddon((ArrowButtonComponent) new ArrowButtonComponent(154, 20, 14, 14, FacingUtil.Sideness.RIGHT).setId(2)));
         factory.add(() -> new ArrowButtonScreenAddon((ArrowButtonComponent) new ArrowButtonComponent(54, 20, 14, 14, FacingUtil.Sideness.LEFT).setId(1)));
         factory.add(() -> new TextScreenAddon("", 54 + 14 + 4, 24, false) {

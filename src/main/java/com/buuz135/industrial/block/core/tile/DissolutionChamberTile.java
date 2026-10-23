@@ -32,7 +32,7 @@ import com.hrznstudio.titanium.component.energy.EnergyStorageComponent;
 import com.hrznstudio.titanium.component.fluid.FluidTankComponent;
 import com.hrznstudio.titanium.component.fluid.SidedFluidTankComponent;
 import com.hrznstudio.titanium.component.inventory.SidedInventoryComponent;
-import com.hrznstudio.titanium.util.RecipeUtil;
+import com.buuz135.industrial.compat.MachineRecipes;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.entity.player.Player;
@@ -43,7 +43,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
-import net.neoforged.neoforge.items.ItemHandlerHelper;
+import com.buuz135.industrial.compat.MachineItems;
 import org.apache.commons.lang3.tuple.Pair;
 
 import javax.annotation.Nonnull;
@@ -76,7 +76,7 @@ public class DissolutionChamberTile extends IndustrialProcessingTile<Dissolution
                 setComponentHarness(this).
                 setInputFilter(((stack, integer) -> !canIncrease())).
                 setOnSlotChanged((stack, integer) -> checkForRecipe()), 100, 64, false));
-        this.addTank(this.inputFluid = (SidedFluidTankComponent<DissolutionChamberTile>) new SidedFluidTankComponent<DissolutionChamberTile>("input_fluid", DissolutionChamberConfig.maxInputTankSize, 33 + slotSpacing, 18 + slotSpacing, 1).
+        this.addTank(this.inputFluid = (SidedFluidTankComponent<DissolutionChamberTile>) new com.buuz135.industrial.compat.MachineFluidTank<DissolutionChamberTile>("input_fluid", DissolutionChamberConfig.maxInputTankSize, 33 + slotSpacing, 18 + slotSpacing, 1).
                 setColor(DyeColor.LIME).
                 setTankType(FluidTankComponent.Type.SMALL).
                 setComponentHarness(this).
@@ -87,7 +87,7 @@ public class DissolutionChamberTile extends IndustrialProcessingTile<Dissolution
                 setRange(1, 3).
                 setInputFilter((stack, integer) -> false).
                 setComponentHarness(this));
-        this.addTank(this.outputFluid = (SidedFluidTankComponent<DissolutionChamberTile>) new SidedFluidTankComponent<DissolutionChamberTile>("output_fluid", DissolutionChamberConfig.maxOutputTankSize, 149, 20, 3).
+        this.addTank(this.outputFluid = (SidedFluidTankComponent<DissolutionChamberTile>) new com.buuz135.industrial.compat.MachineFluidTank<DissolutionChamberTile>("output_fluid", DissolutionChamberConfig.maxOutputTankSize, 149, 20, 3).
                 setColor(DyeColor.MAGENTA).
                 setComponentHarness(this).
                 setTankAction(FluidTankComponent.Action.DRAIN));
@@ -100,7 +100,7 @@ public class DissolutionChamberTile extends IndustrialProcessingTile<Dissolution
             if (currentRecipe != null && currentRecipe.matches(input.getInventory(), inputFluid)) {
                 return;
             }
-            currentRecipe = RecipeUtil.getRecipes(this.level, (RecipeType<DissolutionChamberRecipe>) ModuleCore.DISSOLUTION_TYPE.get()).stream().filter(dissolutionChamberRecipe -> dissolutionChamberRecipe.matches(input.getInventory(), inputFluid)).findFirst().orElse(null);
+            currentRecipe = MachineRecipes.getRecipes(this.level, (RecipeType<DissolutionChamberRecipe>) ModuleCore.DISSOLUTION_TYPE.get()).stream().filter(dissolutionChamberRecipe -> dissolutionChamberRecipe.matches(input.getInventory(), inputFluid)).findFirst().orElse(null);
         }
     }
 
@@ -118,7 +118,7 @@ public class DissolutionChamberTile extends IndustrialProcessingTile<Dissolution
 
     @Override
     public boolean canIncrease() {
-        return currentRecipe != null && ItemHandlerHelper.insertItem(output, currentRecipe.output.orElse(ItemStack.EMPTY).copy(), true).isEmpty() && (currentRecipe.outputFluid.isEmpty() || outputFluid.fillForced(currentRecipe.outputFluid.orElse(FluidStack.EMPTY).copy(), IFluidHandler.FluidAction.SIMULATE) == currentRecipe.outputFluid.orElse(FluidStack.EMPTY).getAmount());
+        return currentRecipe != null && MachineItems.insertItem(output, currentRecipe.output().orElse(ItemStack.EMPTY).copy(), true).isEmpty() && (currentRecipe.outputFluid().isEmpty() || com.buuz135.industrial.compat.MachineFluids.fillForced(outputFluid, currentRecipe.outputFluid().orElse(FluidStack.EMPTY).copy(), IFluidHandler.FluidAction.SIMULATE) == currentRecipe.outputFluid().orElse(FluidStack.EMPTY).getAmount());
     }
 
     @Override
@@ -129,15 +129,17 @@ public class DissolutionChamberTile extends IndustrialProcessingTile<Dissolution
                 // check the tank fluid is in ingredient
                 boolean flag = dissolutionChamberRecipe.inputFluid.test(inputFluid.getFluid());
                 if (flag) {
-                    inputFluid.drainForced(inputFluid.getFluid().copyWithAmount(dissolutionChamberRecipe.inputFluid.amount()), IFluidHandler.FluidAction.EXECUTE);
+                    com.buuz135.industrial.compat.MachineFluids.drainForced(inputFluid, inputFluid.getFluid().copyWithAmount(dissolutionChamberRecipe.inputFluid.amount()), IFluidHandler.FluidAction.EXECUTE);
                     for (int i = 0; i < input.getInventory().getSlots(); i++) {
-                        input.getInventory().getStackInSlot(i).shrink(1);
+                        com.buuz135.industrial.compat.MachineItems.shrink(input.getInventory(), i, 1);
                     }
-                    if (dissolutionChamberRecipe.outputFluid.isPresent() && !dissolutionChamberRecipe.outputFluid.get().isEmpty())
-                        outputFluid.fillForced(dissolutionChamberRecipe.outputFluid.get().copy(), IFluidHandler.FluidAction.EXECUTE);
-                    ItemStack outputStack = dissolutionChamberRecipe.output.get().copy();
-                    outputStack.getItem().onCraftedBy(outputStack, this.level, null);
-                    ItemHandlerHelper.insertItem(output, outputStack, false);
+                    if (dissolutionChamberRecipe.outputFluid().isPresent() && !dissolutionChamberRecipe.outputFluid().get().isEmpty())
+                        com.buuz135.industrial.compat.MachineFluids.fillForced(outputFluid, dissolutionChamberRecipe.outputFluid().get().copy(), IFluidHandler.FluidAction.EXECUTE);
+                    dissolutionChamberRecipe.output().ifPresent(result -> {
+                        ItemStack outputStack = result.copy();
+                        outputStack.getItem().onCraftedPostProcess(outputStack, this.level);
+                        MachineItems.insertItem(output, outputStack, false);
+                    });
                     checkForRecipe();
                 }
             }
@@ -191,11 +193,11 @@ public class DissolutionChamberTile extends IndustrialProcessingTile<Dissolution
     @Override
     public void loadSettings(Player player, CompoundTag tag) {
         if (tag.contains("DC_locked")) {
-            input.setLocked(tag.getBoolean("DC_locked"));
+            input.setLocked(tag.getBooleanOr("DC_locked", false));
         }
         if (tag.contains("DC_filter")) {
-            for (String psFilter : tag.getCompound("DC_filter").getAllKeys()) {
-                input.getFilter()[Integer.parseInt(psFilter)] = ItemStack.parseOptional(this.level.registryAccess(), tag.getCompound("DC_filter").getCompound(psFilter));
+            for (String psFilter : tag.getCompoundOrEmpty("DC_filter").keySet()) {
+                input.getFilter()[Integer.parseInt(psFilter)] = com.buuz135.industrial.compat.ItemNbt.parseOptional(this.level.registryAccess(), tag.getCompoundOrEmpty("DC_filter").getCompoundOrEmpty(psFilter));
             }
         }
         super.loadSettings(player, tag);
@@ -206,7 +208,7 @@ public class DissolutionChamberTile extends IndustrialProcessingTile<Dissolution
         tag.putBoolean("DC_locked", input.isLocked());
         CompoundTag filterTag = new CompoundTag();
         for (int i = 0; i < input.getFilter().length; i++) {
-            filterTag.put(i + "", input.getFilter()[i].saveOptional(this.level.registryAccess()));
+            filterTag.put(i + "", com.buuz135.industrial.compat.ItemNbt.saveOptional(input.getFilter()[i], this.level.registryAccess()));
         }
         tag.put("DC_filter", filterTag);
         super.saveSettings(player, tag);

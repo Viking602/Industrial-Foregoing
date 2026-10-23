@@ -32,7 +32,7 @@ import com.buuz135.industrial.utils.Reference;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
 
 import java.util.List;
@@ -53,9 +53,9 @@ public abstract class FilteredTransporterType<TYPE, CAP> extends TransporterType
     public void handleButtonInteraction(int buttonId, CompoundTag compound) {
         if (buttonId >= 0 && buttonId < filter.getFilterSlots().length) {
             if (compound.contains("Amount")) {
-                this.filter.getFilterSlots()[buttonId].increaseAmount(compound.getInt("Amount"));
+                this.filter.getFilterSlots()[buttonId].increaseAmount(compound.getIntOr("Amount", 0));
             } else {
-                this.filter.setFilter(buttonId, ItemStack.parseOptional(IFAttachments.registryAccess(), compound));
+                this.filter.setFilter(buttonId, com.buuz135.industrial.compat.ItemNbt.parseOptional(IFAttachments.registryAccess(), compound));
             }
             this.getContainer().requestSync();
         }
@@ -81,7 +81,7 @@ public abstract class FilteredTransporterType<TYPE, CAP> extends TransporterType
             }
         });
 
-        ResourceLocation res = ResourceLocation.fromNamespaceAndPath(Reference.MOD_ID, "textures/gui/machines.png");
+        Identifier res = Identifier.fromNamespaceAndPath(Reference.MOD_ID, "textures/gui/machines.png");
         componentList.add(new TexturedStateButtonGuiComponent(16, 133, 20, 18, 18,
                 new StateButtonInfo(0, res, 1, 214, new String[]{"whitelist"}),
                 new StateButtonInfo(1, res, 20, 214, new String[]{"blacklist"})) {
@@ -111,7 +111,7 @@ public abstract class FilteredTransporterType<TYPE, CAP> extends TransporterType
     @Override
     public void deserializeNBT(HolderLookup.Provider provider, CompoundTag nbt) {
         super.deserializeNBT(provider, nbt);
-        if (nbt.contains("Filter")) filter.deserializeNBT(provider, nbt.getCompound("Filter"));
+        if (nbt.contains("Filter")) filter.deserializeNBT(provider, nbt.getCompoundOrEmpty("Filter"));
     }
 
     public RegulatorFilter<TYPE, CAP> getFilter() {

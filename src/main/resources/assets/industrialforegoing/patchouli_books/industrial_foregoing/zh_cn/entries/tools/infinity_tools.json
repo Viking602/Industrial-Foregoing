@@ -1,0 +1,25 @@
+{
+  "name": "无限工具",
+  "icon": "industrialforegoing:infinity_drill",
+  "category": "industrialforegoing:tools",
+  "sortnum": 2,
+  "read_by_default": true,
+  "pages": [
+    {
+      "type": "text",
+      "text": "无限工具的原则很简单：储存的能量越多，性能越强。更高层级还可能解锁特殊效果。装入$(l:generators/biofuel)生物燃油$()后，使用时会优先消耗燃油，提高能效。$(br2)按住$(6)潜行键并右键$()，可打开工具界面。"
+    },
+    {
+      "type": "text",
+      "text": "可以在工具界面中关闭$(6)充电$()。$(br2)共有七个层级：$(li)简陋$(li)普通$(li)少见$(li)稀有$(li)史诗$(li)传奇$(li)神器$(br2)所有无限工具都会将掉落物传送到玩家身边。"
+    },
+    {
+      "type": "text",
+      "text": "成为上游作者的 Patreon 赞助者，可获得特殊的$(6)闪亮$()工具外观奖励。"
+    },
+    {
+      "type": "industrialforegoing:dissolution",
+      "recipe": "industrialforegoing:dissolution_chamber/infinity_drill"
+    }
+  ]
+}

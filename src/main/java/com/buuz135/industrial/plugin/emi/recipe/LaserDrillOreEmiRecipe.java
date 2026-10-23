@@ -15,7 +15,7 @@ import net.minecraft.core.Holder;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.ItemStack;
@@ -37,7 +37,7 @@ public class LaserDrillOreEmiRecipe extends CustomEmiRecipe {
     public LaserDrillOreEmiRecipe(RecipeHolder<LaserDrillOreRecipe> recipe) {
         super(recipe.id(), IFEmiPlugin.LASER_DRILL_ORE_EMI_CATEGORY,
                 List.of(),
-                Arrays.stream(recipe.value().output.getItems()).map(EmiStack::of).toList());
+                Arrays.stream(recipe.value().output.items().map(net.minecraft.world.item.ItemStack::new).toArray(net.minecraft.world.item.ItemStack[]::new)).map(EmiStack::of).toList());
         this.recipe = recipe;
     }
 
@@ -53,7 +53,7 @@ public class LaserDrillOreEmiRecipe extends CustomEmiRecipe {
 
     @Override
     public List<EmiIngredient> getCatalysts() {
-        return List.of(EmiIngredient.of(this.recipe.value().catalyst));
+        return List.of(Emicom.buuz135.industrial.compat.Ingredients.of(this.recipe.value().catalyst));
     }
 
     @Override
@@ -67,10 +67,10 @@ public class LaserDrillOreEmiRecipe extends CustomEmiRecipe {
             int recipeWidth = 82 + 35 + 35;
             RenderSystem.enableBlend();
 
-            var toasts = ResourceLocation.fromNamespaceAndPath("minecraft", "toast/tree");
+            var toasts = Identifier.fromNamespaceAndPath("minecraft", "toast/tree");
             draw.blitSprite(toasts, recipeWidth / 10 * 2, 30 + (Minecraft.getInstance().font.lineHeight + 2) * 4, 20, 20);
             draw.blitSprite(toasts, recipeWidth / 10 * 7, 30 + (Minecraft.getInstance().font.lineHeight + 2) * 4, 20, 20);
-            var icons = ResourceLocation.fromNamespaceAndPath("neoforge", "textures/gui/icons.png");
+            var icons = Identifier.fromNamespaceAndPath("neoforge", "textures/gui/icons.png");
             draw.blit(icons, recipeWidth / 10 * 7 + 1, 30 + (Minecraft.getInstance().font.lineHeight + 2) * 4 + 3, 0, 16, 16, 16);
 
             String minY = Component.translatable("text.industrialforegoing.miny").getString() + " " + recipe.value().rarity.get(recipe.value().pointer).depth_min();
@@ -78,16 +78,16 @@ public class LaserDrillOreEmiRecipe extends CustomEmiRecipe {
             String wight = Component.translatable("text.industrialforegoing.weight").getString() + " " + recipe.value().rarity.get(recipe.value().pointer).weight();
             String biomes = Component.translatable("text.industrialforegoing.requirements").getString();
 
-            draw.drawString(Minecraft.getInstance().font, ChatFormatting.DARK_GRAY + minY, recipeWidth / 10, 30, 0, false);
-            draw.drawString(Minecraft.getInstance().font, ChatFormatting.DARK_GRAY + maxY, recipeWidth / 10 * 6, 30, 0, false);
-            draw.drawString(Minecraft.getInstance().font, ChatFormatting.DARK_GRAY + wight, recipeWidth / 10, 30 + (Minecraft.getInstance().font.lineHeight + 2), 0, false);
+            draw.text(Minecraft.getInstance().font, ChatFormatting.DARK_GRAY + minY, recipeWidth / 10, 30, 0, false);
+            draw.text(Minecraft.getInstance().font, ChatFormatting.DARK_GRAY + maxY, recipeWidth / 10 * 6, 30, 0, false);
+            draw.text(Minecraft.getInstance().font, ChatFormatting.DARK_GRAY + wight, recipeWidth / 10, 30 + (Minecraft.getInstance().font.lineHeight + 2), 0, false);
             if (recipe.value().entityData.isPresent()) {
                 EntityIngredient entityIngredient = recipe.value().entityData.get().getEntity();
-                String name = entityIngredient.isTag() ? "#" + entityIngredient.tag().location() : entityIngredient.getType().getDescription().getString();
+                String name = entityIngredient.isTag() ? "#" + entityIngredient.tag().identifier() : entityIngredient.getType().getDescription().getString();
                 String entity = Component.translatable("text.industrialforegoing.jei.recipe.over").getString() + name;
-                draw.drawString(Minecraft.getInstance().font, ChatFormatting.DARK_GRAY + entity, recipeWidth / 10, 30 + (Minecraft.getInstance().font.lineHeight + 2) * 2, 0, false);
+                draw.text(Minecraft.getInstance().font, ChatFormatting.DARK_GRAY + entity, recipeWidth / 10, 30 + (Minecraft.getInstance().font.lineHeight + 2) * 2, 0, false);
             }
-            draw.drawString(Minecraft.getInstance().font, ChatFormatting.DARK_GRAY + "" + ChatFormatting.UNDERLINE + biomes, recipeWidth / 2 - Minecraft.getInstance().font.width(biomes) / 2, 30 + (Minecraft.getInstance().font.lineHeight + 2) * 3, 0, false);
+            draw.text(Minecraft.getInstance().font, ChatFormatting.DARK_GRAY + "" + ChatFormatting.UNDERLINE + biomes, recipeWidth / 2 - Minecraft.getInstance().font.width(biomes) / 2, 30 + (Minecraft.getInstance().font.lineHeight + 2) * 3, 0, false);
 
             SlotsScreenAddon.drawAsset(draw, Minecraft.getInstance().screen, DefaultAssetProvider.DEFAULT_PROVIDER, 37, 6, 0, 0, 1, integer -> Pair.of(0, 0), integer -> ItemStack.EMPTY, true, integer -> new Color(DyeColor.YELLOW.getFireworkColor()), integer -> true, 1);
             SlotsScreenAddon.drawAsset(draw, Minecraft.getInstance().screen, DefaultAssetProvider.DEFAULT_PROVIDER, 60 + 37, 6, 0, 0, 1, integer -> Pair.of(0, 0), integer -> ItemStack.EMPTY, true, integer -> new Color(DyeColor.ORANGE.getFireworkColor()), integer -> true, 1);
@@ -118,7 +118,7 @@ public class LaserDrillOreEmiRecipe extends CustomEmiRecipe {
         }
         if (recipe.entityData.isPresent()) {
             EntityIngredient entityIngredient = recipe.entityData.get().getEntity();
-            String name = entityIngredient.isTag() ? "#" + entityIngredient.tag().location() : entityIngredient.getType().getDescription().getString();
+            String name = entityIngredient.isTag() ? "#" + entityIngredient.tag().identifier() : entityIngredient.getType().getDescription().getString();
             String text = Component.translatable("text.industrialforegoing.jei.recipe.over").getString() + name;
             int width = Minecraft.getInstance().font.width(text);
             if (mouseX > 12 && mouseX < 12 + width + 4 && mouseY > 28 + (Minecraft.getInstance().font.lineHeight + 2) * 2 && mouseY < 28 + (Minecraft.getInstance().font.lineHeight + 2) * 3) {
@@ -134,7 +134,7 @@ public class LaserDrillOreEmiRecipe extends CustomEmiRecipe {
                 tooltip.add(Component.literal(Component.translatable("text.industrialforegoing.jei.recipe.any").getString()));
             else {
                 for (ResourceKey<DimensionType> registryKey : recipe.rarity.get(recipe.pointer).dimensionRarity().whitelist()) {
-                    tooltip.add(Component.literal("- " + WordUtils.capitalize(Arrays.stream(registryKey.location().getPath().split("_")).reduce((string, string2) -> string + " " + string2).get())));
+                    tooltip.add(Component.literal("- " + WordUtils.capitalize(Arrays.stream(registryKey.identifier().getPath().split("_")).reduce((string, string2) -> string + " " + string2).get())));
                 }
             }
             tooltip.add(Component.empty());
@@ -143,8 +143,8 @@ public class LaserDrillOreEmiRecipe extends CustomEmiRecipe {
                 tooltip.add(Component.literal(Component.translatable("text.industrialforegoing.jei.recipe.any").getString()));
             else {
                 for (TagKey<Biome> registryKey : recipe.rarity.get(recipe.pointer).biomeRarity().whitelist()) {
-                    for (Holder<Biome> biomeHolder : Minecraft.getInstance().level.registryAccess().registryOrThrow(Registries.BIOME).getTagOrEmpty(registryKey)) {
-                        tooltip.add(Component.literal("- ").append(Component.translatable("biome." + biomeHolder.getKey().location().getNamespace() + "." + biomeHolder.getKey().location().getPath())));
+                    for (Holder<Biome> biomeHolder : Minecraft.getInstance().level.registryAccess().lookupOrThrow(Registries.BIOME).getTagOrEmpty(registryKey)) {
+                        tooltip.add(Component.literal("- ").append(Component.translatable("biome." + biomeHolder.getKey().identifier().getNamespace() + "." + biomeHolder.getKey().identifier().getPath())));
                     }
                 }
             }
@@ -155,7 +155,7 @@ public class LaserDrillOreEmiRecipe extends CustomEmiRecipe {
                 tooltip.add(Component.literal(Component.translatable("text.industrialforegoing.jei.recipe.none").getString()));
             else {
                 for (ResourceKey<DimensionType> registryKey : recipe.rarity.get(recipe.pointer).dimensionRarity().blacklist()) {
-                    tooltip.add(Component.literal("- " + WordUtils.capitalize(Arrays.stream(registryKey.location().getPath().split("_")).reduce((string, string2) -> string + " " + string2).get())));
+                    tooltip.add(Component.literal("- " + WordUtils.capitalize(Arrays.stream(registryKey.identifier().getPath().split("_")).reduce((string, string2) -> string + " " + string2).get())));
                 }
             }
             tooltip.add(Component.empty());
@@ -164,8 +164,8 @@ public class LaserDrillOreEmiRecipe extends CustomEmiRecipe {
                 tooltip.add(Component.literal(Component.translatable("text.industrialforegoing.jei.recipe.none").getString()));
             else {
                 for (TagKey<Biome> registryKey : recipe.rarity.get(recipe.pointer).biomeRarity().blacklist()) {
-                    for (Holder<Biome> biomeHolder : Minecraft.getInstance().level.registryAccess().registryOrThrow(Registries.BIOME).getTagOrEmpty(registryKey)) {
-                        tooltip.add(Component.literal("- ").append(Component.translatable("biome." + biomeHolder.getKey().location().getNamespace() + "." + biomeHolder.getKey().location().getPath())));
+                    for (Holder<Biome> biomeHolder : Minecraft.getInstance().level.registryAccess().lookupOrThrow(Registries.BIOME).getTagOrEmpty(registryKey)) {
+                        tooltip.add(Component.literal("- ").append(Component.translatable("biome." + biomeHolder.getKey().identifier().getNamespace() + "." + biomeHolder.getKey().identifier().getPath())));
                     }
                 }
             }

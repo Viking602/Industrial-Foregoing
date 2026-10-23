@@ -66,7 +66,7 @@ import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.InteractionResultHolder;
+
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.ExperienceOrb;
 import net.minecraft.world.entity.item.ItemEntity;
@@ -94,12 +94,12 @@ import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.common.Tags;
-import net.neoforged.neoforge.common.util.TriState;
+import net.minecraft.util.TriState;
 import net.neoforged.neoforge.event.entity.player.ItemEntityPickupEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerXpEvent;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
-import net.neoforged.neoforge.items.ItemHandlerHelper;
+import com.buuz135.industrial.compat.MachineItems;
 
 import javax.annotation.Nullable;
 import java.text.NumberFormat;
@@ -150,7 +150,7 @@ public class ItemInfinityBackpack extends ItemInfinity {
                 ItemStack stack = target.getFinder().getStackGetter().apply(pickupXp.getEntity(), target.getSlot());
                 if (!stack.isEmpty()) {
                     if (stack.getItem() instanceof ItemInfinityBackpack && (getPickUpMode(stack) == 2 || getPickUpMode(stack) == 0)) {
-                        var handlerItem = stack.getCapability(Capabilities.FluidHandler.ITEM);
+                        var handlerItem = com.buuz135.industrial.compat.MachineCapabilities.fluids(stack);
                         if (handlerItem != null) {
                             ExperienceOrb entity = pickupXp.getOrb();
                             if (handlerItem.fill(new FluidStack(ModuleCore.ESSENCE.getSourceFluid().get(), entity.getValue() * 20), IFluidHandler.FluidAction.SIMULATE) > 0) {
@@ -238,7 +238,7 @@ public class ItemInfinityBackpack extends ItemInfinity {
     }
 
     @Override
-    public InteractionResultHolder<ItemStack> use(Level worldIn, Player player, InteractionHand handIn) {
+    public net.minecraft.world.InteractionResult use(Level worldIn, Player player, InteractionHand handIn) {
         ItemStack stack = player.getItemInHand(handIn);
         if (player instanceof ServerPlayer serverPlayer) {
             if (!stack.has(IFAttachments.INFINITY_BACKPACK_ID)) {
@@ -247,11 +247,11 @@ public class ItemInfinityBackpack extends ItemInfinity {
                 stack.set(IFAttachments.INFINITY_BACKPACK_ID, id.toString());
             }
             String id = stack.get(IFAttachments.INFINITY_BACKPACK_ID);
-            IndustrialForegoing.NETWORK.sendTo(new BackpackOpenedMessage(player.getInventory().selected, PlayerInventoryFinder.MAIN), serverPlayer);
+            IndustrialForegoing.NETWORK.sendTo(new BackpackOpenedMessage(player.getInventory().getSelectedSlot(), PlayerInventoryFinder.MAIN), serverPlayer);
             sync(worldIn, id, serverPlayer);
             serverPlayer.openMenu(this, buffer ->
                     LocatorFactory.writePacketBuffer(buffer, new HeldStackLocatorInstance(handIn == InteractionHand.MAIN_HAND)));
-            return InteractionResultHolder.success(player.getItemInHand(handIn));
+            return net.minecraft.world.InteractionResult.SUCCESS;
         }
         if (IndustrialForegoing.CAT_EARS.getPlayers().contains(player.getUUID())) {
             player.getItemInHand(handIn).set(IFAttachments.INFINITY_ITEM_SPECIAL, true);
@@ -260,11 +260,11 @@ public class ItemInfinityBackpack extends ItemInfinity {
     }
 
     @Override
-    public void inventoryTick(ItemStack stack, Level worldIn, Entity entityIn, int itemSlot, boolean isSelected) {
+    public void inventoryTick(ItemStack stack, net.minecraft.server.level.ServerLevel worldIn, Entity entityIn, net.minecraft.world.entity.EquipmentSlot equipmentSlot) {
         if (isMagnetEnabled(stack)) {
             for (ItemEntity itemEntity : entityIn.level().getEntitiesOfClass(ItemEntity.class, new AABB(entityIn.getX(), entityIn.getY(), entityIn.getY(), entityIn.getX(), entityIn.getY(), entityIn.getZ()).inflate(5))) {
-                if (entityIn.level().isClientSide && enoughFuel(stack)) {
-                    if (itemEntity.onGround() && worldIn.random.nextInt(5) < 1)
+                if (entityIn.level().isClientSide() && enoughFuel(stack)) {
+                    if (itemEntity.onGround() && worldIn.getRandom().nextInt(5) < 1)
                         itemEntity.level().addParticle(ParticleTypes.PORTAL, itemEntity.getX(), itemEntity.getY() + 0.5, itemEntity.getZ(), 0, -0.5, 0);
                 } else {
                     if (!itemEntity.hasPickUpDelay() && enoughFuel(stack)) {
@@ -274,9 +274,9 @@ public class ItemInfinityBackpack extends ItemInfinity {
                 }
             }
         }
-        if (!entityIn.level().isClientSide && entityIn instanceof Player) {
+        if (!entityIn.level().isClientSide() && entityIn instanceof Player) {
             if (enoughFuel(stack)) {
-                var handlerItem = stack.getCapability(Capabilities.FluidHandler.ITEM);
+                var handlerItem = com.buuz135.industrial.compat.MachineCapabilities.fluids(stack);
                 if ((((Player) entityIn).getFoodData().needsFood() || ((Player) entityIn).getFoodData().getSaturationLevel() < 10) && handlerItem != null) {
                     for (int i = 0; i < handlerItem.getTanks(); i++) {
                         FluidStack fluidStack = handlerItem.getFluidInTank(i);
@@ -319,7 +319,7 @@ public class ItemInfinityBackpack extends ItemInfinity {
                 }
             }
         }
-        super.inventoryTick(stack, worldIn, entityIn, itemSlot, isSelected);
+        super.inventoryTick(stack, worldIn, entityIn, equipmentSlot);
     }
 
     @Override
@@ -354,12 +354,12 @@ public class ItemInfinityBackpack extends ItemInfinity {
 
     public void handleButtonMessage(int id, Player playerEntity, CompoundTag compound, ItemStack stack) {
         if (id == 4 && playerEntity instanceof ServerPlayer) {
-            String backpackId = compound.getString("Id");
+            String backpackId = compound.getStringOr("Id", "");
             ItemStack cursor = playerEntity.containerMenu.getCarried();
-            boolean shift = compound.getBoolean("Shift");
-            boolean ctrl = compound.getBoolean("Ctrl");
-            int button = compound.getInt("Button");
-            int slot = compound.getInt("Slot");
+            boolean shift = compound.getBooleanOr("Shift", false);
+            boolean ctrl = compound.getBooleanOr("Ctrl", false);
+            int button = compound.getIntOr("Button", 0);
+            int slot = compound.getIntOr("Slot", 0);
             BackpackDataManager dataManager = BackpackDataManager.getData(playerEntity.level());
             BackpackDataManager.BackpackItemHandler handler = dataManager.getBackpack(backpackId);
             ItemStack result = ItemStack.EMPTY;
@@ -383,7 +383,7 @@ public class ItemInfinityBackpack extends ItemInfinity {
                                 handler.getSlotDefinition(slot).setStack(ItemStack.EMPTY);
                                 handler.getSlotDefinition(slot).setAmount(0);
                             } else {
-                                ItemHandlerHelper.giveItemToPlayer(playerEntity, handler.extractItem(slot, maxStack, false));
+                                MachineItems.giveItemToPlayer(playerEntity, handler.extractItem(slot, maxStack, false));
                             }
                         } else {
                             result = handler.extractItem(slot, maxStack, false);
@@ -453,10 +453,6 @@ public class ItemInfinityBackpack extends ItemInfinity {
         stack.set(IFAttachments.INFINITY_ITEM_CAN_CHARGE, true);
     }
 
-    @Override
-    public void verifyComponentsAfterLoad(ItemStack stack) {
-        super.verifyComponentsAfterLoad(stack);
-    }
 
     @Override
     public boolean enoughFuel(ItemStack stack) {
@@ -468,7 +464,7 @@ public class ItemInfinityBackpack extends ItemInfinity {
     public void consumeFuel(ItemStack stack) {
         int level = EnchantmentHelper.getItemEnchantmentLevel(IFAttachments.registryAccess().holderOrThrow(Enchantments.UNBREAKING), stack);
         if (getFuelFromStack(stack) >= FUEL_CONSUMPTION * (1 / (level + 1))) {
-            var capability = stack.getCapability(Capabilities.FluidHandler.ITEM);
+            var capability = com.buuz135.industrial.compat.MachineCapabilities.fluids(stack);
             if (capability != null) {
                 for (int i = 0; i < capability.getTanks(); i++) {
                     if (capability.getFluidInTank(i).is(ModuleCore.BIOFUEL.getSourceFluid())) {
@@ -480,10 +476,6 @@ public class ItemInfinityBackpack extends ItemInfinity {
         }
     }
 
-    @Override
-    public boolean isEnchantable(ItemStack stack) {
-        return true;
-    }
 
     @Override
     public float getDestroySpeed(ItemStack stack, BlockState state) {
@@ -518,10 +510,9 @@ public class ItemInfinityBackpack extends ItemInfinity {
         }).orElse(null);
     }
 
-    @OnlyIn(Dist.CLIENT)
     @Override
-    public List<IFactory<? extends IScreenAddon>> getScreenAddons(Supplier<ItemStack> stack) {
-        List<IFactory<? extends IScreenAddon>> factory = new ArrayList<>();
+    public List<IFactory<?>> getScreenAddons(Supplier<ItemStack> stack) {
+        List<IFactory<?>> factory = new ArrayList<>();
         for (int i = 0; i < BackpackDataManager.SLOT_AMOUNT; i++) {
             int x = i % 8;
             int y = i / 8;
@@ -600,8 +591,8 @@ public class ItemInfinityBackpack extends ItemInfinity {
     public InteractionResult useOn(UseOnContext context) {
         InteractionResult interactionresult = this.place(new BlockPlaceContext(context));
         if (!interactionresult.consumesAction() && context.getItemInHand().has(DataComponents.FOOD)) {
-            InteractionResult interactionresult1 = super.use(context.getLevel(), context.getPlayer(), context.getHand()).getResult();
-            return interactionresult1 == InteractionResult.CONSUME ? InteractionResult.CONSUME_PARTIAL : interactionresult1;
+            InteractionResult interactionresult1 = super.use(context.getLevel(), context.getPlayer(), context.getHand());
+            return interactionresult1 == InteractionResult.CONSUME ? InteractionResult.CONSUME : interactionresult1;
         } else {
             return interactionresult;
         }
@@ -642,7 +633,7 @@ public class ItemInfinityBackpack extends ItemInfinity {
                     level.playSound(player, blockpos, this.getPlaceSound(blockstate1, level, blockpos, context.getPlayer()), SoundSource.BLOCKS, (soundtype.getVolume() + 1.0F) / 2.0F, soundtype.getPitch() * 0.8F);
                     level.gameEvent(GameEvent.BLOCK_PLACE, blockpos, GameEvent.Context.of(player, blockstate1));
                     itemstack.consume(1, player);
-                    return InteractionResult.sidedSuccess(level.isClientSide);
+                    return InteractionResult.SUCCESS;
                 }
             }
         }
@@ -695,11 +686,11 @@ public class ItemInfinityBackpack extends ItemInfinity {
             if (blockentity instanceof InfinityBackpackTile infinityBackpackTile) {
                 infinityBackpackTile.setBackpack(stack.copy());
             }
-            CustomData customdata = (CustomData) stack.getOrDefault(DataComponents.BLOCK_ENTITY_DATA, CustomData.EMPTY);
-            if (!customdata.isEmpty()) {
+            var customdata = stack.get(DataComponents.BLOCK_ENTITY_DATA);
+            if (customdata != null && blockentity != null && customdata.type() == blockentity.getType()) {
 
                 if (blockentity != null) {
-                    if (!level.isClientSide && blockentity.onlyOpCanSetNbt() && (player == null || !player.canUseGameMasterBlocks())) {
+                    if (!level.isClientSide() && blockentity.getType().onlyOpCanSetNbt() && (player == null || !player.canUseGameMasterBlocks())) {
                         return false;
                     }
 

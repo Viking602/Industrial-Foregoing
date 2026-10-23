@@ -33,11 +33,12 @@ import net.minecraft.client.model.geom.builders.LayerDefinition;
 import net.minecraft.client.model.geom.builders.MeshDefinition;
 import net.minecraft.client.model.geom.builders.PartDefinition;
 
-public class InfinityTridentModel extends EntityModel<InfinityTridentEntity> {
+public class InfinityTridentModel extends EntityModel<net.minecraft.client.renderer.entity.state.EntityRenderState> {
 
     private final ModelPart main;
 
     public InfinityTridentModel(ModelPart model) {
+        super(model);
         this.main = model;
     }
 
@@ -63,15 +64,7 @@ public class InfinityTridentModel extends EntityModel<InfinityTridentEntity> {
         return LayerDefinition.create(meshDefinition, 64, 64);
     }
 
-    @Override
-    public void setupAnim(InfinityTridentEntity p_102618_, float p_102619_, float p_102620_, float p_102621_, float p_102622_, float p_102623_) {
 
-    }
-
-    @Override
-    public void renderToBuffer(PoseStack poseStack, VertexConsumer buffer, int packedLight, int packedOverlay, int color) {
-        main.render(poseStack, buffer, packedLight, packedOverlay);
-    }
 
 
 }

@@ -60,19 +60,19 @@ public class StasisChamberTile extends IndustrialAreaWorkingTile<StasisChamberTi
             for (Mob entity : entities) {
                 entity.setNoAi(true);
                 entity.getPersistentData().putLong("StasisChamberTime", this.level.getGameTime());
-                if (entity.getType().is(Tags.EntityTypes.BOSSES) && level instanceof ServerLevel) {
+                if (entity.getType().builtInRegistryHolder().is(Tags.EntityTypes.BOSSES) && level instanceof ServerLevel) {
                     if (StasisChamberConfig.disableBossBars) {
                         level.players().forEach(entity1 -> entity.stopSeenByPlayer((ServerPlayer) entity1));
                     } else {
                         level.players().forEach(entity1 -> entity.startSeenByPlayer((ServerPlayer) entity1));
                     }
                 }
-                if (level.random.nextBoolean() && level.random.nextBoolean()) entity.heal(1f);
+                if (level.getRandom().nextBoolean() && level.getRandom().nextBoolean()) entity.heal(1f);
             }
             List<Player> players = this.level.getEntitiesOfClass(Player.class, getWorkingArea().bounds());
             players.forEach(playerEntity -> {
-                playerEntity.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 25, 135));
-                if (level.random.nextBoolean()) playerEntity.heal(1f);
+                playerEntity.addEffect(new MobEffectInstance(MobEffects.SLOWNESS, 25, 135));
+                if (level.getRandom().nextBoolean()) playerEntity.heal(1f);
             });
             return new WorkAction(0.5f, getPowerPerOperation);
         }

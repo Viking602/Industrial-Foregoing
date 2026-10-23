@@ -27,7 +27,7 @@ import com.hrznstudio.titanium.component.inventory.SidedInventoryComponent;
 import net.minecraft.core.Holder;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.data.recipes.ShapedRecipeBuilder;
+import com.hrznstudio.titanium.recipe.generator.TitaniumShapedRecipeBuilder;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.*;
 import net.minecraft.world.item.crafting.Ingredient;
@@ -35,7 +35,7 @@ import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.item.enchantment.ItemEnchantments;
 import net.minecraft.world.level.block.Blocks;
-import net.neoforged.neoforge.common.util.INBTSerializable;
+import com.hrznstudio.titanium.nbthandler.INBTSerializable;
 import net.neoforged.neoforge.fluids.FluidStack;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -60,7 +60,7 @@ public class DisenchantmentGeneratorType implements IMycelialGeneratorType {
 
     @Override
     public List<BiPredicate<ItemStack, Integer>> getSlotInputPredicates() {
-        return Arrays.asList((stack, integer) -> stack.isEnchanted() || stack.getItem() instanceof EnchantedBookItem, (stack, integer) -> false);
+        return Arrays.asList((stack, integer) -> stack.isEnchanted() || stack.is(net.minecraft.world.item.Items.ENCHANTED_BOOK), (stack, integer) -> false);
     }
 
     @Override
@@ -69,12 +69,12 @@ public class DisenchantmentGeneratorType implements IMycelialGeneratorType {
     }
 
     @Override
-    public boolean canStart(INBTSerializable<CompoundTag>[] inputs) {
+    public boolean canStart(net.neoforged.neoforge.common.util.ValueIOSerializable[] inputs) {
         return inputs.length > 0 && inputs[0] instanceof SidedInventoryComponent && inputs[1] instanceof SidedInventoryComponent && ((SidedInventoryComponent<?>) inputs[0]).getStackInSlot(0).getCount() > 0 && getSlotInputPredicates().get(0).test(((SidedInventoryComponent<?>) inputs[0]).getStackInSlot(0), 0) && ((SidedInventoryComponent<?>) inputs[1]).getStackInSlot(0).isEmpty();
     }
 
     @Override
-    public Pair<Integer, Integer> getTimeAndPowerGeneration(INBTSerializable<CompoundTag>[] inputs) {
+    public Pair<Integer, Integer> getTimeAndPowerGeneration(net.neoforged.neoforge.common.util.ValueIOSerializable[] inputs) {
         if (inputs.length > 0 && inputs[0] instanceof SidedInventoryComponent && ((SidedInventoryComponent<?>) inputs[0]).getStackInSlot(0).getCount() > 0) {
             ItemStack itemstack = ((SidedInventoryComponent) inputs[0]).getStackInSlot(0).copy();
             ((SidedInventoryComponent) inputs[0]).setStackInSlot(0, ItemStack.EMPTY);
@@ -106,14 +106,15 @@ public class DisenchantmentGeneratorType implements IMycelialGeneratorType {
     @Override
     public List<MycelialGeneratorRecipe> getRecipes(RegistryAccess registryAccess) {
         List<MycelialGeneratorRecipe> recipes = new ArrayList<>();
-        for (Enchantment value : registryAccess.registryOrThrow(Registries.ENCHANTMENT)) {
+        for (var enchantment : registryAccess.lookupOrThrow(Registries.ENCHANTMENT).listElements().toList()) {
+            Enchantment value = enchantment.value();
             for (int i = value.getMinLevel(); i <= value.getMaxLevel(); i++) {
                 var enchantments = new ItemEnchantments.Mutable(ItemEnchantments.EMPTY);
-                enchantments.set(Holder.direct(value), i);
+                enchantments.set(enchantment, i);
                 ItemStack book = new ItemStack(Items.ENCHANTED_BOOK);
                 EnchantmentHelper.setEnchantments(book, enchantments.toImmutable());
                 Pair<Integer, Integer> power = calculate(book);
-                recipes.add(new MycelialGeneratorRecipe(Arrays.asList(Collections.singletonList(Ingredient.of(book)), Collections.singletonList(Ingredient.of(ItemStack.EMPTY))), new ArrayList<>(), power.getLeft(), power.getRight()));
+                recipes.add(new MycelialGeneratorRecipe(Arrays.asList(Collections.singletonList(com.buuz135.industrial.compat.Ingredients.of(book)), Collections.emptyList()), new ArrayList<>(), power.getLeft(), power.getRight()));
             }
         }
         return recipes;
@@ -133,7 +134,7 @@ public class DisenchantmentGeneratorType implements IMycelialGeneratorType {
     }
 
     @Override
-    public ShapedRecipeBuilder addIngredients(ShapedRecipeBuilder recipeBuilder) {
+    public TitaniumShapedRecipeBuilder addIngredients(TitaniumShapedRecipeBuilder recipeBuilder) {
         recipeBuilder = recipeBuilder.define('B', Items.BOOK)
                 .define('C', Blocks.GRINDSTONE)
                 .define('M', IndustrialTags.Items.MACHINE_FRAME_ADVANCED);

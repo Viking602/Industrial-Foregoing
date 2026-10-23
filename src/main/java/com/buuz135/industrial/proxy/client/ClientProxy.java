@@ -47,18 +47,18 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.geom.builders.CubeDeformation;
-import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
-import net.minecraft.client.renderer.ItemBlockRenderTypes;
-import net.minecraft.client.renderer.RenderType;
+
+
+import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
-import net.minecraft.client.renderer.entity.player.PlayerRenderer;
-import net.minecraft.client.renderer.item.ItemProperties;
-import net.minecraft.client.resources.PlayerSkin;
-import net.minecraft.client.resources.model.BakedModel;
+
+
+import net.minecraft.world.entity.player.PlayerSkin;
+
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.FastColor;
+import net.minecraft.resources.Identifier;
+import net.minecraft.util.ARGB;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.SpawnEggItem;
@@ -76,12 +76,12 @@ import net.neoforged.neoforge.event.entity.player.ItemTooltipEvent;
 
 import java.util.Calendar;
 
-@EventBusSubscriber(value = Dist.CLIENT, bus = EventBusSubscriber.Bus.MOD)
+@EventBusSubscriber(value = Dist.CLIENT, modid = Reference.MOD_ID)
 public class ClientProxy extends CommonProxy {
 
-    public static ResourceLocation GUI = ResourceLocation.fromNamespaceAndPath(Reference.MOD_ID, "textures/gui/machines.png");
-    public static BakedModel ears_baked;
-    public static BakedModel HYDROPONIC_SIM_PROCESSOR;
+    public static Identifier GUI = Identifier.fromNamespaceAndPath(Reference.MOD_ID, "textures/gui/machines.png");
+    public static net.minecraft.client.renderer.block.dispatch.BlockStateModelPart ears_baked;
+    private static final net.neoforged.neoforge.client.model.standalone.StandaloneModelKey<net.minecraft.client.renderer.block.dispatch.BlockStateModelPart> EARS_MODEL = new net.neoforged.neoforge.client.model.standalone.StandaloneModelKey<>(() -> "industrialforegoing:cat_ears");
 
     public static KeyMapping OPEN_BACKPACK;
 
@@ -120,11 +120,11 @@ public class ClientProxy extends CommonProxy {
 
     @SubscribeEvent
     public static void addLayers(EntityRenderersEvent.AddLayers event) {
-        for (PlayerSkin.Model skin : event.getSkins()) {
-            var renderer = event.getSkin(skin);
-            if (renderer instanceof PlayerRenderer playerRenderer) {
+        for (var skin : event.getSkins()) {
+            var playerRenderer = event.getPlayerRenderer(skin);
+            if (playerRenderer != null) {
                 playerRenderer.addLayer(new ContributorsCatEarsRender(playerRenderer));
-                playerRenderer.addLayer(new InfinityLauncherProjectileArmorLayer(playerRenderer));
+                playerRenderer.addLayer(new InfinityLauncherProjectileArmorLayer(playerRenderer, event.getContext()));
             }
         }
     }
@@ -139,85 +139,59 @@ public class ClientProxy extends CommonProxy {
     }
 
     @SubscribeEvent
-    public static void registerClientExtensions(RegisterClientExtensionsEvent event) {
-        event.registerItem(new IClientItemExtensions() {
-            @Override
-            public BlockEntityWithoutLevelRenderer getCustomRenderer() {
-                return HydroponicSimProcessorISTER.INSTANCE;
-            }
-        }, ModuleAgricultureHusbandry.HYDROPONIC_SIMULATION_PROCESSOR.get());
+    public static void registerModels(net.neoforged.neoforge.client.event.ModelEvent.RegisterStandalone event) {
+        event.register(EARS_MODEL, net.neoforged.neoforge.client.model.standalone.SimpleUnbakedStandaloneModel.simpleModelWrapper(Identifier.fromNamespaceAndPath(Reference.MOD_ID,"block/catears")));
     }
-
-    @Override
-    public void run() {
-
+    @SubscribeEvent
+    public static void modelsLoaded(net.neoforged.neoforge.client.event.ModelEvent.BakingCompleted event) {
+        ears_baked = event.getModelManager().getStandaloneModel(EARS_MODEL);
+        com.buuz135.industrial.proxy.client.render.item.MachineItemTint.clearCache();
+    }
+    @SubscribeEvent
+    public static void itemModels(net.neoforged.neoforge.client.event.RegisterItemModelsEvent event) {
+        event.register(Identifier.fromNamespaceAndPath(Reference.MOD_ID,"hydroponic_processor"), HydroponicSimProcessorISTER.Unbaked.CODEC);
+    }
+    @SubscribeEvent
+    public static void modelProperties(net.neoforged.neoforge.client.event.RegisterRangeSelectItemModelPropertyEvent event) {
+        event.register(Identifier.fromNamespaceAndPath(Reference.MOD_ID, "cooldown"), com.buuz135.industrial.proxy.client.render.item.MachineModelProperty.COOLDOWN);
+        event.register(Identifier.fromNamespaceAndPath(Reference.MOD_ID, "stored"), com.buuz135.industrial.proxy.client.render.item.MachineModelProperty.STORED);
+    }
+    @SubscribeEvent
+    public static void itemTints(net.neoforged.neoforge.client.event.RegisterColorHandlersEvent.ItemTintSources event) {
+        event.register(Identifier.fromNamespaceAndPath(Reference.MOD_ID,"machine"), com.buuz135.industrial.proxy.client.render.item.MachineItemTint.CODEC);
+    }
+    @SubscribeEvent
+    public static void blockTints(net.neoforged.neoforge.client.event.RegisterColorHandlersEvent.BlockTintSources event) {
+        event.register(java.util.List.of(new net.minecraft.client.color.block.BlockTintSource() {
+            @Override public int color(net.minecraft.world.level.block.state.BlockState state) { return -1; }
+            @Override public int colorInWorld(net.minecraft.world.level.block.state.BlockState state, net.minecraft.client.renderer.block.BlockAndTintGetter level, net.minecraft.core.BlockPos pos) {
+                return level.getBlockEntity(pos) instanceof ConveyorTile conveyor ? ARGB.opaque(conveyor.getColor()) : -1;
+            }
+        }), ModuleTransportStorage.CONVEYOR.getBlock());
+    }
+    @SubscribeEvent
+    public static void keys(net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent event) {
+        OPEN_BACKPACK = new KeyMapping("key.industrialforegoing.backpack.desc", -1, KeyMapping.Category.register(Identifier.fromNamespaceAndPath(Reference.MOD_ID,"general")));
+        event.register(OPEN_BACKPACK);
+    }
+    @SubscribeEvent
+    public static void particles(net.neoforged.neoforge.client.event.RegisterParticleGroupsEvent event) {
+        event.register(com.buuz135.industrial.proxy.client.particle.ParticleVex.RENDER, com.buuz135.industrial.proxy.client.particle.ParticleVex.Group::new);
+    }
+    @SubscribeEvent
+    public static void renderState(net.neoforged.neoforge.client.renderstate.RegisterRenderStateModifiersEvent event) {
+        event.registerAvatarEntityModifier(new net.neoforged.neoforge.client.renderstate.AvatarRenderStateModifier() {
+            @Override public <T extends net.minecraft.world.entity.Avatar & net.minecraft.client.entity.ClientAvatarEntity> void accept(T avatar, net.minecraft.client.renderer.entity.state.AvatarRenderState state) {
+                ContributorsCatEarsRender.extract(avatar, state);
+                state.setRenderData(InfinityLauncherProjectileArmorLayer.COUNT, InfinityLauncherProjectileArmorLayer.PROJECTILE_AMOUNT.getOrDefault(avatar.getUUID().toString(), 0));
+            }
+        });
+    }
+    @Override public void run() {
         NeoForge.EVENT_BUS.register(new IFClientEvents());
-
-        //((IReloadableResourceManager) Minecraft.getInstance().getResourceManager()).addReloadListener(resourceManager -> FluidUtils.colorCache.clear());
-
-        ItemBlockRenderTypes.setRenderLayer(ModuleTransportStorage.CONVEYOR.getBlock(), RenderType.cutout());
-        ItemBlockRenderTypes.setRenderLayer(ModuleTool.INFINITY_BACKPACK_BLOCK.getBlock(), RenderType.cutoutMipped());
-        ItemBlockRenderTypes.setRenderLayer(ModuleCore.PINK_SLIME_BLOCK.get(), RenderType.translucent());
-
-        Minecraft.getInstance().getBlockColors().register((state, worldIn, pos, tintIndex) -> {
-            if (tintIndex == 0 && worldIn != null && pos != null) {
-                BlockEntity entity = worldIn.getBlockEntity(pos);
-                if (entity instanceof ConveyorTile) {
-                    return ((ConveyorTile) entity).getColor();
-                }
-            }
-            return 0xFFFFFFFF;
-        }, ModuleTransportStorage.CONVEYOR.getBlock());
-        Minecraft.getInstance().getItemColors().register((stack, tintIndex) -> {
-            if (tintIndex == 1 || tintIndex == 2 || tintIndex == 3) {
-                SpawnEggItem info = null;
-                var blacklisted = false;
-                if (stack.has(IFAttachments.MOB_IMPRISONMENT_TOOL)) {
-                    var tag = stack.get(IFAttachments.MOB_IMPRISONMENT_TOOL);
-                    ResourceLocation id = ResourceLocation.parse(tag.getString("entity"));
-                    var type = BuiltInRegistries.ENTITY_TYPE.get(id);
-                    info = SpawnEggItem.byId(type);
-                    blacklisted = ((MobImprisonmentToolItem) ModuleTool.MOB_IMPRISONMENT_TOOL.get()).isBlacklisted(type);
-                }
-                return info == null ? 0xFF636363 : tintIndex == 3 ? blacklisted ? 0xFFDB201A : 0xFF636363 : FastColor.ARGB32.opaque(info.getColor(tintIndex - 1));
-            }
-            return 0xFFFFFFFF;
-        }, ModuleTool.MOB_IMPRISONMENT_TOOL.get());
-        Minecraft.getInstance().getItemColors().register((stack, tintIndex) -> {
-            if (tintIndex == 0) {
-                return FastColor.ARGB32.opaque(InfinityTier.getTierBraquet(ItemInfinity.getPowerFromStack(stack)).getLeft().getTextureColor());
-            }
-            return 0xFFFFFFFF;
-        }, ModuleTool.INFINITY_BACKPACK.get(), ModuleTool.INFINITY_LAUNCHER.get(), ModuleTool.INFINITY_NUKE.get(), ModuleTool.INFINITY_TRIDENT.get(), ModuleTool.INFINITY_HAMMER.get(), ModuleTool.INFINITY_SAW.get(), ModuleTool.INFINITY_DRILL.get());
-        Minecraft.getInstance().getItemColors().register((stack, tintIndex) -> {
-            var fluidHandlerItem = stack.getCapability(Capabilities.FluidHandler.ITEM);
-            if (tintIndex == 1 && fluidHandlerItem != null) {
-                if (fluidHandlerItem.getFluidInTank(0).getAmount() > 0) {
-                    int color = FluidUtils.getFluidColor(fluidHandlerItem.getFluidInTank(0));
-                    if (color != -1) return FastColor.ARGB32.opaque(color);
-                }
-            }
-            return 0xFFFFFFFF;
-        }, ModuleCore.RAW_ORE_MEAT.getBucketFluid(), ModuleCore.FERMENTED_ORE_MEAT.getBucketFluid());
-
         EventManager.forge(ItemTooltipEvent.class).filter(event -> BuiltInRegistries.ITEM.getKey(event.getItemStack().getItem()).getNamespace().equals(Reference.MOD_ID)).process(event -> {
-            if (Calendar.getInstance().get(Calendar.DAY_OF_MONTH) == 1 && Calendar.getInstance().get(Calendar.MONTH) == Calendar.APRIL) {
-                event.getToolTip().add(Component.literal(Component.translatable("text.industrialforegoing.proxy.client.alt_f4").getString()).withStyle(ChatFormatting.DARK_AQUA));
-            }
+            if (Calendar.getInstance().get(Calendar.DAY_OF_MONTH) == 1 && Calendar.getInstance().get(Calendar.MONTH) == Calendar.APRIL)
+                event.getToolTip().add(Component.translatable("text.industrialforegoing.proxy.client.alt_f4").withStyle(ChatFormatting.DARK_AQUA));
         }).subscribe();
-
-        Minecraft instance = Minecraft.getInstance();
-        EntityRenderDispatcher manager = instance.getEntityRenderDispatcher();
-
-        ItemProperties.register(ModuleTool.INFINITY_LAUNCHER.get(), ResourceLocation.fromNamespaceAndPath(Reference.MOD_ID, "cooldown"), (stack, world, entity, number) -> {
-            if (entity instanceof Player) {
-                return ((Player) entity).getCooldowns().isOnCooldown(stack.getItem()) ? 1 : 2;
-            }
-            return 2f;
-        });
-        ItemProperties.register(ModuleCore.MACHINE_SETTINGS_COPIER.get(), ResourceLocation.fromNamespaceAndPath(Reference.MOD_ID, "stored"), (stack, world, entity, number) -> {
-            return stack.has(IFAttachments.SETTINGS_COPIER) ? 1 : 0;
-        });
     }
-
 }

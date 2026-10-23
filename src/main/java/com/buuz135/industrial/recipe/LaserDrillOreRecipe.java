@@ -31,12 +31,12 @@ import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.advancements.AdvancementRequirements;
 import net.minecraft.advancements.AdvancementRewards;
-import net.minecraft.advancements.critereon.RecipeUnlockedTrigger;
+import net.minecraft.advancements.criterion.RecipeUnlockedTrigger;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.data.recipes.RecipeOutput;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.tags.BiomeTags;
 import net.minecraft.tags.EntityTypeTags;
 import net.minecraft.world.entity.EntityType;
@@ -57,7 +57,7 @@ import java.util.Optional;
 public class LaserDrillOreRecipe extends DrillRecipe<SizedIngredient> {
 
     public static final MapCodec<LaserDrillOreRecipe> CODEC = RecordCodecBuilder.mapCodec(in -> in.group(
-            SizedIngredient.FLAT_CODEC.fieldOf("output").forGetter(o -> o.output),
+            SizedIngredient.NESTED_CODEC.fieldOf("output").forGetter(o -> o.output),
             Ingredient.CODEC.fieldOf("catalyst").forGetter(o -> o.catalyst),
             EntityData.CODEC.optionalFieldOf("entity_data").forGetter(o -> o.entityData),
             LaserDrillRarity.CODEC.listOf().fieldOf("rarity").forGetter(o -> o.rarity)
@@ -214,26 +214,26 @@ public class LaserDrillOreRecipe extends DrillRecipe<SizedIngredient> {
         var recipe = new LaserDrillOreRecipe(output, color, rarity);
         var rl = generateRL(BuiltInRegistries.ITEM.getKey(itemLike.asItem()).getPath());
         var advancementHolder = recipeOutput.advancement()
-                .addCriterion("has_the_recipe", RecipeUnlockedTrigger.unlocked(rl))
-                .rewards(AdvancementRewards.Builder.recipe(rl))
+                .addCriterion("has_the_recipe", RecipeUnlockedTrigger.unlocked(net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.RECIPE, rl)))
+                .rewards(AdvancementRewards.Builder.recipe(net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.RECIPE, rl)))
                 .requirements(AdvancementRequirements.Strategy.OR).build(rl);
-        recipeOutput.accept(rl, recipe, advancementHolder);
+        recipeOutput.accept(net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.RECIPE, rl), recipe, advancementHolder);
     }
 
     public static void createTagRecipe(RecipeOutput recipeOutput, String tagString, int color, LaserDrillRarity... rarity) {
-        var tag = TagUtil.getItemTag(ResourceLocation.fromNamespaceAndPath("c", tagString));
-        var output = SizedIngredient.of(tag, 1);
+        var tag = TagUtil.getItemTag(Identifier.fromNamespaceAndPath("c", tagString));
+        var output = new SizedIngredient(com.buuz135.industrial.compat.Ingredients.of(tag), 1);
         var recipe = new LaserDrillOreRecipe(output, color, rarity);
         var rl = generateRL(tagString);
         var advancementHolder = recipeOutput.advancement()
-                .addCriterion("has_the_recipe", RecipeUnlockedTrigger.unlocked(rl))
-                .rewards(AdvancementRewards.Builder.recipe(rl))
+                .addCriterion("has_the_recipe", RecipeUnlockedTrigger.unlocked(net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.RECIPE, rl)))
+                .rewards(AdvancementRewards.Builder.recipe(net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.RECIPE, rl)))
                 .requirements(AdvancementRequirements.Strategy.OR).build(rl);
-        recipeOutput.accept(rl, recipe, advancementHolder, new NotCondition(new TagEmptyCondition(tag)));
+        recipeOutput.accept(net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.RECIPE, rl), recipe, advancementHolder, new NotCondition(new TagEmptyCondition(tag)));
     }
 
-    public static ResourceLocation generateRL(String key) {
-        return ResourceLocation.fromNamespaceAndPath(Reference.MOD_ID, "laser_drill_ore/" + key);
+    public static Identifier generateRL(String key) {
+        return Identifier.fromNamespaceAndPath(Reference.MOD_ID, "laser_drill_ore/" + key);
     }
 
     @Override
@@ -242,7 +242,7 @@ public class LaserDrillOreRecipe extends DrillRecipe<SizedIngredient> {
     }
 
     @Override
-    public ItemStack assemble(CraftingInput craftingInput, HolderLookup.Provider provider) {
+    public ItemStack assemble(CraftingInput craftingInput) {
         return ItemStack.EMPTY;
     }
 
@@ -257,12 +257,12 @@ public class LaserDrillOreRecipe extends DrillRecipe<SizedIngredient> {
     }
 
     @Override
-    public RecipeSerializer<?> getSerializer() {
+    public RecipeSerializer getSerializer() {
         return ModuleCore.LASER_DRILL_SERIALIZER.get();
     }
 
     @Override
-    public RecipeType<?> getType() {
+    public RecipeType getType() {
         return ModuleCore.LASER_DRILL_TYPE.get();
     }
 

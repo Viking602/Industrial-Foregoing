@@ -1,8 +1,8 @@
 {
   "neoforge:conditions": [
     {
-      "type": "neoforge:item_exists",
-      "item": "industrialforegoing:plant_gatherer"
+      "type": "neoforge:registered",
+      "value": "industrialforegoing:plant_gatherer"
     }
   ],
   "parent": "minecraft:recipes/root",

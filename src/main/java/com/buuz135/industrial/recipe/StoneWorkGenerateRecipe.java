@@ -29,11 +29,12 @@ import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.advancements.AdvancementRequirements;
 import net.minecraft.advancements.AdvancementRewards;
-import net.minecraft.advancements.critereon.RecipeUnlockedTrigger;
+import net.minecraft.advancements.criterion.RecipeUnlockedTrigger;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.data.recipes.RecipeOutput;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.ItemStackTemplate;
 import net.minecraft.world.item.crafting.CraftingInput;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeSerializer;
@@ -43,22 +44,22 @@ import net.minecraft.world.level.block.Blocks;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import net.neoforged.neoforge.fluids.capability.templates.FluidTank;
 
-public class StoneWorkGenerateRecipe implements Recipe<CraftingInput> {
+public class StoneWorkGenerateRecipe implements com.buuz135.industrial.compat.MachineRecipe {
 
     public static final MapCodec<StoneWorkGenerateRecipe> CODEC = RecordCodecBuilder.mapCodec(in -> in.group(
-            ItemStack.CODEC.fieldOf("output").forGetter(o -> o.output),
+            ItemStackTemplate.CODEC.fieldOf("output").forGetter(o -> o.outputTemplate),
             Codec.INT.fieldOf("waterNeed").forGetter(o -> o.waterNeed),
             Codec.INT.fieldOf("lavaNeed").forGetter(o -> o.lavaNeed),
             Codec.INT.fieldOf("waterConsume").forGetter(o -> o.waterConsume),
             Codec.INT.fieldOf("lavaConsume").forGetter(o -> o.lavaConsume)
-    ).apply(in, StoneWorkGenerateRecipe::new));
-    public ItemStack output;
+    ).apply(in, (output, waterNeed, lavaNeed, waterConsume, lavaConsume) -> new StoneWorkGenerateRecipe(output, waterNeed, lavaNeed, waterConsume, lavaConsume, true)));
+    private ItemStackTemplate outputTemplate;
     public int waterNeed;
     public int lavaNeed;
     public int waterConsume;
     public int lavaConsume;
     public StoneWorkGenerateRecipe(ItemStack output, int waterNeed, int lavaNeed, int waterConsume, int lavaConsume) {
-        this.output = output;
+        this.outputTemplate = ItemStackTemplate.fromNonEmptyStack(output);
         this.waterNeed = waterNeed;
         this.lavaNeed = lavaNeed;
         this.waterConsume = waterConsume;
@@ -79,14 +80,14 @@ public class StoneWorkGenerateRecipe implements Recipe<CraftingInput> {
     public static void createRecipe(RecipeOutput recipeOutput, String name, StoneWorkGenerateRecipe recipe) {
         var rl = generateRL(name);
         var advancementHolder = recipeOutput.advancement()
-                .addCriterion("has_the_recipe", RecipeUnlockedTrigger.unlocked(rl))
-                .rewards(AdvancementRewards.Builder.recipe(rl))
+                .addCriterion("has_the_recipe", RecipeUnlockedTrigger.unlocked(net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.RECIPE, rl)))
+                .rewards(AdvancementRewards.Builder.recipe(net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.RECIPE, rl)))
                 .requirements(AdvancementRequirements.Strategy.OR).build(rl);
-        recipeOutput.accept(rl, recipe, advancementHolder);
+        recipeOutput.accept(net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.RECIPE, rl), recipe, advancementHolder);
     }
 
-    public static ResourceLocation generateRL(String key) {
-        return ResourceLocation.fromNamespaceAndPath(Reference.MOD_ID, "stonework_generate/" + key);
+    public static Identifier generateRL(String key) {
+        return Identifier.fromNamespaceAndPath(Reference.MOD_ID, "stonework_generate/" + key);
     }
 
     @Override
@@ -95,7 +96,7 @@ public class StoneWorkGenerateRecipe implements Recipe<CraftingInput> {
     }
 
     @Override
-    public ItemStack assemble(CraftingInput craftingInput, HolderLookup.Provider provider) {
+    public ItemStack assemble(CraftingInput craftingInput) {
         return ItemStack.EMPTY;
     }
 
@@ -110,22 +111,32 @@ public class StoneWorkGenerateRecipe implements Recipe<CraftingInput> {
     }
 
     @Override
-    public RecipeSerializer<?> getSerializer() {
+    public RecipeSerializer getSerializer() {
         return ModuleCore.STONEWORK_GENERATE_SERIALIZER.get();
     }
 
     @Override
-    public RecipeType<?> getType() {
+    public RecipeType getType() {
         return ModuleCore.STONEWORK_GENERATE_TYPE.get();
     }
 
-    public boolean canIncrease(FluidTank fluidTank, FluidTank fluidTank2) {
+    public boolean canIncrease(FluidTankComponent fluidTank, FluidTankComponent fluidTank2) {
         return fluidTank.getFluidAmount() >= waterNeed && fluidTank2.getFluidAmount() >= lavaNeed;
     }
 
     public void consume(FluidTankComponent fluidTank, FluidTankComponent fluidTank2) {
-        fluidTank.drainForced(waterConsume, IFluidHandler.FluidAction.EXECUTE);
-        fluidTank2.drainForced(lavaConsume, IFluidHandler.FluidAction.EXECUTE);
+        com.buuz135.industrial.compat.MachineFluids.drainForced(fluidTank, waterConsume, IFluidHandler.FluidAction.EXECUTE);
+        com.buuz135.industrial.compat.MachineFluids.drainForced(fluidTank2, lavaConsume, IFluidHandler.FluidAction.EXECUTE);
     }
 
+
+    public ItemStack output() { return outputTemplate.create(); }
+
+    private StoneWorkGenerateRecipe(ItemStackTemplate output, int waterNeed, int lavaNeed, int waterConsume, int lavaConsume, boolean templates) {
+        this.outputTemplate = output;
+        this.waterNeed = waterNeed;
+        this.lavaNeed = lavaNeed;
+        this.waterConsume = waterConsume;
+        this.lavaConsume = lavaConsume;
+        }
 }
